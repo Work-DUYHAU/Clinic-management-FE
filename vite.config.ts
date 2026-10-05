@@ -37,6 +37,15 @@ export default defineConfig(({ mode }) => {
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
           },
         },
+        "/api-smartca-sp769": {
+          target:
+            (env.VITE_SMARTCA_ENV || "production") === "production"
+              ? "https://gwsca.vnpt.vn/sca/sp769"
+              : "https://rmgateway.vnptit.vn/sca/sp769",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api-smartca-sp769/, ""),
+        },
         "/api-smartca-prod": {
           target: "https://gwsca.vnpt.vn",
           changeOrigin: true,

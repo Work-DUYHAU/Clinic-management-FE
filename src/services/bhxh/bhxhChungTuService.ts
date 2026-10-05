@@ -45,6 +45,7 @@ interface CachedBhxhToken {
 
 export class BhxhChungTuService {
   private static cachedToken: CachedBhxhToken | null = null;
+  private static lastTokenRequestTime = 0;
 
   /**
    * Xóa bộ nhớ đệm Token phiên làm việc (khi đổi tài khoản hoặc token bị hết hạn)
@@ -99,6 +100,7 @@ export class BhxhChungTuService {
       }
 
       const password = formatBhxhPassword(rawPassword);
+      const now = Date.now();
 
       // Kiểm tra bộ nhớ đệm: Nếu còn hạn và cùng tài khoản/môi trường thì tái sử dụng ngay
       if (
@@ -107,10 +109,22 @@ export class BhxhChungTuService {
         BhxhChungTuService.cachedToken.username === username &&
         BhxhChungTuService.cachedToken.passwordHash === password &&
         BhxhChungTuService.cachedToken.env === env &&
-        Date.now() < BhxhChungTuService.cachedToken.expiresAt - 60000
+        now < BhxhChungTuService.cachedToken.expiresAt - 60000
       ) {
         return { ...BhxhChungTuService.cachedToken.tokenResponse };
       }
+      if (
+        forceRefresh &&
+        BhxhChungTuService.cachedToken &&
+        now - BhxhChungTuService.lastTokenRequestTime < 60000 &&
+        BhxhChungTuService.cachedToken.username === username &&
+        BhxhChungTuService.cachedToken.passwordHash === password &&
+        now < BhxhChungTuService.cachedToken.expiresAt - 60000
+      ) {
+        return { ...BhxhChungTuService.cachedToken.tokenResponse };
+      }
+
+      BhxhChungTuService.lastTokenRequestTime = now;
 
       const params = new URLSearchParams();
       params.append("username", username);

@@ -1,29 +1,35 @@
-// ============================================================
-// TYPES - VNPT SmartCA API Gateway (Tài liệu v1.1, 15-05-2024)
-// ============================================================
-
-/** Môi trường kết nối SmartCA */
-export type SmartCaEnv = 'demo' | 'production';
+export type SmartCaEnv = "demo" | "production";
 
 /** Endpoint gốc theo môi trường (Mục 2 - Giao thức API) */
 export interface SmartCaEndpoints {
   authorize: string;
   token: string;
   resource: string;
+  sp769: string;
 }
 
 const isDev = import.meta.env.DEV;
 
 export const SMARTCA_ENDPOINTS: Record<SmartCaEnv, SmartCaEndpoints> = {
   demo: {
-    authorize: isDev ? '/api-smartca-demo/auth/authorize' : 'https://rmgateway.vnptit.vn/auth/authorize',
-    token: isDev ? '/api-smartca-demo/auth/token' : 'https://rmgateway.vnptit.vn/auth/token',
-    resource: isDev ? '/api-smartca-demo' : 'https://rmgateway.vnptit.vn',
+    authorize: isDev
+      ? "/api-smartca-demo/auth/authorize"
+      : "https://rmgateway.vnptit.vn/auth/authorize",
+    token: isDev
+      ? "/api-smartca-demo/auth/token"
+      : "https://rmgateway.vnptit.vn/auth/token",
+    resource: isDev ? "/api-smartca-demo" : "https://rmgateway.vnptit.vn",
+    sp769: isDev ? "/api-smartca-sp769" : "https://rmgateway.vnptit.vn/sca/sp769",
   },
   production: {
-    authorize: isDev ? '/api-smartca-prod/auth/authorize' : 'https://gwsca.vnpt.vn/auth/authorize',
-    token: isDev ? '/api-smartca-prod/auth/token' : 'https://gwsca.vnpt.vn/auth/token',
-    resource: isDev ? '/api-smartca-prod' : 'https://gwsca.vnpt.vn',
+    authorize: isDev
+      ? "/api-smartca-prod/auth/authorize"
+      : "https://gwsca.vnpt.vn/auth/authorize",
+    token: isDev
+      ? "/api-smartca-prod/auth/token"
+      : "https://gwsca.vnpt.vn/auth/token",
+    resource: isDev ? "/api-smartca-prod" : "https://gwsca.vnpt.vn",
+    sp769: isDev ? "/api-smartca-sp769" : "https://gwsca.vnpt.vn/sca/sp769",
   },
 };
 
@@ -156,12 +162,12 @@ export type SmartCaTranStatus =
 
 /** Nhãn hiển thị tiếng Việt theo mã trạng thái giao dịch */
 export const SMARTCA_TRAN_STATUS_VI: Record<number, string> = {
-  1: 'Ký số thành công',
-  4000: 'Chờ người dùng xác nhận OTP trên app SmartCA',
-  4001: 'Giao dịch đã hết hạn',
-  4002: 'Người dùng từ chối xác nhận',
-  4003: 'Xác thực khóa authorize thất bại',
-  4004: 'Ký số thất bại',
+  1: "Ký số thành công",
+  4000: "Chờ người dùng xác nhận OTP trên app SmartCA",
+  4001: "Giao dịch đã hết hạn",
+  4002: "Người dùng từ chối xác nhận",
+  4003: "Xác thực khóa authorize thất bại",
+  4004: "Ký số thất bại",
 };
 
 export interface SmartCaSignedDocument {
@@ -208,9 +214,13 @@ export class SmartCaError extends Error {
   readonly code: string | number;
   readonly codeDesc: string | null;
 
-  constructor(message: string, code: string | number, codeDesc: string | null = null) {
+  constructor(
+    message: string,
+    code: string | number,
+    codeDesc: string | null = null,
+  ) {
     super(message);
-    this.name = 'SmartCaError';
+    this.name = "SmartCaError";
     this.code = code;
     this.codeDesc = codeDesc;
   }
@@ -218,8 +228,9 @@ export class SmartCaError extends Error {
 
 /** Ánh xạ lỗi OAuth2 400 -> thông điệp tiếng Việt */
 export const SMARTCA_OAUTH_ERROR_VI: Record<string, string> = {
-  invalid_client: 'Sai thông tin App client (client_id / client_secret không đúng)',
-  invalid_grant: 'Sai thông tin tài khoản SmartCA (username hoặc password)',
+  invalid_client:
+    "Sai thông tin App client (client_id / client_secret không đúng)",
+  invalid_grant: "Sai thông tin tài khoản SmartCA (username hoặc password)",
   invalid_scope: 'Scope API không hợp lệ - cần phạm vi "sign offline_access"',
 };
 
@@ -268,11 +279,11 @@ export interface SmartCaClient {
 // ------------------------------------------------------------
 
 export type SignerRole =
-  | 'BAC_SI'
-  | 'NGUOI_LAP'
-  | 'TRUONG_KHOA'
-  | 'THU_TRUONG'
-  | 'DON_VI';
+  | "BAC_SI"
+  | "NGUOI_LAP"
+  | "TRUONG_KHOA"
+  | "THU_TRUONG"
+  | "DON_VI";
 
 export interface SignerProfile {
   id: string;
@@ -290,4 +301,3 @@ export interface SignerProfile {
 }
 
 export const DEFAULT_CLINIC_SIGNERS: SignerProfile[] = [];
-
