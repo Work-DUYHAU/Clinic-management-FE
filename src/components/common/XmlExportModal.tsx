@@ -210,8 +210,60 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     status: "idle",
   });
 
+  const [tokenCooldown, setTokenCooldown] = useState(0);
+
+  // Đếm ngược thời gian chờ chống spam yêu cầu Token lên Cổng BHXH
+  useEffect(() => {
+    if (tokenCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setTokenCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [tokenCooldown]);
+
   const handleFetchSessionToken = useCallback(
     async (isSilent = false, forceRefresh = false) => {
+      // 1. Chặn click spam nếu đang trong thời gian cooldown
+      if (forceRefresh && tokenCooldown > 0) {
+        if (!isSilent) {
+          toast.warning(
+            `Vui lòng chờ ${tokenCooldown}s trước khi yêu cầu cấp lại Token Cổng BHXH để bảo vệ IP phòng khám không bị chặn!`,
+            "Chống Spam Request",
+          );
+        }
+        return;
+      }
+
+      // 2. Chặn yêu cầu dư thừa: Nếu Token hiện tại vẫn còn hiệu lực (~25 phút) và cùng mật khẩu
+      if (forceRefresh) {
+        const cached = BhxhChungTuService.getCachedToken();
+        const p = bhxhPasswordInput.trim() || getEffectivePassword();
+        const pwdHash = formatBhxhPassword(p);
+        if (
+          cached &&
+          (cached.apiToken || cached.APIKey?.access_token) &&
+          cached.passwordHash === pwdHash
+        ) {
+          setTokenSession({
+            accessToken: cached.apiToken || cached.APIKey?.access_token || "",
+            tokenId: cached.idToken || cached.APIKey?.id_token || "",
+            passwordHash: pwdHash,
+            isLoading: false,
+            error: null,
+            status: "success",
+            expiresIn: cached.APIKey?.expires_in,
+          });
+          setTokenCooldown(60);
+          if (!isSilent) {
+            toast.info(
+              "Token phiên làm việc hiện tại vẫn còn hiệu lực. Đã tái sử dụng Token để tránh bị Cổng BHXH giới hạn tần suất!",
+              "Token Đang Hoạt Động",
+            );
+          }
+          return;
+        }
+      }
+
       setTokenSession((prev) => ({
         ...prev,
         isLoading: true,
@@ -243,6 +295,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             status: "success",
             expiresIn: res.APIKey?.expires_in,
           });
+          setTokenCooldown(60); // Kích hoạt 60 giây (1 phút) thời gian chờ chống spam
           if (!isSilent) {
             toast.success(
               "Đã lấy thành công Token phiên làm việc Cổng BHXH!",
@@ -278,10 +331,51 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
 
   // Tự động kiểm tra và lấy token khi người dùng chuyển sang tab "api"
   useEffect(() => {
-    if (isOpen && tab === "api" && tokenSession.status === "idle") {
-      handleFetchSessionToken(true);
+    if (isOpen && tab === "api") {
+      const cached = BhxhChungTuService.getCachedToken();
+      if (cached && (cached.apiToken || cached.APIKey?.access_token)) {
+        setTokenSession({
+          accessToken: cached.apiToken || cached.APIKey?.access_token || "",
+          tokenId: cached.idToken || cached.APIKey?.id_token || "",
+          passwordHash: cached.passwordHash || formatBhxhPassword(getEffectivePassword()),
+          isLoading: false,
+          error: null,
+          status: "success",
+          expiresIn: cached.APIKey?.expires_in,
+        });
+        return;
+      }
+
+      if (tokenSession.status === "idle") {
+        handleFetchSessionToken(true);
+      }
     }
   }, [isOpen, tab, tokenSession.status, handleFetchSessionToken]);
+
+  // Tự động đồng bộ khung Token khi có kết quả gửi thành công lên Cổng BHXH
+  useEffect(() => {
+    if (localApiResponse) {
+      const isSuccess =
+        String(localApiResponse.maKetQua) === "200" ||
+        localApiResponse.isOk === true ||
+        Boolean(localApiResponse.maGiaoDich && !localApiResponse.isError);
+
+      if (isSuccess) {
+        const cached = BhxhChungTuService.getCachedToken();
+        if (cached && (cached.apiToken || cached.APIKey?.access_token)) {
+          setTokenSession({
+            accessToken: cached.apiToken || cached.APIKey?.access_token || "",
+            tokenId: cached.idToken || cached.APIKey?.id_token || "",
+            passwordHash: cached.passwordHash || formatBhxhPassword(getEffectivePassword()),
+            isLoading: false,
+            error: null,
+            status: "success",
+            expiresIn: cached.APIKey?.expires_in,
+          });
+        }
+      }
+    }
+  }, [localApiResponse]);
 
   const isKeyCopied = externalIsKeyCopied || internalIsKeyCopied;
   const handleCopy = externalOnCopy || internalCopy;
@@ -997,8 +1091,8 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleFetchSessionToken(false, true)}
-                          disabled={tokenSession.isLoading}
-                          className="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                          disabled={tokenSession.isLoading || tokenCooldown > 0}
+                          className="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Gọi API /api/token/take để cấp mới Token"
                         >
                           <RefreshCw
@@ -1007,7 +1101,11 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                               tokenSession.isLoading ? "animate-spin" : ""
                             }
                           />
-                          <span>Lấy Lại Token</span>
+                          <span>
+                            {tokenCooldown > 0
+                              ? `Chờ (${tokenCooldown}s)`
+                              : "Lấy Lại Token"}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -1095,8 +1193,8 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleFetchSessionToken(false, true)}
-                            disabled={tokenSession.isLoading}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                            disabled={tokenSession.isLoading || tokenCooldown > 0}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
                           >
                             <RefreshCw
                               size={12}
@@ -1104,7 +1202,11 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                                 tokenSession.isLoading ? "animate-spin" : ""
                               }
                             />
-                            <span>Áp Dụng & Thử Lấy Token Lại</span>
+                            <span>
+                              {tokenCooldown > 0
+                                ? `Chờ (${tokenCooldown}s)`
+                                : "Áp Dụng & Thử Lấy Token Lại"}
+                            </span>
                           </button>
                         </div>
                       </div>

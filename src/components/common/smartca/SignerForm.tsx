@@ -6,6 +6,8 @@ import {
   Send,
   CheckCircle2,
   AlertCircle,
+  Zap,
+  X,
 } from "lucide-react";
 import type { SmartCaPersistentConfig } from "../../../services/smartca/smartcaConfig";
 import {
@@ -32,6 +34,11 @@ export interface SignerFormProps {
   setShowPassword: (show: boolean) => void;
   isInitiating: boolean;
   onInitiateSign: () => void;
+  onCancelSign?: () => void;
+  authMethodLabel?: string;
+  buttonLabel?: string;
+  loadingLabel?: string;
+  signMode?: "Q1" | "Q2";
 }
 
 export const SignerForm: React.FC<SignerFormProps> = ({
@@ -50,6 +57,11 @@ export const SignerForm: React.FC<SignerFormProps> = ({
   setShowPassword,
   isInitiating,
   onInitiateSign,
+  onCancelSign,
+  authMethodLabel = "Ứng dụng VNPT SmartCA (Q1)",
+  buttonLabel = "Gửi Yêu Cầu Ký Số Lên App SmartCA",
+  loadingLabel = "Đang Khởi Tạo Ký Q1...",
+  signMode = "Q2",
 }) => {
   const identityStatus = useMemo(() => {
     if (!identityValue.trim()) return null;
@@ -61,10 +73,19 @@ export const SignerForm: React.FC<SignerFormProps> = ({
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h4 className="text-base font-extrabold text-slate-900">
-            Ký Số Phê Duyệt Qua App VNPT SmartCA (Q1)
+            {signMode === "Q2" ? (
+              <span className="flex items-center gap-1.5 text-blue-700">
+                <Zap size={18} className="fill-blue-600 text-blue-600" />
+                <span>Ký Số Tự Động VNPT SmartCA (Smart OTP qua Secret Key)</span>
+              </span>
+            ) : (
+              "Ký Số Phê Duyệt Qua App VNPT SmartCA (Q1)"
+            )}
           </h4>
           <p className="text-xs text-slate-500">
-            Nhập thông tin người ký & tài khoản SmartCA nhận thông báo phê duyệt
+            {signMode === "Q2"
+              ? "Tự động sinh mã Smart OTP từ Secret Key & hoàn tất ký số trong 1 click, không cần mở app điện thoại"
+              : "Nhập thông tin người ký & tài khoản SmartCA nhận thông báo phê duyệt"}
           </p>
         </div>
 
@@ -238,33 +259,45 @@ export const SignerForm: React.FC<SignerFormProps> = ({
         </div>
       </div>
 
-      {/* NÚT GỬI YÊU CẦU KÝ SỐ Q1 */}
+      {/* NÚT GỬI YÊU CẦU KÝ SỐ & NÚT HỦY BỎ */}
       <div className="flex items-center justify-between pt-2">
         <div className="text-xs text-slate-500">
-          Phương thức xác thực: <b>Ứng dụng VNPT SmartCA (Q1)</b>
+          Phương thức xác thực: <b>{authMethodLabel}</b>
         </div>
-        <button
-          type="button"
-          disabled={isInitiating}
-          onClick={onInitiateSign}
-          className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white flex items-center gap-2 transition-all cursor-pointer ${
-            isInitiating
-              ? "bg-slate-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 active:scale-95"
-          }`}
-        >
-          {isInitiating ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              <span>Đang Khởi Tạo Ký Q1...</span>
-            </>
-          ) : (
-            <>
-              <Send size={16} />
-              <span>Gửi Yêu Cầu Ký Số Lên App SmartCA</span>
-            </>
+        <div className="flex items-center gap-2">
+          {isInitiating && onCancelSign && (
+            <button
+              type="button"
+              onClick={onCancelSign}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 animate-fadeIn"
+            >
+              <X size={15} />
+              <span>Hủy Bỏ</span>
+            </button>
           )}
-        </button>
+          <button
+            type="button"
+            disabled={isInitiating}
+            onClick={onInitiateSign}
+            className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white flex items-center gap-2 transition-all cursor-pointer ${
+              isInitiating
+                ? "bg-slate-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 active:scale-95"
+            }`}
+          >
+            {isInitiating ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>{loadingLabel}</span>
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                <span>{buttonLabel}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
