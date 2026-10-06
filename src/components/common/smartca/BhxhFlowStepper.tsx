@@ -1,0 +1,574 @@
+import React from "react";
+import {
+  ShieldCheck,
+  Send,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  Check,
+  Copy,
+  Download,
+  RotateCcw,
+  ExternalLink,
+  FileCheck,
+} from "lucide-react";
+import { useClipboard } from "../../../hooks/useClipboard";
+import type { ExtractedSignatureInfo } from "../../../utils/xmlDsigEngine";
+
+export interface BhxhFlowStepperProps {
+  /** Hồ sơ đã có chữ ký số hợp lệ */
+  isSigned: boolean;
+  /** Đang trong tiến trình ký số (Q1/Q2) */
+  isSigning: boolean;
+  /** Đang gửi gói tin lên Cổng BHXH */
+  isSendingApi: boolean;
+  /** Kết quả phản hồi thực tế từ Cổng BHXH */
+  apiResponse: any;
+  /** Số lượng bản ghi thực tế */
+  itemsCount?: number;
+  itemLabel?: string;
+  /** Tên tệp XML thực tế */
+  fileName?: string;
+  /** Đã nạp tệp XML / Excel tùy chỉnh từ máy tính */
+  hasCustomUploadedFile?: boolean;
+  /** Thông tin chữ ký số thực tế trích xuất từ XML */
+  signatureInfo?: ExtractedSignatureInfo;
+  /** Callback gửi lại lên Cổng BHXH */
+  onResendApi?: () => void;
+  /** Callback tải tệp XML đã ký */
+  onDownloadSignedXml?: () => void;
+  /** Callback làm mới/ký lại từ đầu */
+  onResetAll?: () => void;
+}
+
+type StepState =
+  | "completed"
+  | "active"
+  | "ready"
+  | "warning"
+  | "error"
+  | "pending";
+
+const STEP_STYLES: Record<
+  StepState,
+  { circle: string; title: string; line: string }
+> = {
+  completed: {
+    circle: "bg-emerald-600 text-white shadow-2xs",
+    title: "text-emerald-800 font-bold",
+    line: "bg-emerald-500",
+  },
+  active: {
+    circle:
+      "bg-blue-600 text-white shadow-xs animate-pulse ring-2 ring-blue-300",
+    title: "text-blue-700 font-extrabold",
+    line: "bg-blue-500 animate-pulse",
+  },
+  ready: {
+    circle: "bg-amber-500 text-white shadow-2xs",
+    title: "text-amber-700 font-bold",
+    line: "bg-slate-200",
+  },
+  warning: {
+    circle: "bg-amber-600 text-white shadow-2xs",
+    title: "text-amber-700 font-bold",
+    line: "bg-amber-500",
+  },
+  error: {
+    circle: "bg-rose-600 text-white shadow-xs ring-2 ring-rose-300",
+    title: "text-rose-700 font-extrabold",
+    line: "bg-rose-500",
+  },
+  pending: {
+    circle: "bg-slate-200 text-slate-500 font-semibold",
+    title: "text-slate-500 font-medium",
+    line: "bg-slate-200",
+  },
+};
+
+export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
+  isSigned,
+  isSigning,
+  isSendingApi,
+  apiResponse,
+  itemsCount = 0,
+  itemLabel = "bản ghi",
+  fileName,
+  hasCustomUploadedFile = false,
+  signatureInfo,
+  onResendApi,
+  onDownloadSignedXml,
+  onResetAll,
+}) => {
+  const { isKeyCopied, copy } = useClipboard();
+
+  // 1. Phân tích dữ liệu phản hồi THỰC TẾ từ Cổng BHXH (Tuyệt đối không làm cứng)
+  const hasApiResponse = Boolean(apiResponse);
+  const rawMaKetQua =
+    apiResponse?.maKetQua != null
+      ? String(apiResponse.maKetQua)
+      : apiResponse?.code != null
+        ? String(apiResponse.code)
+        : null;
+
+  const isApiSuccess =
+    rawMaKetQua === "200" ||
+    (apiResponse?.isOk === true &&
+      rawMaKetQua !== "400" &&
+      rawMaKetQua !== "401" &&
+      rawMaKetQua !== "500") ||
+    Boolean(
+      apiResponse?.maGiaoDich &&
+      !apiResponse?.isError &&
+      rawMaKetQua !== "400" &&
+      rawMaKetQua !== "401" &&
+      rawMaKetQua !== "500",
+    );
+
+  const maGiaoDich =
+    apiResponse?.maGiaoDich ||
+    apiResponse?.MaGiaoDich ||
+    apiResponse?.data?.maGiaoDich ||
+    apiResponse?.data?.MaGiaoDich ||
+    "";
+
+  const thoiGianTiepNhan =
+    apiResponse?.thoiGianTiepNhan ||
+    apiResponse?.ThoiGianTiepNhan ||
+    apiResponse?.thoiGianNhan ||
+    apiResponse?.data?.thoiGianTiepNhan ||
+    apiResponse?.data?.thoiGianNhan ||
+    "";
+
+  const thongDiep =
+    apiResponse?.thongDiep ||
+    apiResponse?.ghiChu ||
+    apiResponse?.message ||
+    apiResponse?.data?.thongDiep ||
+    apiResponse?.data?.ghiChu ||
+    (hasApiResponse
+      ? isApiSuccess
+        ? "Cổng BHXH đã tiếp nhận dữ liệu thành công"
+        : `Cổng BHXH từ chối tiếp nhận (Mã: ${rawMaKetQua || "N/A"})`
+      : "");
+
+  const kyQT = apiResponse?.kyQT || "";
+  const loaiHs = apiResponse?.loaiHs || "";
+  const responseTotalRecords =
+    apiResponse?.totalRecords != null
+      ? Number(apiResponse.totalRecords)
+      : itemsCount;
+  const soHoSo = apiResponse?.soHoSo || "";
+
+  // 2. Trạng thái các bước theo DỮ LIỆU THỰC TẾ
+  // Chỉ hoàn thành bước 1 khi thực sự có bản ghi (> 0) hoặc đã nạp file tùy chỉnh
+  const isStep1Done = (itemsCount != null && itemsCount > 0) || Boolean(hasCustomUploadedFile);
+  const isStep2Done = Boolean(isSigned);
+  const isStep2Active = Boolean(isSigning);
+  const isStep3Done = hasApiResponse;
+  const isStep3Active = isSendingApi && !hasApiResponse;
+  const isStep4Done = hasApiResponse && isApiSuccess;
+  const isStep4Error = hasApiResponse && !isApiSuccess;
+  const isStep4Active = isSendingApi && !hasApiResponse;
+
+  const steps: Array<{
+    step: number;
+    title: string;
+    subtext: string;
+    state: StepState;
+    icon: React.ReactNode;
+  }> = [
+    {
+      step: 1,
+      title: "1. Lập Hồ Sơ",
+      subtext:
+        itemsCount > 0
+          ? `${itemsCount} ${itemLabel}`
+          : hasCustomUploadedFile
+            ? "Đã nạp file"
+            : "Chờ dữ liệu",
+      state: isStep1Done ? "completed" : "pending",
+      icon: isStep1Done ? (
+        <Check size={11} strokeWidth={3} />
+      ) : (
+        <FileCheck size={11} />
+      ),
+    },
+    {
+      step: 2,
+      title: "2. Ký SmartCA",
+      subtext: isStep2Done
+        ? signatureInfo?.signingTime
+          ? `Ký: ${signatureInfo.signingTime.split(" ")[0]}`
+          : "Đã ký số"
+        : isStep2Active
+          ? "Đang ký..."
+          : "Chờ ký số",
+      state: isStep2Done ? "completed" : isStep2Active ? "active" : "pending",
+      icon: isStep2Done ? (
+        <Check size={11} strokeWidth={3} />
+      ) : isStep2Active ? (
+        <Loader2 size={11} className="animate-spin" />
+      ) : (
+        <ShieldCheck size={11} />
+      ),
+    },
+    {
+      step: 3,
+      title: "3. Gửi Cổng BHXH",
+      subtext: isStep3Done
+        ? "Đã chuyển"
+        : isStep3Active
+          ? "Đang gửi..."
+          : isStep2Done
+            ? "Sẵn sàng"
+            : "Chờ ký số",
+      state: isStep3Done
+        ? isStep4Error
+          ? "warning"
+          : "completed"
+        : isStep3Active
+          ? "active"
+          : isStep2Done
+            ? "ready"
+            : "pending",
+      icon: isStep3Done ? (
+        <Check size={11} strokeWidth={3} />
+      ) : isStep3Active ? (
+        <Loader2 size={11} className="animate-spin" />
+      ) : (
+        <Send size={10} />
+      ),
+    },
+    {
+      step: 4,
+      title: "4. Tiếp Nhận",
+      subtext: isStep4Done
+        ? rawMaKetQua
+          ? `Mã: ${rawMaKetQua}`
+          : "Thành công"
+        : isStep4Error
+          ? rawMaKetQua
+            ? `Lỗi ${rawMaKetQua}`
+            : "Chưa nhận"
+          : isStep4Active
+            ? "Đang phản hồi..."
+            : "Chờ kết quả",
+      state: isStep4Done
+        ? "completed"
+        : isStep4Error
+          ? "error"
+          : isStep4Active
+            ? "active"
+            : "pending",
+      icon: isStep4Done ? (
+        <Check size={11} strokeWidth={3} />
+      ) : isStep4Error ? (
+        <AlertTriangle size={11} />
+      ) : isStep4Active ? (
+        <Loader2 size={11} className="animate-spin" />
+      ) : (
+        <CheckCircle2 size={11} />
+      ),
+    },
+  ];
+
+  // 3. Danh sách thông tin chi tiết thực tế của gói phản hồi
+  const infoItems = [
+    maGiaoDich
+      ? {
+          label: "Mã Giao Dịch Tiếp Nhận",
+          value: maGiaoDich,
+          isMono: true,
+          highlight: "blue",
+          isCopyable: true,
+          copyKey: "maGd",
+          span: "sm:col-span-2 lg:col-span-1",
+        }
+      : null,
+    thoiGianTiepNhan
+      ? {
+          label: "Thời Gian Tiếp Nhận",
+          value: thoiGianTiepNhan,
+          span: "col-span-1",
+        }
+      : null,
+    fileName
+      ? {
+          label: "Tệp Hồ Sơ Đã Gửi",
+          value: fileName,
+          isMono: true,
+          isTruncate: true,
+          span: "col-span-1",
+        }
+      : null,
+    kyQT
+      ? {
+          label: "Kỳ Quyết Toán",
+          value:
+            kyQT.length === 6 ? `${kyQT.slice(4)}/${kyQT.slice(0, 4)}` : kyQT,
+          span: "col-span-1",
+        }
+      : null,
+    responseTotalRecords > 0
+      ? {
+          label: "Số Bản Ghi Tiếp Nhận",
+          value: `${responseTotalRecords} ${itemLabel}`,
+          span: "col-span-1",
+        }
+      : null,
+    soHoSo
+      ? {
+          label: "Số Hồ Sơ",
+          value: soHoSo,
+          isMono: true,
+          highlight: "emerald",
+          span: "col-span-1",
+        }
+      : null,
+    loaiHs
+      ? { label: "Loại Hồ Sơ", value: `Loại ${loaiHs}`, span: "col-span-1" }
+      : null,
+  ].filter(Boolean) as Array<{
+    label: string;
+    value: string;
+    isMono?: boolean;
+    isTruncate?: boolean;
+    highlight?: "blue" | "emerald";
+    isCopyable?: boolean;
+    copyKey?: string;
+    span?: string;
+  }>;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs select-none">
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
+          {steps.map((st, idx) => {
+            const style = STEP_STYLES[st.state];
+            const isLast = idx === steps.length - 1;
+            const nextStep = steps[idx + 1];
+            const connectorActive =
+              nextStep &&
+              (nextStep.state === "completed" ||
+                nextStep.state === "active" ||
+                nextStep.state === "error" ||
+                nextStep.state === "warning");
+            const connectorStyle = nextStep
+              ? STEP_STYLES[nextStep.state].line
+              : "bg-slate-200";
+
+            return (
+              <React.Fragment key={st.step}>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] transition-all shrink-0 ${style.circle}`}
+                  >
+                    {st.icon}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`text-xs whitespace-nowrap ${style.title}`}
+                    >
+                      {st.title}
+                    </span>
+                    <span
+                      className="text-[10px] text-slate-400 font-normal hidden lg:inline truncate max-w-[85px]"
+                      title={st.subtext}
+                    >
+                      ({st.subtext})
+                    </span>
+                  </div>
+                </div>
+
+                {!isLast && (
+                  <div className="flex-1 h-[2px] min-w-[12px] sm:min-w-[20px] bg-slate-200 rounded-full overflow-hidden mx-1">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        connectorActive ? connectorStyle : "w-0"
+                      }`}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {isSendingApi && !hasApiResponse && (
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex items-center gap-3.5 animate-fadeIn">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-600/20">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+          <div>
+            <h5 className="text-xs sm:text-sm font-extrabold text-blue-950">
+              Đang Chuyển Phát Hồ Sơ Lên Cổng Tiếp Nhận BHXH...
+            </h5>
+            <p className="text-[11px] text-blue-700 mt-0.5">
+              Hồ sơ đã được ký số hợp lệ và đang được gửi qua API Cổng Giám Định
+              BHYT. Vui lòng giữ cửa sổ!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {hasApiResponse && (
+        <div
+          className={`p-4 sm:p-5 rounded-2xl border transition-all animate-fadeIn space-y-4 shadow-2xs ${
+            isApiSuccess
+              ? "bg-emerald-50/70 border-emerald-300"
+              : "bg-rose-50/70 border-rose-300"
+          }`}
+        >
+          {/* Header kết quả */}
+          <div className="flex items-center justify-between flex-wrap gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 ${
+                  isApiSuccess ? "bg-emerald-600" : "bg-rose-600"
+                }`}
+              >
+                {isApiSuccess ? (
+                  <CheckCircle2 size={20} />
+                ) : (
+                  <AlertTriangle size={20} />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4
+                    className={`text-sm font-black ${
+                      isApiSuccess ? "text-emerald-950" : "text-rose-950"
+                    }`}
+                  >
+                    {isApiSuccess
+                      ? "CỔNG BHXH TIẾP NHẬN HỒ SƠ THÀNH CÔNG"
+                      : "CỔNG BHXH CHƯA TIẾP NHẬN ĐƯỢC HỒ SƠ"}
+                  </h4>
+                  {rawMaKetQua && (
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                        isApiSuccess
+                          ? "bg-emerald-200/80 text-emerald-900 border border-emerald-300"
+                          : "bg-rose-200/80 text-rose-900 border border-rose-300"
+                      }`}
+                    >
+                      Mã KQ: {rawMaKetQua}
+                    </span>
+                  )}
+                </div>
+                {thongDiep && (
+                  <p
+                    className={`text-xs mt-0.5 ${
+                      isApiSuccess ? "text-emerald-700" : "text-rose-700"
+                    }`}
+                  >
+                    {thongDiep}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              {onDownloadSignedXml && isSigned && (
+                <button
+                  type="button"
+                  onClick={onDownloadSignedXml}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <Download size={13} />
+                  <span>Tải XML Đã Ký</span>
+                </button>
+              )}
+              {onResendApi && (
+                <button
+                  type="button"
+                  onClick={onResendApi}
+                  disabled={isSendingApi}
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <RotateCcw size={13} />
+                  <span>Gửi Lại</span>
+                </button>
+              )}
+              {onResetAll && (
+                <button
+                  type="button"
+                  onClick={onResetAll}
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <span>Làm Mới</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Grid thông tin tiếp nhận THỰC TẾ */}
+          {infoItems.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+              {infoItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between ${
+                    item.span || ""
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                      {item.label}
+                    </div>
+                    <div
+                      className={`text-xs font-semibold ${item.isMono ? "font-mono font-bold" : ""} ${
+                        item.highlight === "blue"
+                          ? "text-blue-700"
+                          : item.highlight === "emerald"
+                            ? "text-emerald-700"
+                            : "text-slate-800"
+                      } ${item.isTruncate ? "truncate" : "break-all"} select-all`}
+                      title={item.value}
+                    >
+                      {item.value}
+                    </div>
+                  </div>
+                  {item.isCopyable && item.copyKey && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copy(
+                          item.value,
+                          `Đã sao chép ${item.label.toLowerCase()}!`,
+                          item.copyKey,
+                        )
+                      }
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors shrink-0"
+                      title={`Sao chép ${item.label}`}
+                    >
+                      {isKeyCopied(item.copyKey) ? (
+                        <Check size={14} className="text-emerald-600" />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Chi tiết JSON phản hồi THỰC TẾ từ Cổng BHXH (Để đối soát kỹ thuật) */}
+          <details className="text-[11px] text-slate-600">
+            <summary className="cursor-pointer font-bold hover:text-slate-900 select-none flex items-center gap-1.5 py-1">
+              <ExternalLink size={12} />
+              <span>Xem chi tiết gói phản hồi JSON thực tế từ Cổng BHXH</span>
+            </summary>
+            <pre className="mt-2 p-3 bg-slate-900 text-emerald-300 rounded-xl font-mono text-[10px] overflow-x-auto select-text border border-slate-800 max-h-48">
+              {JSON.stringify(apiResponse, null, 2)}
+            </pre>
+          </details>
+        </div>
+      )}
+    </div>
+  );
+};

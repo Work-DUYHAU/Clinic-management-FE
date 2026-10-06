@@ -15,8 +15,13 @@ import { TbytThdvEditModal } from "./components/TbytThdvEditModal";
 import { SchemaMappingModal } from "../common/SchemaMappingModal";
 import { SchemaMappingCard } from "../common/SchemaMappingCard";
 import { useSchemaMappingProps } from "../../../hooks";
+import { useRegisterSignModal } from "../../../context/SignModalContext";
 
-export const DmTbDvktTab: React.FC = () => {
+interface DmTbDvktTabProps {
+  isActive?: boolean;
+}
+
+export const DmTbDvktTab: React.FC<DmTbDvktTabProps> = ({ isActive = true }) => {
   const toast = useToast();
   const [tbytItems, setTbytItems] = useState<DmTbytThdvItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,9 +31,7 @@ export const DmTbDvktTab: React.FC = () => {
 
   // Modal State for Mẫu 06/DM
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<"xml" | "base64" | "api" | "smartca">(
-    "xml",
-  );
+  const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">("smartca");
 
   // Edit / Add Modal State for Mẫu 06/DM
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -36,6 +39,12 @@ export const DmTbDvktTab: React.FC = () => {
 
   // Schema Mapping Inspector Modal State
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
+
+  // Đăng ký mở modal ký số khi tab này active
+  useRegisterSignModal(isActive, () => {
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  });
 
   // File Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,11 +174,11 @@ export const DmTbDvktTab: React.FC = () => {
         onDownloadTemplate={downloadTbytThdvExcelTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
-          setXmlModalTab("xml");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
-          setXmlModalTab("api");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}

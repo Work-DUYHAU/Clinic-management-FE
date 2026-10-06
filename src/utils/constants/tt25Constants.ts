@@ -255,11 +255,12 @@ export function getDocOptionsList(
       ? `[Tài liệu hiện hành] ${fileName}`
       : `[Tài liệu hiện hành]`;
 
+  const countText = `${itemsCount} ${itemLabel}`;
   const currentDesc =
     fileName && fileName.trim().length > 0
       ? sourceFileName
-        ? `Dữ liệu đang thao tác từ tệp "${sourceFileName}" (${itemsCount || 1} ${itemLabel})`
-        : `Dữ liệu đang thao tác (${itemsCount || 1} ${itemLabel})`
+        ? `Dữ liệu đang thao tác từ tệp "${sourceFileName}" (${countText})`
+        : `Dữ liệu đang thao tác (${countText})`
       : "Chưa có tệp dữ liệu (vui lòng nạp tệp Excel / XML)";
 
   const currentGroup: DocSignOptionGroup[] = [

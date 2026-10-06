@@ -3,6 +3,7 @@ import { SmartCaErrorModal } from "./ErrorModal";
 import { extractXmlSignature } from "../../utils/xmlDsigEngine";
 import { useSmartCaSignQ1 } from "../../hooks/useSmartCaSignQ1";
 import { useSmartCaSignQ2 } from "../../hooks/q2/useSmartCaSignQ2";
+import { useSignerFormState } from "../../hooks/useSignerFormState";
 import type { DocSignOptionType } from "../../types/tt25ChungTuTypes";
 import { downloadXmlFile } from "../../utils/shared";
 import {
@@ -12,12 +13,21 @@ import {
   SignedResultView,
   WaitingApprovalView,
   SignerForm,
+  BhxhFlowStepper,
 } from "./smartca";
-import { SmartCaOtpModal } from "./smartca/q2";
 import type { SignerProfile } from "../../types/smartcaTypes";
 import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
 
 import type { SourceFileUploadInfo } from "./XmlExportModal";
+
+export interface SmartCaSignAction {
+  visible: boolean;
+  isInitiating: boolean;
+  label: string;
+  loadingLabel: string;
+  trigger: () => void;
+  onCancel?: () => void;
+}
 
 export interface SmartCaSignPanelProps {
   xmlContent: string;
@@ -35,6 +45,17 @@ export interface SmartCaSignPanelProps {
   onResetSignature: () => void;
   onDownloadSignedXml?: () => void;
   onViewXml?: () => void;
+  autoSendOnSign?: boolean;
+  onToggleAutoSend?: (val: boolean) => void;
+  onDirectSendBhxh?: () => void;
+  isSendingApi?: boolean;
+  apiResponse?: any;
+  onRegisterSignAction?: (action: SmartCaSignAction | null) => void;
+  hideSubmitButton?: boolean;
+  signMode?: "Q1" | "Q2";
+  onSignModeChange?: (mode: "Q1" | "Q2") => void;
+  hideSignModeSwitcher?: boolean;
+  hideAutoSendCheckbox?: boolean;
 }
 
 export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
@@ -48,10 +69,23 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
   onSignedSuccess,
   onResetSignature,
   onDownloadSignedXml,
-  onViewXml,
+  onViewXml: _onViewXml,
+  autoSendOnSign = true,
+  onToggleAutoSend,
+  onDirectSendBhxh,
+  isSendingApi,
+  apiResponse,
+  onRegisterSignAction,
+  hideSubmitButton = false,
+  signMode: propSignMode,
+  onSignModeChange,
+  hideSignModeSwitcher = false,
+  hideAutoSendCheckbox = false,
 }) => {
   // Chế độ ký số SmartCA: Mặc định Q2 (Smart OTP nhanh) | Q1 (Phê duyệt qua App)
-  const [signMode, setSignMode] = useState<"Q1" | "Q2">("Q2");
+  const [internalSignMode, setInternalSignMode] = useState<"Q1" | "Q2">("Q2");
+  const signMode = propSignMode ?? internalSignMode;
+  const setSignMode = onSignModeChange ?? setInternalSignMode;
 
   // 1. Quản lý trạng thái chọn loại hồ sơ / chứng từ
   const [selectedDocType, setSelectedDocType] =
@@ -116,6 +150,9 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
 
   const isSigned = signatureInfo.hasSignature && !isCountersigning;
 
+  // Single Source of Truth cho toàn bộ thông tin tài khoản người ký
+  const signerForm = useSignerFormState();
+
   // 3. Custom Hook quản lý quy trình ký Q1 (App Phê Duyệt - BẢO VỆ NGUYÊN TRẠNG 100%)
   const q1 = useSmartCaSignQ1({
     effectiveXmlToSign: actualXmlForHook,
@@ -129,6 +166,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
       setIsCountersigning(false);
       onResetSignature?.();
     },
+    signerForm,
   });
 
   // 4. Custom Hook quản lý quy trình ký Q2 (Smart OTP - TÁCH BIỆT ĐỘC LẬP)
@@ -144,47 +182,8 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
       setIsCountersigning(false);
       onResetSignature?.();
     },
+    signerForm,
   });
-
-  // Đồng bộ thông tin tài khoản ký giữa 2 chế độ Q1 và Q2 để tiện lợi cho người dùng
-  const activeIdentityValue =
-    signMode === "Q2" ? q2.identityValue : q1.identityValue;
-  const activePassword = signMode === "Q2" ? q2.password : q1.password;
-  const activeShowPassword =
-    signMode === "Q2" ? q2.showPassword : q1.showPassword;
-  const activeIdType = signMode === "Q2" ? q2.idType : q1.idType;
-  const activeSignerName = signMode === "Q2" ? q2.signerName : q1.signerName;
-  const activeSignerEmail = signMode === "Q2" ? q2.signerEmail : q1.signerEmail;
-
-  const handleSyncIdentityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    q1.handleIdentityChange(e);
-    q2.handleIdentityChange(e);
-  };
-
-  const handleSyncSelectIdType = (type: any) => {
-    q1.handleSelectIdType(type);
-    q2.handleSelectIdType(type);
-  };
-
-  const handleSyncPassword = (pwd: string) => {
-    q1.setPassword(pwd);
-    q2.setPassword(pwd);
-  };
-
-  const handleSyncShowPassword = (show: boolean) => {
-    q1.setShowPassword(show);
-    q2.setShowPassword(show);
-  };
-
-  const handleSyncSignerName = (name: string) => {
-    q1.setSignerName(name);
-    q2.setSignerName(name);
-  };
-
-  const handleSyncSignerEmail = (email: string) => {
-    q1.setSignerEmail(email);
-    q2.setSignerEmail(email);
-  };
 
   const handleResetAndResignAll = () => {
     q1.handleResetAndResign();
@@ -197,8 +196,88 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
     downloadXmlFile(content, effectiveFileName || "Signed_Document.xml");
   };
 
+  const isInitiatingSign =
+    signMode === "Q2" ? q2.isInitiating : q1.isInitiating;
+  const handleInitiateSignAction =
+    signMode === "Q2" ? q2.handleStartSignQ2 : q1.handleInitiateQ1Sign;
+  const handleCancelSignAction =
+    signMode === "Q2" && q2.isInitiating ? q2.handleCancelSignAuto : undefined;
+
+  const currentButtonLabel = autoSendOnSign
+    ? signMode === "Q2"
+      ? "Ký Số & Gửi Cổng BHXH"
+      : "Ký & Gửi Cổng BHXH"
+    : signMode === "Q2"
+      ? "Ký Số Tự Động Q2"
+      : "Gửi Yêu Cầu Ký Số Lên App SmartCA";
+
+  const currentLoadingLabel =
+    signMode === "Q2"
+      ? autoSendOnSign
+        ? "Đang Tự Động Ký & Chuẩn Bị Gửi Cổng..."
+        : "Đang Tự Động Sinh Mã & Ký Số..."
+      : "Đang Khởi Tạo Ký Q1...";
+
+  const isDigestComputing = useMemo(() => {
+    if (!effectiveXmlToSign || isSigned) return false;
+    const currentDigest =
+      signMode === "Q2" ? q2.digestInfo : q1.digestInfo;
+    return currentDigest === null;
+  }, [effectiveXmlToSign, isSigned, signMode, q2.digestInfo, q1.digestInfo]);
+
+  React.useEffect(() => {
+    if (onRegisterSignAction) {
+      if (!isSigned && !q1.waitingTransaction) {
+        onRegisterSignAction({
+          visible: true,
+          isInitiating: isInitiatingSign || isDigestComputing,
+          label: isDigestComputing ? "Đang Tính Mã Băm..." : currentButtonLabel,
+          loadingLabel: isDigestComputing
+            ? "Đang Tính Mã Băm..."
+            : currentLoadingLabel,
+          trigger: handleInitiateSignAction,
+          onCancel: handleCancelSignAction,
+        });
+      } else {
+        onRegisterSignAction(null);
+      }
+    }
+  }, [
+    onRegisterSignAction,
+    isSigned,
+    q1.waitingTransaction,
+    isInitiatingSign,
+    isDigestComputing,
+    currentButtonLabel,
+    currentLoadingLabel,
+    handleInitiateSignAction,
+    handleCancelSignAction,
+  ]);
+
   return (
     <div className="space-y-4">
+      {/* 0. Tiến trình quy trình khép kín: Lập hồ sơ -> Ký số -> Gửi Cổng BHXH -> Hoàn tất */}
+      <BhxhFlowStepper
+        isSigned={isSigned}
+        isSigning={Boolean(
+          signMode === "Q2"
+            ? q2.isInitiating
+            : q1.isInitiating || q1.waitingTransaction,
+        )}
+        isSendingApi={Boolean(isSendingApi)}
+        apiResponse={apiResponse}
+        itemsCount={itemsCount}
+        itemLabel={itemLabel}
+        fileName={effectiveFileName}
+        hasCustomUploadedFile={Boolean(uploadedCustomXml)}
+        signatureInfo={signatureInfo}
+        onResendApi={onDirectSendBhxh}
+        onDownloadSignedXml={
+          onDownloadSignedXml || handleDefaultDownloadSignedXml
+        }
+        onResetAll={handleResetAndResignAll}
+      />
+
       {/* 1. Khối chọn loại hồ sơ & Nạp file Excel / XML */}
       <DocTypeSelector
         fileName={fileName}
@@ -239,11 +318,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
           if (isSigned) onResetSignature();
         }}
         onOpenPreviewXml={() => {
-          if (onViewXml) {
-            onViewXml();
-          } else {
-            setShowXmlPreview(true);
-          }
+          setShowXmlPreview(true);
         }}
       />
 
@@ -262,7 +337,8 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
       <DigestInfoCard
         effectiveFileName={effectiveFileName}
         isSigned={isSigned}
-        isWaiting={Boolean(q1.waitingTransaction || q2.waitingTx)}
+        isWaiting={Boolean(q1.waitingTransaction)}
+        isDigestComputing={isDigestComputing}
         digestValue={
           isSigned
             ? signatureInfo.digestValue
@@ -275,47 +351,49 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
       />
 
       {/* Thanh chuyển đổi chế độ ký Q1 / Q2 tinh gọn, không bể layout */}
-      {!isSigned && !q1.waitingTransaction && !q2.waitingTx && (
-        <div className="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200 shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setSignMode("Q2")}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              signMode === "Q2"
-                ? "bg-white text-blue-700 shadow-xs border border-blue-100"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span>Ký Tự Động</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
-              Q2
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSignMode("Q1")}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              signMode === "Q1"
-                ? "bg-white text-blue-700 shadow-xs border border-blue-100"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span>Ký Xác Nhận</span>
-            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
-              Q1
-            </span>
-          </button>
-        </div>
-      )}
+      {!hideSignModeSwitcher &&
+        !isSigned &&
+        !q1.waitingTransaction && (
+          <div className="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setSignMode("Q2")}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                signMode === "Q2"
+                  ? "bg-white text-blue-700 shadow-xs border border-blue-100"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span>Ký Tự Động</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
+                Q2
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSignMode("Q1")}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                signMode === "Q1"
+                  ? "bg-white text-blue-700 shadow-xs border border-blue-100"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span>Ký Xác Nhận</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
+                Q1
+              </span>
+            </button>
+          </div>
+        )}
 
       {/* 3. Hiển thị tương ứng: Đã ký / Chờ App phê duyệt (Q1) / Form nhập liệu */}
       {isSigned ? (
         <SignedResultView
           signatureInfo={signatureInfo}
           credential={q1.credential}
-          signerName={activeSignerName}
-          identityValue={activeIdentityValue}
-          signerEmail={activeSignerEmail}
+          signerName={signerForm.signerName}
+          identityValue={signerForm.identityValue}
+          signerEmail={signerForm.signerEmail}
           copiedKey={q1.copiedKey}
           onCopySignedXml={() =>
             q1.handleCopy(signedXml || effectiveXmlToSign, "signedXml")
@@ -325,6 +403,9 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
           }
           onResetAndResign={handleResetAndResignAll}
           onCountersign={() => setIsCountersigning(true)}
+          onDirectSendBhxh={onDirectSendBhxh}
+          isSendingApi={isSendingApi}
+          hasApiResponse={Boolean(apiResponse)}
         />
       ) : signMode === "Q1" && q1.waitingTransaction ? (
         <WaitingApprovalView
@@ -332,8 +413,8 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
           waitingTransaction={q1.waitingTransaction}
           countdown={q1.countdown}
           formatCountdown={q1.formatCountdown}
-          identityValue={activeIdentityValue}
-          idType={activeIdType}
+          identityValue={signerForm.identityValue}
+          idType={signerForm.idType}
           effectiveFileName={effectiveFileName}
           copiedKey={q1.copiedKey}
           onCopyTranId={() =>
@@ -361,18 +442,18 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
           )}
           <SignerForm
             config={q1.config}
-            signerName={activeSignerName}
-            setSignerName={handleSyncSignerName}
-            signerEmail={activeSignerEmail}
-            setSignerEmail={handleSyncSignerEmail}
-            idType={activeIdType}
-            identityValue={activeIdentityValue}
-            onIdentityChange={handleSyncIdentityChange}
-            onSelectIdType={handleSyncSelectIdType}
-            password={activePassword}
-            setPassword={handleSyncPassword}
-            showPassword={activeShowPassword}
-            setShowPassword={handleSyncShowPassword}
+            signerName={signerForm.signerName}
+            setSignerName={signerForm.setSignerName}
+            signerEmail={signerForm.signerEmail}
+            setSignerEmail={signerForm.setSignerEmail}
+            idType={signerForm.idType}
+            identityValue={signerForm.identityValue}
+            onIdentityChange={signerForm.handleIdentityChange}
+            onSelectIdType={signerForm.handleSelectIdType}
+            password={signerForm.password}
+            setPassword={signerForm.setPassword}
+            showPassword={signerForm.showPassword}
+            setShowPassword={signerForm.setShowPassword}
             isInitiating={signMode === "Q2" ? q2.isInitiating : q1.isInitiating}
             onInitiateSign={
               signMode === "Q2" ? q2.handleStartSignQ2 : q1.handleInitiateQ1Sign
@@ -388,34 +469,31 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
                 : "Ứng dụng VNPT SmartCA (Q1)"
             }
             buttonLabel={
-              signMode === "Q2"
-                ? "Ký Số Tự Động Q2"
-                : "Gửi Yêu Cầu Ký Số Lên App SmartCA"
+              autoSendOnSign
+                ? signMode === "Q2"
+                  ? "Ký Số & Gửi Cổng BHXH"
+                  : "Ký & Gửi Cổng BHXH"
+                : signMode === "Q2"
+                  ? "Ký Số Tự Động Q2"
+                  : "Gửi Yêu Cầu Ký Số Lên App SmartCA"
             }
             loadingLabel={
               signMode === "Q2"
-                ? "Đang Tự Động Sinh Mã & Ký Số..."
+                ? autoSendOnSign
+                  ? "Đang Tự Động Ký & Chuẩn Bị Gửi Cổng..."
+                  : "Đang Tự Động Sinh Mã & Ký Số..."
                 : "Đang Khởi Tạo Ký Q1..."
             }
             signMode={signMode}
+            autoSendOnSign={autoSendOnSign}
+            onToggleAutoSend={onToggleAutoSend}
+            hideSubmitButton={hideSubmitButton || Boolean(onRegisterSignAction)}
+            hideAutoSendCheckbox={hideAutoSendCheckbox}
+            isDigestComputing={isDigestComputing}
           />
         </div>
       )}
 
-      {/* Modal Popup Nhập Mã Smart OTP (Dành riêng cho Q2) */}
-      <SmartCaOtpModal
-        isOpen={q2.isOtpModalOpen}
-        waitingTx={q2.waitingTx}
-        isAuthorizing={q2.isAuthorizing}
-        isReinitiating={q2.isInitiating}
-        otpError={q2.otpError}
-        attemptsLeft={q2.attemptsLeft}
-        canRetryOtp={q2.canRetryOtp}
-        isExpired={q2.isExpired}
-        onConfirm={q2.handleConfirmOtp}
-        onReinitiate={q2.handleReinitiateQ2}
-        onClose={q2.handleCancelOtpModal}
-      />
 
       {/* Error Modal khi kết nối VNPT thật gặp lỗi (Q1) */}
       <SmartCaErrorModal
@@ -424,7 +502,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
         errorMessage={q1.authErrorModalData.errorMessage}
         env={q1.config.env}
         clientId={q1.config.clientId}
-        username={activeIdentityValue}
+        username={signerForm.identityValue}
       />
     </div>
   );

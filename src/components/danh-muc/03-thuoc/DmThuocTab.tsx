@@ -14,8 +14,13 @@ import { ThuocEditModal } from './components/ThuocEditModal';
 import { ThuocXmlModal } from './components/ThuocXmlModal';
 import { SchemaMappingModal, SchemaMappingCard } from '../common';
 import { useSchemaMappingProps } from '../../../hooks';
+import { useRegisterSignModal } from '../../../context/SignModalContext';
 
-export const DmThuocTab: React.FC = () => {
+interface DmThuocTabProps {
+  isActive?: boolean;
+}
+
+export const DmThuocTab: React.FC<DmThuocTabProps> = ({ isActive = true }) => {
   const toast = useToast();
   const [thuocItems, setThuocItems] = useState<DmThuocItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,12 +29,18 @@ export const DmThuocTab: React.FC = () => {
 
   // Modal States
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<'xml' | 'base64' | 'api' | 'smartca'>('xml');
+  const [xmlModalTab, setXmlModalTab] = useState<'smartca' | 'base64'>('smartca');
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmThuocItem | null>(null);
 
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
+
+  // Đăng ký mở modal ký số khi tab này active
+  useRegisterSignModal(isActive, () => {
+    setXmlModalTab('smartca');
+    setIsXmlModalOpen(true);
+  });
 
   // File Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,11 +141,11 @@ export const DmThuocTab: React.FC = () => {
         onClearData={handleClearData}
         onOpenXmlModal={() => {
           setIsXmlModalOpen(true);
-          setXmlModalTab('xml');
+          setXmlModalTab('smartca');
         }}
         onOpenApiTab={() => {
           setIsXmlModalOpen(true);
-          setXmlModalTab('api');
+          setXmlModalTab('smartca');
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {

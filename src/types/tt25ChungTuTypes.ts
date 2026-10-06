@@ -409,6 +409,8 @@ export interface BhxhSendChungTuResponse {
   maGiaoDich?: string;
   ghiChu?: string;
   message?: string;
+  thoiGianTiepNhan?: string;
+  ThoiGianTiepNhan?: string;
 }
 
 export interface BhxhSendGiayToDienTuRequest {
@@ -422,6 +424,8 @@ export interface BhxhSendGiayToDienTuResponse {
   maGiaoDich?: string;
   ghiChu?: string;
   message?: string;
+  thoiGianTiepNhan?: string;
+  ThoiGianTiepNhan?: string;
 }
 
 export interface BhxhGuiChungTu2025Request {

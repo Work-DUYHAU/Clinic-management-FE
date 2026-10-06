@@ -1,8 +1,8 @@
-import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import type { ParseHs09ExcelResult } from '../../../../types/hs09DieuChinhTypes';
-import { DanhMucDropzone } from '../../../danh-muc/common';
-import { HS09_SCHEMA_FIELDS } from '../../../../utils/constants/hs09DieuChinhConstants';
+import React from "react";
+import { CheckCircle2 } from "lucide-react";
+import type { ParseHs09ExcelResult } from "../../../../types/hs09DieuChinhTypes";
+import { DanhMucDropzone } from "../../../danh-muc/common";
+import { HS09_SCHEMA_FIELDS } from "../../../../utils/constants/hs09DieuChinhConstants";
 
 interface Hs09DropzoneProps {
   isLoadingFile: boolean;
@@ -29,7 +29,7 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
   onOpenXmlModal,
   onOpenApiTab,
   onOpenSchemaModal,
-  onAddNew
+  onAddNew,
 }) => {
   const totalSchemaFields = HS09_SCHEMA_FIELDS.length;
 
@@ -40,17 +40,16 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
       loadingTitle="Đang đọc và phân tích file Excel / XML Hồ sơ điều chỉnh 09/BH..."
       title="Nạp Tệp Excel / XML Hồ Sơ Điều Chỉnh Mẫu 09/BH (Loại HS 73)"
       description={
-        <>
-          Kéo thả hoặc nhấp để chọn file (.xlsx, .xls, .csv, .xml). Tự động phân tích cấu trúc điều chỉnh XML1, XML2, XML3, XML4, XML5 chuẩn cổng BHXH.
-        </>
+        <>Kéo thả hoặc nhấp để chọn file (.xlsx, .xls, .csv, .xml).</>
       }
       uploadStats={
         fileUploadStats
           ? {
               selectedSheet: fileUploadStats.selectedSheet,
               totalRows: fileUploadStats.totalRows,
-              rowUnitLabel: 'hồ sơ điều chỉnh',
-              matchedColumnsCount: Object.keys(fileUploadStats.detectedHeaders).length,
+              rowUnitLabel: "hồ sơ điều chỉnh",
+              matchedColumnsCount: Object.keys(fileUploadStats.detectedHeaders)
+                .length,
               totalColumnsCount: totalSchemaFields,
               fileName: fileUploadStats.fileName,
               availableSheets: fileUploadStats.availableSheets,
@@ -73,7 +72,7 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
       onOpenApiTab={onOpenApiTab}
       onAddNew={onAddNew}
       templateLabel="Tải Mẫu Excel 09/BH"
-      xmlLabel="Xem XML / Base64"
+      xmlLabel="Ký Số & Gửi Cổng"
       apiLabel="Gửi Cổng BHXH (Loại 73)"
       addNewLabel="Thêm Hồ Sơ 09"
     />

@@ -1,8 +1,8 @@
-import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import type { ParseHs01ExcelResult } from '../services/hs01TongHopService';
-import { DanhMucDropzone } from '../../../danh-muc/common';
-import { HS01_SCHEMA_FIELDS } from '../services/hs01TongHopService';
+import React from "react";
+import { CheckCircle2 } from "lucide-react";
+import type { ParseHs01ExcelResult } from "../services/hs01TongHopService";
+import { DanhMucDropzone } from "../../../danh-muc/common";
+import { HS01_SCHEMA_FIELDS } from "../services/hs01TongHopService";
 
 interface Hs01DropzoneProps {
   isLoadingFile: boolean;
@@ -29,7 +29,7 @@ export const Hs01Dropzone: React.FC<Hs01DropzoneProps> = ({
   onOpenXmlModal,
   onOpenApiTab,
   onOpenSchemaModal,
-  onAddNew
+  onAddNew,
 }) => {
   const totalSchemaFields = HS01_SCHEMA_FIELDS.length;
 
@@ -40,15 +40,16 @@ export const Hs01Dropzone: React.FC<Hs01DropzoneProps> = ({
       loadingTitle="Đang đọc và phân tích file Excel / XML Hồ sơ tổng hợp..."
       title="Nạp Tệp Excel / XML Hồ Sơ Tổng Hợp KBCB (Mẫu 01/BH)"
       description={
-        <>Kéo thả hoặc nhấp để chọn file (.xlsx, .xls, .csv, .xml). Tự động nhận diện &amp; đối soát {totalSchemaFields} trường thông tin chuẩn BHXH.</>
+        <>Kéo thả hoặc nhấp để chọn file (.xlsx, .xls, .csv, .xml).</>
       }
       uploadStats={
         fileUploadStats
           ? {
               selectedSheet: fileUploadStats.selectedSheet,
               totalRows: fileUploadStats.totalRows,
-              rowUnitLabel: 'hồ sơ tổng hợp',
-              matchedColumnsCount: Object.keys(fileUploadStats.detectedHeaders).length,
+              rowUnitLabel: "hồ sơ tổng hợp",
+              matchedColumnsCount: Object.keys(fileUploadStats.detectedHeaders)
+                .length,
               totalColumnsCount: totalSchemaFields,
               fileName: fileUploadStats.fileName,
               availableSheets: fileUploadStats.availableSheets,
@@ -71,7 +72,7 @@ export const Hs01Dropzone: React.FC<Hs01DropzoneProps> = ({
       onOpenApiTab={onOpenApiTab}
       onAddNew={onAddNew}
       templateLabel="Tải Mẫu Excel 01/BH"
-      xmlLabel="Xem XML / Base64"
+      xmlLabel="Ký Số & Gửi Cổng"
       apiLabel="Gửi Cổng BHXH (Loại 5)"
       addNewLabel="Thêm Hồ Sơ Mới"
     />

@@ -16,7 +16,7 @@ export interface DichVuXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmDichVuItem[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: 'base64' | 'smartca';
   onSendSuccess?: (result: SendDichVuGatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -25,7 +25,7 @@ export const DichVuXmlModal: React.FC<DichVuXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = 'xml',
+  defaultTab = 'smartca',
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -64,7 +64,6 @@ export const DichVuXmlModal: React.FC<DichVuXmlModalProps> = ({
       itemLabel="dịch vụ kỹ thuật"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc05_DVKT"
       loaiHsCode="12"
       tab={tab}
       onTabChange={setTab}

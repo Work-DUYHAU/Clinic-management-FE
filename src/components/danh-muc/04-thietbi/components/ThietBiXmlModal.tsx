@@ -16,7 +16,7 @@ export interface ThietBiXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmThietBiItem[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: 'base64' | 'smartca';
   onSendSuccess?: (result: SendThietBiGatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -25,7 +25,7 @@ export const ThietBiXmlModal: React.FC<ThietBiXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = 'xml',
+  defaultTab = 'smartca',
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -64,7 +64,6 @@ export const ThietBiXmlModal: React.FC<ThietBiXmlModalProps> = ({
       itemLabel="vật tư / thiết bị"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc04_DMVTYT"
       loaiHsCode="11"
       tab={tab}
       onTabChange={setTab}

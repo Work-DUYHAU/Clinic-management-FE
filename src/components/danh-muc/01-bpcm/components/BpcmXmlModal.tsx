@@ -17,7 +17,7 @@ export interface BpcmXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmBpcmItem[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: 'base64' | 'smartca';
   onSendSuccess?: (result: GatewaySendResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -26,7 +26,7 @@ export const BpcmXmlModal: React.FC<BpcmXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = 'xml',
+  defaultTab = 'smartca',
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -65,7 +65,6 @@ export const BpcmXmlModal: React.FC<BpcmXmlModalProps> = ({
       itemLabel="khoa phòng / bàn khám"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc01_BPCMKBCB"
       loaiHsCode="70"
       tab={tab}
       onTabChange={setTab}

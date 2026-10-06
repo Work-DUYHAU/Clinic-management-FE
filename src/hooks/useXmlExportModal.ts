@@ -1,15 +1,22 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useToast } from '../context/ToastContext';
-import { extractXmlSignature } from '../utils/xmlDsigEngine';
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useToast } from "../context/ToastContext";
+import { extractXmlSignature } from "../utils/xmlDsigEngine";
+import { BhxhChungTuService } from "../services/bhxh/bhxhChungTuService";
+
+export type XmlExportTabType = "base64" | "smartca";
 
 export interface UseXmlExportModalOptions<T, R = any> {
   isOpen: boolean;
   items: T[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: XmlExportTabType;
   generateXml: (items: T[]) => string;
   generateBase64?: (items: T[], xml?: string) => string;
   downloadFile: (items: T[], xml?: string) => void;
-  sendGateway?: (items: T[], signature?: any, fileBase64?: string) => Promise<R>;
+  sendGateway?: (
+    items: T[],
+    signature?: any,
+    fileBase64?: string,
+  ) => Promise<R>;
   downloadSuccessMessage?: string;
   emptyItemsMessage?: string;
   getSendSuccessMessage?: (result: R) => string;
@@ -19,24 +26,28 @@ export interface UseXmlExportModalOptions<T, R = any> {
 export function useXmlExportModal<T, R = any>({
   isOpen,
   items,
-  defaultTab = 'xml',
+  defaultTab = "smartca",
   generateXml,
   generateBase64,
   downloadFile,
   sendGateway,
-  downloadSuccessMessage = 'Đã tải xuống tệp XML thành công!',
-  emptyItemsMessage = 'Không có dữ liệu để gửi!',
+  downloadSuccessMessage = "Đã tải xuống tệp XML thành công!",
+  emptyItemsMessage = "Không có dữ liệu để gửi!",
   getSendSuccessMessage,
   onSendSuccess,
 }: UseXmlExportModalOptions<T, R>) {
   const toast = useToast();
-  const [tab, setTab] = useState<'xml' | 'base64' | 'api' | 'smartca'>(defaultTab);
+  const [tab, setTab] = useState<XmlExportTabType>(
+    defaultTab === "base64" ? "base64" : "smartca",
+  );
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<R | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setTab(defaultTab);
+      setTab(defaultTab === "base64" ? "base64" : "smartca");
+      // Chủ động tiền kết nối & lấy sẵn Token Cổng BHXH ngay khi mở modal
+      BhxhChungTuService.takeToken().catch(() => {});
     } else {
       // Khi đóng modal thì xóa kết quả gửi để sẵn sàng cho phiên mới
       setSendResult(null);
@@ -54,23 +65,24 @@ export function useXmlExportModal<T, R = any>({
   generateBase64Ref.current = generateBase64;
 
   const xmlContent = useMemo(
-    () => (isOpen && items.length > 0 ? generateXmlRef.current(items) : ''),
-    [isOpen, items]
+    () => (isOpen && items.length > 0 ? generateXmlRef.current(items) : ""),
+    [isOpen, items],
   );
 
   const base64Content = useMemo(() => {
-    if (!isOpen || !xmlContent) return '';
-    if (generateBase64Ref.current) return generateBase64Ref.current(items, xmlContent);
-    return '';
+    if (!isOpen || !xmlContent) return "";
+    if (generateBase64Ref.current)
+      return generateBase64Ref.current(items, xmlContent);
+    return "";
   }, [isOpen, items, xmlContent]);
 
   const handleDownloadXml = () => {
     if (items.length === 0) {
-      toast.warning('Chưa có dữ liệu để tải XML!');
+      toast.warning("Chưa có dữ liệu để tải XML!");
       return;
     }
     downloadFile(items, xmlContent);
-    toast.success(downloadSuccessMessage, 'Tải Tệp XML');
+    toast.success(downloadSuccessMessage, "Tải Tệp XML");
   };
 
   const handleSendGateway = async (signaturePayload?: any) => {
@@ -78,7 +90,7 @@ export function useXmlExportModal<T, R = any>({
     const signatureResult = signaturePayload?.signResponse || signaturePayload;
 
     if (items.length === 0 && !fileBase64) {
-      toast.error(emptyItemsMessage, 'Lỗi Gửi Dữ Liệu');
+      toast.error(emptyItemsMessage, "Lỗi Gửi Dữ Liệu");
       return;
     }
 
@@ -87,8 +99,8 @@ export function useXmlExportModal<T, R = any>({
       const sig = extractXmlSignature(signaturePayload.signedXml);
       if (!sig.hasSignature) {
         toast.warning(
-          'Hồ sơ chưa có chữ ký số điện tử hợp lệ (<CHUKYDONVI>). Cổng BHXH bắt buộc gói dữ liệu XML phải được ký số trước khi gửi!',
-          'Yêu Cầu Chữ Ký Số'
+          "Hồ sơ chưa có chữ ký số điện tử hợp lệ (<CHUKYDONVI>). Cổng BHXH bắt buộc gói dữ liệu XML phải được ký số trước khi gửi!",
+          "Yêu Cầu Chữ Ký Số",
         );
         return;
       }
@@ -101,15 +113,15 @@ export function useXmlExportModal<T, R = any>({
       const res = await sendGateway(items, signatureResult, fileBase64);
       setSendResult(res);
       const isSuccess =
-        String((res as any)?.maKetQua) === '200' ||
+        String((res as any)?.maKetQua) === "200" ||
         (res as any)?.isOk === true ||
         Boolean((res as any)?.maGiaoDich && !(res as any)?.isError);
 
       if (isSuccess) {
         const msg = getSendSuccessMessage
           ? getSendSuccessMessage(res)
-          : 'Hồ sơ đã được gửi và tiếp nhận thành công trên Cổng BHXH!';
-        toast.success(msg, 'Gửi Cổng BHXH Thành Công');
+          : "Hồ sơ đã được gửi và tiếp nhận thành công trên Cổng BHXH!";
+        toast.success(msg, "Gửi Cổng BHXH Thành Công");
         if (onSendSuccess) {
           onSendSuccess(res);
         }
@@ -118,12 +130,17 @@ export function useXmlExportModal<T, R = any>({
           (res as any)?.thongDiep ||
           (res as any)?.ghiChu ||
           (res as any)?.message ||
-          `Cổng BHXH từ chối tiếp nhận (Mã phản hồi: ${String((res as any)?.maKetQua || '400')})`;
-        toast.error(errMsg, 'Lỗi Tiếp Nhận Cổng BHXH');
+          `Cổng BHXH từ chối tiếp nhận (Mã phản hồi: ${String((res as any)?.maKetQua || "400")})`;
+        toast.error(errMsg, "Lỗi Tiếp Nhận Cổng BHXH");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi kết nối cổng BHXH';
-      toast.error(msg, 'Lỗi Gửi Cổng');
+      const msg = err instanceof Error ? err.message : "Lỗi kết nối cổng BHXH";
+      setSendResult({
+        maKetQua: "500",
+        thongDiep: msg,
+        isError: true,
+      } as any);
+      toast.error(msg, "Lỗi Gửi Cổng");
     } finally {
       setIsSending(false);
     }

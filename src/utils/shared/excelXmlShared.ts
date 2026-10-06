@@ -822,13 +822,24 @@ export async function sendDanhMucToBhxhGateway(
     };
 
     const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await fetch(`${baseUrl}${endpoint}`, {
+    const response = await BhxhChungTuService.fetchGateway(`${baseUrl}${endpoint}`, {
       method: "POST",
       headers,
       body: params.toString(),
     });
 
-    const data = await response.json();
+    let data: any = {};
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        maKetQua: String(response.status),
+        thongDiep:
+          text.slice(0, 150) || `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
+      };
+    }
+
     const isOk = String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
     return {
       maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),

@@ -15,8 +15,13 @@ import { NhanLucEditModal } from './components/NhanLucEditModal';
 import { SchemaMappingModal } from '../common/SchemaMappingModal';
 import { SchemaMappingCard } from '../common/SchemaMappingCard';
 import { useSchemaMappingProps } from '../../../hooks';
+import { useRegisterSignModal } from '../../../context/SignModalContext';
 
-export const DmNhanLucTab: React.FC = () => {
+interface DmNhanLucTabProps {
+  isActive?: boolean;
+}
+
+export const DmNhanLucTab: React.FC<DmNhanLucTabProps> = ({ isActive = true }) => {
   const toast = useToast();
   const [nhanLucItems, setNhanLucItems] = useState<DmNhanLucItem[]>([]);
   const [searchNhanLuc, setSearchNhanLuc] = useState('');
@@ -25,7 +30,7 @@ export const DmNhanLucTab: React.FC = () => {
 
   // Modal State for Mẫu 02/DM
   const [isNhanLucXmlModalOpen, setIsNhanLucXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<'xml' | 'base64' | 'api'>('xml');
+  const [xmlModalTab, setXmlModalTab] = useState<'smartca' | 'base64'>('smartca');
 
   // Edit / Add Modal State for Mẫu 02/DM
   const [isNhanLucEditModalOpen, setIsNhanLucEditModalOpen] = useState(false);
@@ -33,6 +38,12 @@ export const DmNhanLucTab: React.FC = () => {
 
   // Schema Mapping Inspector Modal State
   const [isNhanLucSchemaModalOpen, setIsNhanLucSchemaModalOpen] = useState(false);
+
+  // Đăng ký mở modal ký số khi tab này active
+  useRegisterSignModal(isActive, () => {
+    setXmlModalTab('smartca');
+    setIsNhanLucXmlModalOpen(true);
+  });
 
   // File Upload Handler
   const handleNhanLucFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,11 +148,11 @@ export const DmNhanLucTab: React.FC = () => {
         onClearData={handleNhanLucClearData}
         onOpenXmlModal={() => {
           setIsNhanLucXmlModalOpen(true);
-          setXmlModalTab('xml');
+          setXmlModalTab('smartca');
         }}
         onOpenApiTab={() => {
           setIsNhanLucXmlModalOpen(true);
-          setXmlModalTab('api');
+          setXmlModalTab('smartca');
         }}
         onOpenSchemaModal={() => setIsNhanLucSchemaModalOpen(true)}
         onAddNew={() => {

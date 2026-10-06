@@ -1,39 +1,49 @@
-import React from 'react';
-import type { HoSoDieuChinh09Item, SendHs09GatewayResult } from '../../../../types/hs09DieuChinhTypes';
+import React from "react";
+import type {
+  HoSoDieuChinh09Item,
+  SendHs09GatewayResult,
+} from "../../../../types/hs09DieuChinhTypes";
 import {
   generateHs09Xml,
   downloadHs09XmlFile,
-  sendHs09ToBhxhGateway
-} from '../../../../utils/hs09DieuChinhXmlEngine';
-import { xmlToBase64 } from '../../../../utils/shared/excelXmlShared';
-import { XmlExportModal } from '../../../common';
-import { useXmlExportModal } from '../../../../hooks';
+  sendHs09ToBhxhGateway,
+} from "../../../../utils/hs09DieuChinhXmlEngine";
+import { xmlToBase64 } from "../../../../utils/shared/excelXmlShared";
+import { XmlExportModal } from "../../../common";
+import { useXmlExportModal } from "../../../../hooks";
 
-import type { SourceFileUploadInfo } from '../../../common';
+import type { SourceFileUploadInfo } from "../../../common";
 
 export interface Hs09XmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: HoSoDieuChinh09Item[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
-  activeTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: "base64" | "smartca";
+  activeTab?: "base64" | "smartca";
   onSendSuccess?: (result: SendHs09GatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
 
-// ==========================================
-// CÁC HÀM XỬ LÝ DỮ LIỆU HS09 (Dễ maintain & tái sử dụng)
-// ==========================================
-const generateHs09Base64Handler = (_items: HoSoDieuChinh09Item[], xml?: string) => {
-  return xml ? xmlToBase64(xml) : '';
+const generateHs09Base64Handler = (
+  _items: HoSoDieuChinh09Item[],
+  xml?: string,
+) => {
+  return xml ? xmlToBase64(xml) : "";
 };
 
-const downloadHs09FileHandler = (items: HoSoDieuChinh09Item[], xml?: string) => {
+const downloadHs09FileHandler = (
+  items: HoSoDieuChinh09Item[],
+  xml?: string,
+) => {
   downloadHs09XmlFile(xml || items);
 };
 
-const sendHs09GatewayHandler = (items: HoSoDieuChinh09Item[]) => {
-  return sendHs09ToBhxhGateway(items);
+const sendHs09GatewayHandler = (
+  items: HoSoDieuChinh09Item[],
+  signature?: any,
+  fileBase64?: string,
+) => {
+  return sendHs09ToBhxhGateway(items, undefined, signature, fileBase64);
 };
 
 const getHs09SendSuccessMessage = (res: SendHs09GatewayResult) => {
@@ -45,7 +55,7 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
   onClose,
   items,
   defaultTab,
-  activeTab = 'xml',
+  activeTab = "smartca",
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -67,10 +77,11 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
     generateBase64: generateHs09Base64Handler,
     downloadFile: downloadHs09FileHandler,
     sendGateway: sendHs09GatewayHandler,
-    downloadSuccessMessage: 'Đã tải xuống tệp XML Hồ sơ điều chỉnh Mẫu 09/BH thành công!',
-    emptyItemsMessage: 'Không có hồ sơ điều chỉnh nào để gửi!',
+    downloadSuccessMessage:
+      "Đã tải xuống tệp XML Hồ sơ điều chỉnh Mẫu 09/BH thành công!",
+    emptyItemsMessage: "Không có hồ sơ điều chỉnh nào để gửi!",
     getSendSuccessMessage: getHs09SendSuccessMessage,
-    onSendSuccess
+    onSendSuccess,
   });
 
   return (
@@ -83,7 +94,6 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
       itemLabel="hồ sơ điều chỉnh"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/HSDCTT12/GuiHoSoDieuChinh09BH"
       loaiHsCode="73"
       tab={tab}
       onTabChange={setTab}

@@ -20,6 +20,8 @@ import { SchemaMappingModal } from "../../danh-muc/common/SchemaMappingModal";
 import { SchemaMappingCard } from "../../danh-muc/common/SchemaMappingCard";
 import { useSchemaMappingProps } from "../../../hooks";
 import { getTodayIsoDate } from "../../../utils/shared/excelXmlShared";
+import { useRegisterSignModal } from "../../../context/SignModalContext";
+import { BhxhChungTuService } from "../../../services/bhxh/bhxhChungTuService";
 
 export const Hs01TongHopTab: React.FC = () => {
   const toast = useToast();
@@ -33,14 +35,20 @@ export const Hs01TongHopTab: React.FC = () => {
 
   // Modals
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<"xml" | "base64" | "api">(
-    "xml",
+  const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">(
+    "smartca",
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Hs01TongHopItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<Hs01TongHopItem | null>(null);
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
+
+  // Dùng chung 1 modal duy nhất: Bấm "Ký Số" ở Navbar hay ở Dropzone đều mở modal này
+  useRegisterSignModal(true, () => {
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  });
 
   // File Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,6 +60,8 @@ export const Hs01TongHopTab: React.FC = () => {
       const result = await parseHs01ExcelFile(file);
       setItems(result.items);
       setFileUploadStats(result);
+      // Tiền kết nối Cổng BHXH trong lúc người dùng xem dữ liệu
+      BhxhChungTuService.takeToken().catch(() => {});
       toast.success(
         `Đã nạp thành công ${result.items.length} hồ sơ tổng hợp từ tệp "${file.name}"\nSheet: "${result.selectedSheet}"`,
         "Nạp File Excel Mẫu 01/BH Thành Công",
@@ -227,11 +237,11 @@ export const Hs01TongHopTab: React.FC = () => {
         onDownloadTemplate={handleDownloadTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
-          setXmlModalTab("xml");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
-          setXmlModalTab("api");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}

@@ -17,7 +17,7 @@ export interface NhanLucXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmNhanLucItem[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: 'base64' | 'smartca';
   onSendSuccess?: (result: SendNhanLucGatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -26,7 +26,7 @@ export const NhanLucXmlModal: React.FC<NhanLucXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = 'xml',
+  defaultTab = 'smartca',
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -69,7 +69,6 @@ export const NhanLucXmlModal: React.FC<NhanLucXmlModalProps> = ({
       itemLabel="nhân lực y tế"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc02_NLKCB"
       loaiHsCode="71"
       tab={tab}
       onTabChange={setTab}

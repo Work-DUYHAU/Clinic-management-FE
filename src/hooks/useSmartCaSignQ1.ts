@@ -12,23 +12,18 @@ import {
   type SmartCaSignResponse,
   type SmartCaQ1InitiateResponse,
 } from "../services/smartca/smartcaHandlers";
-import {
-  SMARTCA_CLIENT_SECRET,
-  SMARTCA_DEFAULT_MST,
-  SMARTCA_DEFAULT_PASSWORD,
-} from "../services/smartca/smartcaConfig";
+import { SMARTCA_CLIENT_SECRET } from "../services/smartca/smartcaConfig";
 import { DEFAULT_CLINIC_NAME } from "../utils/shared/excelXmlShared";
 import { SMARTCA_TRAN_STATUS, type SignerProfile } from "../types/smartcaTypes";
 import {
-  type IdentityType,
   IDENTITY_LABELS,
-  sanitizeIdentityInput,
   validateIdentity,
   validateEmail,
 } from "../utils/validators";
 
-export const COUNTDOWN_SECONDS = 180;
+import { useSignerFormState, type SignerFormState } from "./useSignerFormState";
 
+export const COUNTDOWN_SECONDS = 180;
 
 export interface UseSmartCaSignQ1Props {
   effectiveXmlToSign: string;
@@ -36,6 +31,7 @@ export interface UseSmartCaSignQ1Props {
   isSigned: boolean;
   onSignedSuccess: (signedXml: string, signResponse: SmartCaSignResponse) => void;
   onResetSignature?: () => void;
+  signerForm?: SignerFormState;
 }
 
 export function useSmartCaSignQ1({
@@ -43,20 +39,27 @@ export function useSmartCaSignQ1({
   effectiveFileName,
   onSignedSuccess,
   onResetSignature,
+  signerForm,
 }: UseSmartCaSignQ1Props) {
   const { credential, config } = useSmartCa();
   const toast = useToast();
 
-  // Thông tin người ký (Mặc định ký theo đơn vị: Mã số thuế và mật khẩu cấu hình từ .env)
-  const defaultMst = SMARTCA_DEFAULT_MST || config.username || "";
-  const [signerName, setSignerName] = useState("");
-  const [signerEmail, setSignerEmail] = useState("");
-  const [idType, setIdType] = useState<"phone" | "cccd" | "mst">(
-    defaultMst ? "mst" : "phone",
-  );
-  const [identityValue, setIdentityValue] = useState(defaultMst);
-  const [password, setPassword] = useState(SMARTCA_DEFAULT_PASSWORD || "");
-  const [showPassword, setShowPassword] = useState(false);
+  const internalForm = useSignerFormState();
+  const form = signerForm || internalForm;
+  const {
+    signerName,
+    setSignerName,
+    signerEmail,
+    setSignerEmail,
+    idType,
+    identityValue,
+    password,
+    setPassword,
+    showPassword,
+    setShowPassword,
+    handleIdentityChange,
+    handleSelectIdType,
+  } = form;
 
   // Trạng thái giao dịch Q1
   const [isInitiating, setIsInitiating] = useState(false);
@@ -112,22 +115,6 @@ export function useSmartCaSignQ1({
 
   const handleCopy = (text: string, key: string) => {
     copy(text, "Đã sao chép vào khay nhớ tạm", key);
-  };
-
-  const handleIdentityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = sanitizeIdentityInput(e.target.value, idType);
-    setIdentityValue(raw);
-  };
-
-  const handleSelectIdType = (type: IdentityType) => {
-    if (idType !== type) {
-      setIdType(type);
-      if (type === "mst" && defaultMst) {
-        setIdentityValue(defaultMst);
-      } else {
-        setIdentityValue("");
-      }
-    }
   };
 
 

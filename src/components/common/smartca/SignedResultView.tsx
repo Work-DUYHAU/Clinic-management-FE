@@ -7,6 +7,7 @@ import {
   Download,
   RefreshCw,
   UserPlus,
+  Send,
 } from "lucide-react";
 import type { ExtractedSignatureInfo } from "../../../utils/xmlDsigEngine";
 import type { SmartCaCredential } from "../../../types/smartcaTypes";
@@ -22,6 +23,9 @@ export interface SignedResultViewProps {
   onDownloadSignedXml?: () => void;
   onResetAndResign: () => void;
   onCountersign?: () => void;
+  onDirectSendBhxh?: () => void;
+  isSendingApi?: boolean;
+  hasApiResponse?: boolean;
 }
 
 export const SignedResultView: React.FC<SignedResultViewProps> = ({
@@ -35,6 +39,9 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
   onDownloadSignedXml,
   onResetAndResign,
   onCountersign,
+  onDirectSendBhxh,
+  isSendingApi,
+  hasApiResponse,
 }) => {
   const isMultiSigned = Boolean(
     signatureInfo.signatures && signatureInfo.signatures.length > 1,
@@ -42,186 +49,183 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
   const sigCount = signatureInfo.signatureCount || 1;
 
   return (
-    <div className="p-5 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-4 animate-fadeIn">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-          <ShieldCheck size={22} />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-sm font-extrabold text-emerald-950">
-              {isMultiSigned
-                ? `Tài liệu XML đã được đồng ký thành công (${sigCount} chữ ký)`
-                : "Tài liệu XML đã được ký số thành công (Quy trình 1)"}
-            </h4>
-            {isMultiSigned && (
-              <span className="px-2 py-0.5 bg-emerald-200/80 text-emerald-900 rounded-full text-[10px] font-bold">
-                Đồng ký (Countersign)
-              </span>
-            )}
+    <div className="p-3.5 sm:p-4 bg-emerald-50/50 border border-emerald-200/90 rounded-2xl space-y-3 animate-fadeIn">
+      {/* Header trạng thái chữ ký số W3C */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+            <ShieldCheck size={18} />
           </div>
-          <p className="text-xs text-emerald-700">
-            Khối thẻ &lt;CHUKYDONVI&gt; đã được đóng gói chuẩn W3C XMLDSig vào XML.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-xs sm:text-sm font-extrabold text-emerald-950">
+                {isMultiSigned
+                  ? `Hồ sơ đã được đồng ký (${sigCount} chữ ký hợp lệ)`
+                  : "Chữ ký số hợp lệ (Chuẩn W3C XMLDSig)"}
+              </h4>
+              {isMultiSigned && (
+                <span className="px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded-full text-[10px] font-bold">
+                  Đồng ký
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-emerald-700">
+              Thẻ &lt;CHUKYDONVI&gt; đã được đóng gói trực tiếp vào tệp XML.
+            </p>
+          </div>
+        </div>
+
+        {/* Thông tin nhanh về chủ thể ký */}
+        <div className="text-right text-[11px] text-slate-600 hidden sm:block">
+          <span className="text-slate-500">Chủ thể: </span>
+          <b className="font-semibold text-slate-800">
+            {signatureInfo.subjectDN || credential?.cert?.subjectDN || signerName || "—"}
+          </b>
         </div>
       </div>
 
+      {/* Chi tiết các chữ ký (hỗ trợ hiển thị gọn nếu đồng ký) */}
       {isMultiSigned && signatureInfo.signatures ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {signatureInfo.signatures.map((sig, idx) => (
             <div
               key={sig.signatureId || idx}
-              className="p-3.5 bg-white rounded-xl border border-emerald-200 space-y-2 text-xs text-slate-700 shadow-xs"
+              className="p-2.5 bg-white rounded-xl border border-emerald-200 text-xs text-slate-700 shadow-2xs"
             >
-              <div className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-emerald-700 font-bold">
-                  <Info size={13} />
+              <div className="font-bold text-slate-900 border-b border-slate-100 pb-1 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-emerald-700 font-bold text-[11px]">
+                  <Info size={12} />
                   Chữ ký #{idx + 1}
                   {idx === 0
                     ? " (Người lập biểu / Bác sĩ)"
-                    : " (Thủ trưởng đơn vị / Cơ sở KCB)"}
+                    : " (Thủ trưởng đơn vị / CSKCB)"}
                 </span>
-                {sig.signatureId && (
-                  <span className="font-mono text-[10px] text-slate-400">
-                    {sig.signatureId}
+                {sig.signingTime && (
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {sig.signingTime}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                <div className="sm:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                <div className="truncate" title={sig.subjectDN || ""}>
                   <b className="text-slate-500">Chủ thể:</b>{" "}
-                  <span className="font-mono font-semibold text-slate-900">
-                    {sig.subjectDN || "Chữ ký hợp lệ"}
+                  <span className="font-semibold text-slate-900">
+                    {sig.subjectDN || "Hợp lệ"}
                   </span>
                 </div>
                 <div>
                   <b className="text-slate-500">Serial:</b>{" "}
                   <span className="font-mono text-slate-900">
-                    {sig.serialNumber || "N/A"}
+                    {sig.serialNumber || "—"}
                   </span>
                 </div>
-                <div>
-                  <b className="text-slate-500">Thời gian:</b>{" "}
-                  <span className="font-mono text-slate-900">
-                    {sig.signingTime || "N/A"}
-                  </span>
-                </div>
-                {sig.digestValue && (
-                  <div className="sm:col-span-2">
-                    <b className="text-slate-500">Mã băm (Digest):</b>{" "}
-                    <span className="font-mono text-slate-900 select-all break-all">
-                      {sig.digestValue}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="p-4 bg-white rounded-xl border border-emerald-200 space-y-2 text-xs text-slate-700 shadow-xs">
-          <div className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-            <Info size={14} className="text-emerald-600" />
-            Thông Tin Chứng Thư Số & Chữ Ký Đã Ký
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
-            <div className="sm:col-span-2">
-              <b className="text-slate-500">Chủ thể (Subject):</b>{" "}
-              <span className="font-mono font-semibold text-slate-900">
-                {signatureInfo.subjectDN ||
-                  credential?.cert?.subjectDN ||
-                  signerName ||
-                  "—"}
-              </span>
-            </div>
+        /* Tóm tắt 1 dòng cho chữ ký đơn để giao diện cực kỳ tinh gọn */
+        <div className="p-2.5 sm:p-3 bg-white rounded-xl border border-emerald-200/80 shadow-2xs text-[11px] grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div
+            className="sm:col-span-1 truncate"
+            title={`Chủ thể: ${signatureInfo.subjectDN || signerName || "—"}${
+              signerEmail ? ` (${signerEmail})` : ""
+            }${identityValue ? ` - TK: ${identityValue}` : ""}`}
+          >
+            <span className="text-slate-500">Chủ thể: </span>
+            <b className="text-slate-900 font-semibold">
+              {signatureInfo.subjectDN || credential?.cert?.subjectDN || signerName || "—"}
+            </b>
             {signerEmail && (
-              <div className="sm:col-span-2">
-                <b className="text-slate-500">Email người ký:</b>{" "}
-                <span className="font-mono font-semibold text-slate-900">
-                  {signerEmail}
-                </span>
-              </div>
-            )}
-            {identityValue && (
-              <div>
-                <b className="text-slate-500">Tài khoản ký:</b>{" "}
-                <span className="font-mono text-slate-900">
-                  {identityValue}
-                </span>
-              </div>
-            )}
-            <div>
-              <b className="text-slate-500">Mã Serial:</b>{" "}
-              <span className="font-mono text-slate-900">
-                {signatureInfo.serialNumber ||
-                  credential?.cert?.serialNumber ||
-                  "—"}
+              <span className="text-[10px] text-slate-500 ml-1 font-normal">
+                ({signerEmail})
               </span>
-            </div>
-            <div>
-              <b className="text-slate-500">Thời gian ký:</b>{" "}
-              <span className="font-mono text-slate-900">
-                {signatureInfo.signingTime || new Date().toLocaleString("vi-VN")}
-              </span>
-            </div>
-            {signatureInfo.digestValue && (
-              <div className="sm:col-span-2">
-                <b className="text-slate-500">Mã băm SHA-256 (Digest):</b>{" "}
-                <span className="font-mono text-slate-900 select-all break-all">
-                  {signatureInfo.digestValue}
-                </span>
-              </div>
             )}
+          </div>
+          <div
+            className="truncate"
+            title={`Mã Serial: ${signatureInfo.serialNumber || credential?.cert?.serialNumber || "—"}${
+              identityValue ? ` - Tài khoản: ${identityValue}` : ""
+            }`}
+          >
+            <span className="text-slate-500">Serial: </span>
+            <span className="font-mono text-slate-800">
+              {signatureInfo.serialNumber || credential?.cert?.serialNumber || "—"}
+            </span>
+          </div>
+          <div title={identityValue ? `Tài khoản: ${identityValue}` : undefined}>
+            <span className="text-slate-500">Thời gian ký: </span>
+            <span className="font-mono text-slate-800">
+              {signatureInfo.signingTime || "—"}
+            </span>
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-2.5 flex-wrap pt-1">
-        <button
-          type="button"
-          onClick={onCopySignedXml}
-          className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-        >
-          {copiedKey === "signedXml" ? (
-            <Check size={14} className="text-emerald-600" />
-          ) : (
-            <Copy size={14} />
-          )}
-          <span>
-            {copiedKey === "signedXml" ? "Đã Sao Chép" : "Sao Chép XML Đã Ký"}
-          </span>
-        </button>
+      {/* Thanh Action Toolbar tinh gọn */}
+      <div className="flex items-center gap-2 flex-wrap pt-0.5">
+        {onDirectSendBhxh && !hasApiResponse && (
+          <button
+            type="button"
+            disabled={isSendingApi}
+            onClick={onDirectSendBhxh}
+            className={`px-3.5 py-1.5 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ${
+              isSendingApi
+                ? "bg-slate-400 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
+            }`}
+            title="Gửi ngay hồ sơ XML đã ký này lên Cổng Tiếp Nhận BHXH"
+          >
+            <Send size={13} className={isSendingApi ? "animate-pulse" : ""} />
+            <span>{isSendingApi ? "Đang Gửi Cổng..." : "Gửi Lên Cổng BHXH"}</span>
+          </button>
+        )}
 
         {onDownloadSignedXml && (
           <button
             type="button"
             onClick={onDownloadSignedXml}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
           >
-            <Download size={14} />
-            <span>Tải File XML Đã Ký</span>
+            <Download size={13} />
+            <span>Tải XML Đã Ký</span>
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={onCopySignedXml}
+          className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+        >
+          {copiedKey === "signedXml" ? (
+            <Check size={13} className="text-emerald-600" />
+          ) : (
+            <Copy size={13} />
+          )}
+          <span>
+            {copiedKey === "signedXml" ? "Đã Sao Chép" : "Sao Chép XML"}
+          </span>
+        </button>
 
         {onCountersign && (
           <button
             type="button"
             onClick={onCountersign}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-            title="Ký thêm chữ ký (bác sĩ hoặc thủ trưởng đơn vị) bảo toàn chữ ký cũ"
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+            title="Ký thêm chữ ký (bác sĩ hoặc thủ trưởng CSKCB) bảo toàn chữ ký cũ"
           >
-            <UserPlus size={14} />
-            <span>Ký Thêm / Đồng Ký (Countersign)</span>
+            <UserPlus size={13} />
+            <span>Đồng Ký Tiếp</span>
           </button>
         )}
 
         <button
           type="button"
           onClick={onResetAndResign}
-          className="px-4 py-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ml-auto cursor-pointer"
+          className="px-3 py-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ml-auto cursor-pointer active:scale-95"
         >
-          <RefreshCw size={13} />
-          <span>Hủy Chữ Ký / Ký Lại Từ Đầu</span>
+          <RefreshCw size={12} />
+          <span>Ký Lại</span>
         </button>
       </div>
     </div>
