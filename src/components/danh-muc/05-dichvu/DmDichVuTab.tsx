@@ -18,8 +18,13 @@ import {
 import { SchemaMappingModal } from "../common/SchemaMappingModal";
 import { SchemaMappingCard } from "../common/SchemaMappingCard";
 import { useSchemaMappingProps } from "../../../hooks";
+import { useRegisterSignModal } from "../../../context/SignModalContext";
 
-export const DmDichVuTab: React.FC = () => {
+interface DmDichVuTabProps {
+  isActive?: boolean;
+}
+
+export const DmDichVuTab: React.FC<DmDichVuTabProps> = ({ isActive = true }) => {
   const toast = useToast();
   const [dichVuItems, setDichVuItems] = useState<DmDichVuItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,13 +34,17 @@ export const DmDichVuTab: React.FC = () => {
 
   // Modal State for Mẫu 05/DM
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<
-    "xml" | "base64" | "api" | "smartca"
-  >("xml");
+  const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">("smartca");
 
   // Edit / Add Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmDichVuItem | null>(null);
+
+  // Đăng ký mở modal ký số khi tab này active
+  useRegisterSignModal(isActive, () => {
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  });
 
   // Thuốc phóng xạ Modal State
   const [isThuocPxModalOpen, setIsThuocPxModalOpen] = useState(false);
@@ -199,11 +208,11 @@ export const DmDichVuTab: React.FC = () => {
         onDownloadTemplate={generateDichVuTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
-          setXmlModalTab("xml");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
-          setXmlModalTab("api");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}

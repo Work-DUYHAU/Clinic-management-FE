@@ -17,7 +17,7 @@ export interface ThuocXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmThuocItem[];
-  defaultTab?: "xml" | "base64" | "api" | "smartca";
+  defaultTab?: "base64" | "smartca";
   onSendSuccess?: (result: SendThuocGatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -26,7 +26,7 @@ export const ThuocXmlModal: React.FC<ThuocXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = "xml",
+  defaultTab = "smartca",
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -67,7 +67,6 @@ export const ThuocXmlModal: React.FC<ThuocXmlModalProps> = ({
       itemLabel="mặt hàng thuốc / chế phẩm máu"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc03_DMTHUOC"
       loaiHsCode="10"
       tab={tab}
       onTabChange={setTab}

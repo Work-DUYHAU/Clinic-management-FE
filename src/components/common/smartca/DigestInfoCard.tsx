@@ -5,6 +5,7 @@ export interface DigestInfoCardProps {
   effectiveFileName: string;
   isSigned: boolean;
   isWaiting: boolean;
+  isDigestComputing?: boolean;
   digestValue?: string | null;
   copiedKey: string | null;
   onCopyDigest: (digest: string) => void;
@@ -14,6 +15,7 @@ export const DigestInfoCard: React.FC<DigestInfoCardProps> = ({
   effectiveFileName,
   isSigned,
   isWaiting,
+  isDigestComputing,
   digestValue,
   copiedKey,
   onCopyDigest,
@@ -42,6 +44,10 @@ export const DigestInfoCard: React.FC<DigestInfoCardProps> = ({
             <span className="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold flex items-center gap-1.5 animate-pulse">
               CHỜ DUYỆT APP
             </span>
+          ) : isDigestComputing ? (
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 animate-pulse">
+              <Clock size={13} className="animate-spin" /> ĐANG TÍNH MÃ BĂM...
+            </span>
           ) : !digestValue ? (
             <span className="px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-xs font-semibold flex items-center gap-1.5">
               <Clock size={13} /> CHƯA NẠP TỆP
@@ -63,6 +69,10 @@ export const DigestInfoCard: React.FC<DigestInfoCardProps> = ({
           <code className="font-mono text-slate-800 text-[11px] bg-white px-2 py-0.5 rounded border border-slate-200 select-all break-all shadow-2xs font-semibold">
             {digestValue ? (
               digestValue
+            ) : isDigestComputing ? (
+              <span className="text-indigo-600 font-normal italic animate-pulse">
+                Đang băm mã SHA-256 nội dung XML...
+              </span>
             ) : (
               <span className="text-slate-400 font-normal italic">
                 (Chưa có tệp tin - Vui lòng nạp tệp Excel / XML)

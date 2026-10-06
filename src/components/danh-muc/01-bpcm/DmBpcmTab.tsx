@@ -15,8 +15,13 @@ import { BpcmEditModal } from "./components/BpcmEditModal";
 import { SchemaMappingModal } from "../common/SchemaMappingModal";
 import { SchemaMappingCard } from "../common/SchemaMappingCard";
 import { useSchemaMappingProps } from "../../../hooks";
+import { useRegisterSignModal } from "../../../context/SignModalContext";
 
-export const DmBpcmTab: React.FC = () => {
+interface DmBpcmTabProps {
+  isActive?: boolean;
+}
+
+export const DmBpcmTab: React.FC<DmBpcmTabProps> = ({ isActive = true }) => {
   const toast = useToast();
   const [bpcmItems, setBpcmItems] = useState<DmBpcmItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,11 +31,16 @@ export const DmBpcmTab: React.FC = () => {
 
   // Modal States
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<"xml" | "base64" | "api">("xml");
+  const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">("smartca");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmBpcmItem | null>(null);
-
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
+
+  // Đăng ký mở modal ký số khi tab này active
+  useRegisterSignModal(isActive, () => {
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,11 +149,11 @@ export const DmBpcmTab: React.FC = () => {
         onDownloadTemplate={downloadBpcmExcelTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
-          setXmlModalTab("xml");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
-          setXmlModalTab("api");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}

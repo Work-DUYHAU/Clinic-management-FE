@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
+import { useSignModal } from "../context/SignModalContext";
 import type { MainTabType, HoSoTabType } from "./Sidebar";
 
 interface NavbarProps {
@@ -22,12 +23,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSignModal,
 }) => {
   const toast = useToast();
+  const { openSignModal } = useSignModal();
+
   const today = new Date().toLocaleDateString("vi-VN", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  const handleOpenSign = () => {
+    if (onOpenSignModal) {
+      onOpenSignModal();
+    } else {
+      openSignModal();
+    }
+  };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200/90 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
@@ -106,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Nút Mở Ký Số SmartCA Nhanh */}
         <button
           type="button"
-          onClick={onOpenSignModal}
+          onClick={handleOpenSign}
           className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-50/80 hover:bg-blue-100/80 text-[#1677ff] border border-blue-200 hover:border-blue-400 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
           title="Mở Bảng Ký Số SmartCA & Liên Thông BHXH"
         >

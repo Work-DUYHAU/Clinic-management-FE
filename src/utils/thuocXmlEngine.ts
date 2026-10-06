@@ -49,12 +49,13 @@ export const parseThuocWorksheet = (
   fileName?: string,
   defaultMaCskcb?: string,
 ): ParseThuocExcelResult => {
+  const ws = workbook.Sheets[sheetName];
   return thuocEngine.parseWorksheet(
-    workbook,
+    ws,
     sheetName,
+    workbook.SheetNames || [sheetName],
     fileName,
-    undefined,
-    undefined,
+    workbook,
     defaultMaCskcb,
   );
 };

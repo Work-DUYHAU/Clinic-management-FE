@@ -1,5 +1,8 @@
 import * as XLSX from "xlsx";
-import { BhxhChungTuService, BHXH_CONFIG } from "../services/bhxh/bhxhChungTuService";
+import {
+  BhxhChungTuService,
+  BHXH_CONFIG,
+} from "../services/bhxh/bhxhChungTuService";
 import type {
   Hs01TongHopItem,
   ParseHs01ExcelResult,
@@ -32,8 +35,6 @@ import {
   parseHs01Row,
   renderHs01ItemXml,
 } from "./parsers/hs01TongHopRowParser";
-// ⚠️ ĐIỂM THAY DỮ LIỆU THẬT: chữ ký số SmartCA (tranId/serial/sig)
-// do tab "Ký Số SmartCA" trả về - đính kèm kết quả gửi cổng.
 import type { SmartCaSignatureResult } from "../types/smartcaTypes";
 
 export {
@@ -321,9 +322,6 @@ export async function parseHs01ExcelFile(
   );
 }
 
-/**
- * Sinh cấu trúc XML chuẩn <HSTH01BH> cho Mẫu 01/BH (Loại HS 5)
- */
 export function generateHs01Xml(
   items: Hs01TongHopItem[],
   maCskcb = DEFAULT_MA_CSKCB,
@@ -339,25 +337,21 @@ export function generateHs01Xml(
   return `<?xml version="1.0" encoding="utf-8"?><HSTH01BH xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${datasetXml}${signatureXml}</HSTH01BH>`;
 }
 
-/**
- * Tải file XML Mẫu 01/BH xuống máy
- */
 export function downloadHs01XmlFile(
   items: Hs01TongHopItem[],
   maCskcb = DEFAULT_MA_CSKCB,
   customFileName?: string,
 ): void {
   const xml = generateHs01Xml(items, maCskcb);
-  const now = new Date();
-  const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const fileName =
-    customFileName || `HSTH01BH_${maCskcb}_${ymd}_${items.length}HS.xml`;
+  const firstItem = items[0];
+  const namQt = firstItem?.namQt || new Date().getFullYear();
+  const thangQt = String(
+    firstItem?.thangQt || new Date().getMonth() + 1,
+  ).padStart(2, "0");
+  const kyQT = `${namQt}${thangQt}`;
+  const fileName = customFileName || `HSTH01BH_${maCskcb}_${kyQT}.xml`;
   downloadXmlFile(xml, fileName);
 }
-
-/**
- * Tạo & Tải file Excel Mẫu 01/BH chuẩn 20 cột
- */
 export function downloadHs01ExcelTemplate(): void {
   const ws = XLSX.utils.aoa_to_sheet([
     HS01_EXCEL_TEMPLATE_HEADERS,
@@ -369,10 +363,6 @@ export function downloadHs01ExcelTemplate(): void {
   XLSX.writeFile(wb, "Mau_01BH_HoSoTongHop_Chuan_20Cot.xlsx");
 }
 
-/**
- * Gửi hồ sơ tổng hợp Mẫu 01/BH lên Cổng tiếp nhận Giám định BHYT
- * Endpoint: /api/HoSoTongHop7980/GuiHoSoTongHop01BH (Loại HS 5)
- */
 export async function sendHs01ToBhxhGateway(
   items: Hs01TongHopItem[],
   credentials?: Partial<{
@@ -388,8 +378,38 @@ export async function sendHs01ToBhxhGateway(
   customFileBase64?: string,
 ): Promise<SendHs01GatewayResult> {
   const maCskcb = credentials?.maCskcb || DEFAULT_MA_CSKCB;
-  const currentKyQt = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}`;
-  const kyQT = credentials?.kyQT || currentKyQt;
+
+  // 1. Trích xuất kỳ quyết toán từ dữ liệu hồ sơ thực tế (NAM_QT & THANG_QT từ file Excel)
+  const firstItem = items[0];
+  let namQt = firstItem?.namQt;
+  let thangQt = firstItem?.thangQt
+    ? String(firstItem.thangQt).padStart(2, "0")
+    : undefined;
+
+  // 2. Nếu tệp nạp từ XML máy tính, quét trực tiếp thẻ <NAM_QT> và <THANG_QT> trong XML
+  if (!namQt || !thangQt) {
+    const signedXmlFromSig = (signature as any)?.signedXml;
+    let xmlContent = signedXmlFromSig || "";
+    if (!xmlContent && customFileBase64) {
+      try {
+        xmlContent = atob(customFileBase64);
+      } catch {
+        // bỏ qua
+      }
+    }
+    if (xmlContent) {
+      const matchNam = xmlContent.match(/<NAM_QT>(\d{4})<\/NAM_QT>/);
+      const matchThang = xmlContent.match(/<THANG_QT>(\d{1,2})<\/THANG_QT>/);
+      if (matchNam) namQt = Number(matchNam[1]);
+      if (matchThang) thangQt = String(matchThang[1]).padStart(2, "0");
+    }
+  }
+
+  const finalNamQt = namQt || new Date().getFullYear();
+  const finalThangQt =
+    thangQt || String(new Date().getMonth() + 1).padStart(2, "0");
+  const dataKyQt = `${finalNamQt}${finalThangQt}`;
+  const kyQT = credentials?.kyQT || dataKyQt;
 
   const tokenRes = await BhxhChungTuService.takeToken();
   const token = tokenRes.apiToken || tokenRes.APIKey?.access_token;
@@ -397,7 +417,10 @@ export async function sendHs01ToBhxhGateway(
     return {
       maKetQua: String(tokenRes.maKetQua || "401"),
       maGiaoDich: "",
-      thongDiep: tokenRes.thongDiep || tokenRes.message || "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
+      thongDiep:
+        tokenRes.thongDiep ||
+        tokenRes.message ||
+        "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
       thoiGianTiepNhan: getThoiGianTiepNhan(),
       totalRecords: items.length,
       kyQT,
@@ -409,48 +432,63 @@ export async function sendHs01ToBhxhGateway(
     // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
     const signedXmlFromSig = (signature as any)?.signedXml;
     const base64 =
-      customFileBase64 ||
-      (signedXmlFromSig
+      signedXmlFromSig
         ? xmlToBase64(signedXmlFromSig)
-        : xmlToBase64(generateHs01Xml(items, maCskcb)));
+        : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));
 
     const params = new URLSearchParams();
     params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
     params.append("loaiHs", "5");
     params.append("maTinh", credentials?.maTinh || DEFAULT_MA_TINH);
     params.append("maCskcb", maCskcb);
-    params.append("maCơ sở KCB", maCskcb);
     params.append("kyQT", kyQT);
     params.append("fileHsBase64", base64);
-    params.append("fileBase64Str", base64);
     if (signature?.tranId) {
       params.append("tranId", signature.tranId);
     }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
-      "accessToken": token,
-      "tokenId": tokenRes.idToken || tokenRes.APIKey?.id_token || "",
-      "passwordHash": tokenRes.passwordHash || "",
+      accessToken: token,
+      tokenId: tokenRes.idToken || tokenRes.APIKey?.id_token || "",
+      passwordHash: tokenRes.passwordHash || "",
     };
 
     const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await fetch(`${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_TONG_HOP_01BH}`, {
-      method: "POST",
-      headers,
-      body: params.toString(),
-    });
+    const response = await BhxhChungTuService.fetchGateway(
+      `${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_TONG_HOP_01BH}`,
+      {
+        method: "POST",
+        headers,
+        body: params.toString(),
+      },
+    );
 
-    const data = await response.json();
-    const isOk = String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
+    let data: any = {};
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        maKetQua: String(response.status),
+        thongDiep:
+          text.slice(0, 150) || `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
+      };
+    }
+    const isOk =
+      String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
     return {
       maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
-      maGiaoDich: data.maGiaoDich || (isOk ? `HS01BH_${maCskcb}_${kyQT}_${Date.now().toString().slice(-6)}` : ""),
+      maGiaoDich:
+        data.maGiaoDich ||
+        (isOk
+          ? `HS01BH_${maCskcb}_${kyQT}_${Date.now().toString().slice(-6)}`
+          : ""),
       thongDiep:
         data.thongDiep ||
         data.ghiChu ||
         (isOk
-          ? `Tiếp nhận thành công ${items.length} hồ sơ tổng hợp Mẫu 01/BH lên Cổng BHXH` +
+          ? `Tiếp nhận thành công ${items.length} hồ sơ tổng hợp Mẫu 01/BH (Kỳ QT: ${thangQt}/${namQt}) lên Cổng BHXH` +
             (signature ? ` (đã ký số SmartCA)` : "")
           : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
       thoiGianTiepNhan: data.thoiGianTiepNhan || getThoiGianTiepNhan(),
@@ -459,7 +497,8 @@ export async function sendHs01ToBhxhGateway(
       loaiHs: "5",
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
+    const errorMsg =
+      err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
     return {
       maKetQua: "500",
       maGiaoDich: "",

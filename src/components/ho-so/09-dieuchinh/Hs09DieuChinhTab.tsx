@@ -23,6 +23,8 @@ import {
 import { SchemaMappingModal } from "../../danh-muc/common/SchemaMappingModal";
 import { SchemaMappingCard } from "../../danh-muc/common/SchemaMappingCard";
 import { useSchemaMappingProps } from "../../../hooks";
+import { useRegisterSignModal } from "../../../context/SignModalContext";
+import { BhxhChungTuService } from "../../../services/bhxh/bhxhChungTuService";
 import { getTodayIsoDate } from "../../../utils/shared/excelXmlShared";
 
 interface Hs09DieuChinhTabProps {
@@ -62,8 +64,8 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
 
   // Modals
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
-  const [xmlModalTab, setXmlModalTab] = useState<"xml" | "base64" | "api">(
-    "xml",
+  const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">(
+    "smartca",
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<HoSoDieuChinh09Item | null>(
@@ -75,6 +77,12 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
   );
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
+  // Dùng chung 1 modal duy nhất: Bấm "Ký Số" ở Navbar hay ở Dropzone đều mở modal này
+  useRegisterSignModal(true, () => {
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  });
+
   // File Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,6 +93,8 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
       const result = await parseHs09ExcelFile(file);
       setItems(result.items);
       setFileUploadStats(result);
+      // Tiền kết nối Cổng BHXH trong lúc người dùng xem dữ liệu
+      BhxhChungTuService.takeToken().catch(() => {});
       toast.success(
         `Đã nạp thành công ${result.items.length} hồ sơ điều chỉnh 09/BH từ tệp "${file.name}"\nSheet: "${result.selectedSheet}"`,
         "Nạp File Excel Mẫu 09/BH Thành Công",
@@ -283,11 +293,11 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
         onDownloadTemplate={handleDownloadTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
-          setXmlModalTab("xml");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
-          setXmlModalTab("api");
+          setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenSchemaModal={() => setIsSchemaModalOpen(true)}

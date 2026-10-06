@@ -12,14 +12,15 @@ export default defineConfig(({ mode }) => {
       ? "https://egw.baohiemxahoi.gov.vn"
       : "https://gdbhyt.baohiemxahoi.gov.vn");
 
-  // Agent xử lý riêng cho bắt tay TLS của Cổng BHXH để tránh ECONNRESET
+  // Agent xử lý riêng cho bắt tay TLS của Cổng BHXH để tránh ECONNRESET / 502 do socket nhàn rỗi
   const bhxhAgent = new https.Agent({
     rejectUnauthorized: false,
     // Cho phép hạ mức bảo mật TLS phù hợp với chuẩn WAF Cổng BHXH
     ciphers: "DEFAULT@SECLEVEL=0",
     // Giữ SNI chuẩn domain đích thay vì bỏ trống
     servername: new URL(targetUrl).hostname,
-    keepAlive: true,
+    keepAlive: false,
+    timeout: 60000,
   });
 
   return {
@@ -35,6 +36,20 @@ export default defineConfig(({ mode }) => {
           headers: {
             "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          },
+          configure: (proxy) => {
+            proxy.on("error", (err, _req, res) => {
+              console.warn("[Vite Proxy BHXH] Lỗi kết nối Cổng BHXH:", err.message);
+              if (res && "writeHead" in res && !res.headersSent) {
+                res.writeHead(502, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    maKetQua: "502",
+                    thongDiep: "Cổng BHXH phản hồi 502 hoặc kết nối mạng bị gián đoạn",
+                  }),
+                );
+              }
+            });
           },
         },
         "/api-smartca-sp769": {

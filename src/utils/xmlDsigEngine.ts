@@ -47,10 +47,6 @@ export interface CanonicalizeOptions {
   preserveOtherSignatures?: boolean;
 }
 
-/**
- * Nén XML thành 1 dòng duy nhất (minified), loại bỏ khoảng trắng, tab và xuống dòng thừa giữa các thẻ XML.
- * Đảm bảo dữ liệu nguyên vẹn 100% từng byte khi băm và khi gửi lên Cổng BHXH (C14N compliant).
- */
 export function minifyXml(xml: string): string {
   if (!xml) return "";
   return xml
@@ -104,9 +100,6 @@ export async function computeXmlDigest(
   return { digestValue: base64, hexDigest: hex };
 }
 
-/**
- * Trích xuất các namespace xmlns: prefix từ root element để kế thừa vào SignedInfo theo chuẩn W3C C14N
- */
 export function extractRootNamespaces(rawXml?: string): string[] {
   const defaultNs = [
     'xmlns:xsd="http://www.w3.org/2001/XMLSchema"',
@@ -381,10 +374,6 @@ export interface InjectSignatureOptions {
   targetSignatureId?: string;
 }
 
-/**
- * Thay thế hoặc chèn khối <Signature> vào tài liệu XML.
- * Hỗ trợ đồng ký / Countersign: Mặc định bảo toàn các chữ ký đã có trước đó trong <CHUKYDONVI>.
- */
 export function injectSignatureToXml(
   rawXml: string,
   signatureBlockOrParams: string | XmlDSigParams,
@@ -491,10 +480,6 @@ export function injectSignatureToXml(
   return `${rawXml}\n<CHUKYDONVI>\n  ${signatureXml.trim()}\n</CHUKYDONVI>`;
 }
 
-/**
- * Gỡ bỏ chữ ký. Nếu truyền targetSigId thì chỉ xóa chữ ký tương ứng và giữ nguyên các chữ ký khác;
- * nếu không truyền thì đưa thẻ <CHUKYDONVI> về rỗng chuẩn hóa.
- */
 export function removeSignatureFromXml(
   xml: string,
   targetSigId?: string,
@@ -559,9 +544,6 @@ export function extractXmlSignatures(xml: string): ExtractedSignatureInfo[] {
   });
 }
 
-/**
- * Trích xuất thông tin chữ ký từ tài liệu XML đã ký (trả về chữ ký chính kèm danh sách toàn bộ chữ ký)
- */
 export function extractXmlSignature(xml: string): ExtractedSignatureInfo {
   const allSigs = extractXmlSignatures(xml);
   if (allSigs.length === 0) {

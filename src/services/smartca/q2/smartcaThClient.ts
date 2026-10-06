@@ -19,6 +19,19 @@ export interface SmartCaThClientConfig {
   env?: "demo" | "production";
 }
 
+export class SmartCaThError extends Error {
+  statusCode?: number;
+  httpStatus?: number;
+
+  constructor(message: string, statusCode?: number, httpStatus?: number) {
+    const codePrefix = statusCode ? `[SMARTCA-TH ${statusCode}] ` : "";
+    super(`${codePrefix}${message}`);
+    this.name = "SmartCaThError";
+    this.statusCode = statusCode;
+    this.httpStatus = httpStatus;
+  }
+}
+
 export class SmartCaThClient {
   private spId: string;
   private spPassword: string;
@@ -41,7 +54,7 @@ export class SmartCaThClient {
   }> {
     const finalUserId = (userId || SMARTCA_USER_ID).trim();
     if (!finalUserId) {
-      throw new Error(
+      throw new SmartCaThError(
         "Chưa cung cấp mã định danh người ký (user_id / MST / CCCD).",
       );
     }
@@ -64,12 +77,18 @@ export class SmartCaThClient {
     try {
       data = await res.json();
     } catch {
-      throw new Error(`Lỗi kết nối cổng get_certificate (HTTP ${res.status}).`);
+      throw new SmartCaThError(
+        `Lỗi kết nối cổng get_certificate (HTTP ${res.status}).`,
+        undefined,
+        res.status,
+      );
     }
 
     if (data.status_code !== 200 || !data.data?.user_certificates?.length) {
-      throw new Error(
+      throw new SmartCaThError(
         data.message || "Không tìm thấy chứng thư số hợp lệ của thuê bao.",
+        data.status_code,
+        res.status,
       );
     }
 
@@ -141,15 +160,19 @@ export class SmartCaThClient {
     try {
       data = await res.json();
     } catch {
-      throw new Error(
+      throw new SmartCaThError(
         `Lỗi kết nối cổng v2/signatures/sign (HTTP ${res.status}).`,
+        undefined,
+        res.status,
       );
     }
 
     if (data.status_code !== 200 || !data.data?.sad) {
-      throw new Error(
+      throw new SmartCaThError(
         data.message ||
           "Khởi tạo chữ ký số V2 không thành công (thiếu SAD token).",
+        data.status_code,
+        res.status,
       );
     }
 
@@ -193,8 +216,10 @@ export class SmartCaThClient {
     try {
       data = await res.json();
     } catch {
-      throw new Error(
+      throw new SmartCaThError(
         `Lỗi kết nối cổng v2/signatures/confirm (HTTP ${res.status}).`,
+        undefined,
+        res.status,
       );
     }
 
@@ -203,9 +228,11 @@ export class SmartCaThClient {
       !data.data?.signatures ||
       data.data.signatures.length === 0
     ) {
-      throw new Error(
+      throw new SmartCaThError(
         data.message ||
           "Xác nhận chữ ký số V2 thất bại (không nhận được signatures).",
+        data.status_code,
+        res.status,
       );
     }
 

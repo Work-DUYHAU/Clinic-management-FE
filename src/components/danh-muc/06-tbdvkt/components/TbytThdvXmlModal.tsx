@@ -16,7 +16,7 @@ export interface TbytThdvXmlModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: DmTbytThdvItem[];
-  defaultTab?: 'xml' | 'base64' | 'api' | 'smartca';
+  defaultTab?: 'base64' | 'smartca';
   onSendSuccess?: (result: SendTbytThdvGatewayResult) => void;
   fileUploadStats?: SourceFileUploadInfo | null;
 }
@@ -25,7 +25,7 @@ export const TbytThdvXmlModal: React.FC<TbytThdvXmlModalProps> = ({
   isOpen,
   onClose,
   items,
-  defaultTab = 'xml',
+  defaultTab = 'smartca',
   onSendSuccess,
   fileUploadStats,
 }) => {
@@ -64,7 +64,6 @@ export const TbytThdvXmlModal: React.FC<TbytThdvXmlModalProps> = ({
       itemLabel="thiết bị thực hiện DVKT"
       xmlContent={xmlContent}
       base64Content={base64Content}
-      apiEndpoint="https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc06_DMTBYT"
       loaiHsCode="72"
       tab={tab}
       onTabChange={setTab}

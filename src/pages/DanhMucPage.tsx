@@ -36,7 +36,11 @@ interface TabItem {
   featured?: boolean;
 }
 
-export const DanhMucPage: React.FC = () => {
+interface DanhMucPageProps {
+  isActive?: boolean;
+}
+
+export const DanhMucPage: React.FC<DanhMucPageProps> = ({ isActive = true }) => {
   const [activeCatalogTab, setActiveCatalogTab] =
     useState<CatalogTab>("01_bpcm");
 
@@ -172,22 +176,22 @@ export const DanhMucPage: React.FC = () => {
       {/* Active Tab Content - Keep mounted to preserve individual Excel imports and sheet states */}
       <div className="transition-all duration-200">
         <div className={activeCatalogTab === "01_bpcm" ? "block" : "hidden"}>
-          <DmBpcmTab />
+          <DmBpcmTab isActive={isActive && activeCatalogTab === "01_bpcm"} />
         </div>
         <div className={activeCatalogTab === "02_nhanluc" ? "block" : "hidden"}>
-          <DmNhanLucTab />
+          <DmNhanLucTab isActive={isActive && activeCatalogTab === "02_nhanluc"} />
         </div>
         <div className={activeCatalogTab === "03_thuoc" ? "block" : "hidden"}>
-          <DmThuocTab />
+          <DmThuocTab isActive={isActive && activeCatalogTab === "03_thuoc"} />
         </div>
         <div className={activeCatalogTab === "04_thietbi" ? "block" : "hidden"}>
-          <DmThietBiTab />
+          <DmThietBiTab isActive={isActive && activeCatalogTab === "04_thietbi"} />
         </div>
         <div className={activeCatalogTab === "05_dichvu" ? "block" : "hidden"}>
-          <DmDichVuTab />
+          <DmDichVuTab isActive={isActive && activeCatalogTab === "05_dichvu"} />
         </div>
         <div className={activeCatalogTab === "06_tbdvkt" ? "block" : "hidden"}>
-          <DmTbDvktTab />
+          <DmTbDvktTab isActive={isActive && activeCatalogTab === "06_tbdvkt"} />
         </div>
       </div>
     </div>

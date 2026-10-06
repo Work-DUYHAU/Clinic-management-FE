@@ -1,5 +1,8 @@
 import * as XLSX from "xlsx";
-import { BhxhChungTuService, BHXH_CONFIG } from "../services/bhxh/bhxhChungTuService";
+import {
+  BhxhChungTuService,
+  BHXH_CONFIG,
+} from "../services/bhxh/bhxhChungTuService";
 import type {
   HoSoDieuChinh09Item,
   ParseHs09ExcelResult,
@@ -26,6 +29,7 @@ import {
   DEFAULT_MA_CSKCB,
 } from "./shared/excelXmlShared";
 import { parseHs09Row, renderHs09ItemXml } from "./parsers/hs09RowParser";
+import type { SmartCaSignatureResult } from "../types/smartcaTypes";
 
 export { xmlToBase64, downloadXmlFile };
 
@@ -352,13 +356,11 @@ export function downloadHs09ExcelTemplate(): void {
   XLSX.writeFile(wb, "Mau_09BH_HoSoDieuChinh_Chuan_22Cot.xlsx");
 }
 
-/**
- * Gửi hồ sơ điều chỉnh Mẫu 09/BH lên Cổng tiếp nhận Giám định BHYT
- * Endpoint: /api/HSDCTT12/GuiHoSoDieuChinh09BH (Loại HS 73)
- */
 export async function sendHs09ToBhxhGateway(
   items: HoSoDieuChinh09Item[],
   credentials?: Partial<Hs09GatewayCredentials>,
+  signature?: SmartCaSignatureResult,
+  customFileBase64?: string,
 ): Promise<SendHs09GatewayResult> {
   const maCskcb =
     credentials?.maCskcb || items[0]?.ttMau?.maCskcb || DEFAULT_MA_CSKCB;
@@ -369,7 +371,10 @@ export async function sendHs09ToBhxhGateway(
     return {
       maKetQua: String(tokenRes.maKetQua || "401"),
       maGiaoDich: "",
-      thongDiep: tokenRes.thongDiep || tokenRes.message || "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
+      thongDiep:
+        tokenRes.thongDiep ||
+        tokenRes.message ||
+        "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
       thoiGianTiepNhan: getThoiGianTiepNhan(),
       totalRecords: items.length,
       loaiHs: "73",
@@ -377,36 +382,59 @@ export async function sendHs09ToBhxhGateway(
   }
 
   try {
-    const xml = generateHs09Xml(items, maCskcb);
-    const base64 = xmlToBase64(xml);
+    // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
+    const signedXmlFromSig = (signature as any)?.signedXml;
+    const base64 =
+      signedXmlFromSig
+        ? xmlToBase64(signedXmlFromSig)
+        : customFileBase64 || xmlToBase64(generateHs09Xml(items, maCskcb));
 
     const params = new URLSearchParams();
     params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
     params.append("loaiHs", "73");
     params.append("maCskcb", maCskcb);
-    params.append("maCơ sở KCB", maCskcb);
     params.append("fileHsBase64", base64);
-    params.append("fileBase64Str", base64);
+    if (signature?.tranId) {
+      params.append("tranId", signature.tranId);
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
-      "accessToken": token,
-      "tokenId": tokenRes.idToken || tokenRes.APIKey?.id_token || "",
-      "passwordHash": tokenRes.passwordHash || "",
+      accessToken: token,
+      tokenId: tokenRes.idToken || tokenRes.APIKey?.id_token || "",
+      passwordHash: tokenRes.passwordHash || "",
     };
 
     const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await fetch(`${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_DIEU_CHINH_09BH}`, {
-      method: "POST",
-      headers,
-      body: params.toString(),
-    });
+    const response = await BhxhChungTuService.fetchGateway(
+      `${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_DIEU_CHINH_09BH}`,
+      {
+        method: "POST",
+        headers,
+        body: params.toString(),
+      },
+    );
 
-    const data = await response.json();
-    const isOk = String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
+    let data: any = {};
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        maKetQua: String(response.status),
+        thongDiep:
+          text.slice(0, 150) || `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
+      };
+    }
+    const isOk =
+      String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
     return {
       maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
-      maGiaoDich: data.maGiaoDich || (isOk ? `HSDC09BH_${maCskcb}_${getTodayYmd()}_${Date.now().toString().slice(-6)}` : ""),
+      maGiaoDich:
+        data.maGiaoDich ||
+        (isOk
+          ? `HSDC09BH_${maCskcb}_${getTodayYmd()}_${Date.now().toString().slice(-6)}`
+          : ""),
       thongDiep:
         data.thongDiep ||
         data.ghiChu ||
@@ -418,7 +446,8 @@ export async function sendHs09ToBhxhGateway(
       loaiHs: "73",
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
+    const errorMsg =
+      err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
     return {
       maKetQua: "500",
       maGiaoDich: "",

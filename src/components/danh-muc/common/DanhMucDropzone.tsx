@@ -1,8 +1,8 @@
 import React from "react";
-import { Upload } from "lucide-react";
+import { Upload, ShieldCheck } from "lucide-react";
 import { useFileDropzone } from "../../../hooks";
 import type { ThemeColor, ExcelSheetInfo } from "./ExcelUploadStatsBar";
-import { ExcelUploadStatsBar, DanhMucActionToolbar } from "./index";
+import { ExcelUploadStatsBar } from "./index";
 
 /**
  * Giao diện màu theo theme cho dropzone (bổ sung cho ThemeColor của StatsBar).
@@ -16,6 +16,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: string;
     btn: string;
     btnShadow: string;
+    xmlBtn: string;
   }
 > = {
   blue: {
@@ -27,6 +28,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-blue-100",
     btn: "bg-[#1677ff] hover:bg-blue-600",
     btnShadow: "shadow-blue-500/20",
+    xmlBtn: "bg-blue-50 hover:bg-blue-100 border-blue-200 text-[#1677ff]",
   },
   indigo: {
     border:
@@ -37,6 +39,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-indigo-100",
     btn: "bg-indigo-600 hover:bg-indigo-700",
     btnShadow: "shadow-indigo-500/20",
+    xmlBtn: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700",
   },
   emerald: {
     border:
@@ -47,6 +50,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-emerald-100",
     btn: "bg-emerald-600 hover:bg-emerald-700",
     btnShadow: "shadow-emerald-500/20",
+    xmlBtn: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700",
   },
   cyan: {
     border:
@@ -57,6 +61,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-cyan-100",
     btn: "bg-cyan-600 hover:bg-cyan-700",
     btnShadow: "shadow-cyan-500/20",
+    xmlBtn: "bg-slate-900 hover:bg-slate-800 text-white",
   },
   purple: {
     border:
@@ -67,6 +72,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-purple-100",
     btn: "bg-purple-600 hover:bg-purple-700",
     btnShadow: "shadow-purple-500/20",
+    xmlBtn: "bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700",
   },
   amber: {
     border:
@@ -77,6 +83,7 @@ const dropzoneThemeStyles: Record<
     iconBorder: "border-amber-100",
     btn: "bg-amber-600 hover:bg-amber-700",
     btnShadow: "shadow-amber-500/20",
+    xmlBtn: "bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-900",
   },
 };
 
@@ -102,28 +109,28 @@ export interface DanhMucDropzoneProps {
     availableSheets?: ExcelSheetInfo[];
     extraBadge?: React.ReactNode;
   };
-  /** Số bản ghi hiện có (để toolbar hiện nút Xóa Hết) */
-  itemsCount: number;
+  /** Số bản ghi hiện có */
+  itemsCount?: number;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSwitchSheet?: (sheetName: string) => void;
   onOpenSchemaModal?: () => void;
-  onDownloadTemplate: () => void;
-  onClearData: () => void;
+  onDownloadTemplate?: () => void;
+  onClearData?: () => void;
   onOpenXmlModal: () => void;
   onOpenApiTab?: () => void;
-  onAddNew: () => void;
+  onAddNew?: () => void;
   // Nhãn toolbar
   templateLabel?: string;
   xmlLabel?: string;
+  xmlTooltip?: string;
   apiLabel?: string;
-  addNewLabel: string;
+  addNewLabel?: string;
   buttonLabel?: string;
 }
 
 /**
  * Dropzone dùng chung cho mọi tab Danh mục / Hồ sơ:
- * input file ẩn + kéo-thả + stats bar + action toolbar.
- * Mỗi tab chỉ truyền theme, label và handlers — không còn copy logic drag-drop.
+ * input file ẩn + kéo-thả + stats bar.
  */
 export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   themeColor = "blue",
@@ -132,19 +139,12 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   title,
   description,
   uploadStats,
-  itemsCount,
   onFileUpload,
   onSwitchSheet,
   onOpenSchemaModal,
-  onDownloadTemplate,
-  onClearData,
   onOpenXmlModal,
-  onOpenApiTab,
-  onAddNew,
-  templateLabel,
   xmlLabel,
-  apiLabel,
-  addNewLabel,
+  xmlTooltip,
   buttonLabel = "Chọn Tệp Excel / XML",
 }) => {
   const {
@@ -159,7 +159,7 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   const theme = dropzoneThemeStyles[themeColor] || dropzoneThemeStyles.blue;
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
       {/* Upload Dropzone */}
       <div>
         <input
@@ -175,20 +175,20 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 flex flex-col md:flex-row items-center justify-between gap-4 ${
+          className={`border-2 border-dashed rounded-2xl p-3.5 sm:p-4 text-center cursor-pointer transition-all duration-200 flex flex-col md:flex-row items-center justify-between gap-3.5 ${
             isLoadingFile
               ? "pointer-events-none opacity-60 cursor-not-allowed"
               : ""
           } ${isDragging ? theme.dragging : theme.border}`}
         >
-          <div className="flex items-center gap-4 text-left">
+          <div className="flex items-center gap-3 text-left">
             <div
-              className={`w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0 border ${theme.iconText} ${theme.iconBorder}`}
+              className={`w-10 h-10 rounded-xl bg-white shadow-2xs flex items-center justify-center shrink-0 border ${theme.iconText} ${theme.iconBorder}`}
             >
-              <Upload size={24} />
+              <Upload size={18} />
             </div>
             <div>
-              <h4 className="text-base font-bold text-slate-900">
+              <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
                 {isLoadingFile ? loadingTitle : title}
               </h4>
               {description && (
@@ -197,52 +197,54 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            disabled={isLoadingFile}
-            onClick={(e) => {
-              e.stopPropagation();
-              openFilePicker();
-            }}
-            className={`px-5 py-2.5 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md transition-all whitespace-nowrap self-stretch md:self-auto flex items-center gap-2 ${theme.btn} ${theme.btnShadow}`}
-          >
-            <Upload size={15} />
-            <span>{isLoadingFile ? "Đang Xử Lý..." : buttonLabel}</span>
-          </button>
+          <div className="flex items-center gap-2 self-stretch md:self-auto shrink-0 flex-wrap justify-end">
+            <button
+              type="button"
+              disabled={isLoadingFile}
+              onClick={(e) => {
+                e.stopPropagation();
+                openFilePicker();
+              }}
+              className={`px-4 py-2 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${theme.btn} ${theme.btnShadow}`}
+            >
+              <Upload size={14} />
+              <span>{isLoadingFile ? "Đang Xử Lý..." : buttonLabel}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenXmlModal();
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs border cursor-pointer ${theme.xmlBtn}`}
+              title={xmlTooltip}
+            >
+              <ShieldCheck size={14} />
+              <span>{xmlLabel || "Ký Số & Gửi Cổng"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Thống kê file đã nạp & chuyển sheet */}
         {uploadStats && (
-          <ExcelUploadStatsBar
-            selectedSheet={uploadStats.selectedSheet || ""}
-            totalRows={uploadStats.totalRows}
-            rowUnitLabel={uploadStats.rowUnitLabel}
-            matchedColumnsCount={uploadStats.matchedColumnsCount}
-            totalColumnsCount={uploadStats.totalColumnsCount}
-            fileName={uploadStats.fileName}
-            availableSheets={uploadStats.availableSheets}
-            themeColor={themeColor}
-            onOpenSchemaModal={onOpenSchemaModal}
-            onSwitchSheet={onSwitchSheet}
-            extraBadge={uploadStats.extraBadge}
-          />
+          <div className="pt-2">
+            <ExcelUploadStatsBar
+              selectedSheet={uploadStats.selectedSheet || ""}
+              totalRows={uploadStats.totalRows}
+              rowUnitLabel={uploadStats.rowUnitLabel}
+              matchedColumnsCount={uploadStats.matchedColumnsCount}
+              totalColumnsCount={uploadStats.totalColumnsCount}
+              fileName={uploadStats.fileName}
+              availableSheets={uploadStats.availableSheets}
+              themeColor={themeColor}
+              onOpenSchemaModal={onOpenSchemaModal}
+              onSwitchSheet={onSwitchSheet}
+              extraBadge={uploadStats.extraBadge}
+            />
+          </div>
         )}
       </div>
-
-      {/* Action Toolbar */}
-      <DanhMucActionToolbar
-        itemsCount={itemsCount}
-        templateLabel={templateLabel}
-        xmlLabel={xmlLabel}
-        apiLabel={apiLabel}
-        addNewLabel={addNewLabel}
-        themeColor={themeColor}
-        onDownloadTemplate={onDownloadTemplate}
-        onClearData={onClearData}
-        onOpenXmlModal={onOpenXmlModal}
-        onOpenApiTab={onOpenApiTab}
-        onAddNew={onAddNew}
-      />
     </div>
   );
 };

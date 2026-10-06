@@ -51,15 +51,16 @@ export const findMatchingBpcmSchemaKey = bpcmEngine.findMatchingSchemaKey;
 export const parseWorksheet = (
   workbook: import("xlsx").WorkBook,
   sheetName: string,
-  fileName: string,
+  fileName?: string,
   defaultMaCskcb?: string,
 ): ParseExcelResult => {
+  const ws = workbook.Sheets[sheetName];
   return bpcmEngine.parseWorksheet(
-    workbook,
+    ws,
     sheetName,
+    workbook.SheetNames || [sheetName],
     fileName,
-    undefined,
-    undefined,
+    workbook,
     defaultMaCskcb,
   );
 };

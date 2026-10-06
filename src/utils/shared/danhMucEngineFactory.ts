@@ -562,7 +562,7 @@ ${rowsXml}
 
     const xml = generateXml(items, maCskcb);
     const finalBase64 =
-      fileBase64 || (xml ? generateBase64(items, xml) : undefined);
+      fileBase64 || (xml ? xmlToBase64(xml) : undefined);
 
     return sendDanhMucToBhxhGateway(
       config.catalogCode,
