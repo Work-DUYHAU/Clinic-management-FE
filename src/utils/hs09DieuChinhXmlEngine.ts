@@ -389,10 +389,40 @@ export async function sendHs09ToBhxhGateway(
         ? xmlToBase64(signedXmlFromSig)
         : customFileBase64 || xmlToBase64(generateHs09Xml(items, maCskcb));
 
+    // Trích xuất kỳ quyết toán kyQT (yêu cầu định dạng AAAAMM: YYYYMM, năm từ 2000, tháng 01-12)
+    let rawKyQt = items[0]?.ttXml1?.kyQt?.trim() || "";
+    if (!rawKyQt && signedXmlFromSig) {
+      const match = signedXmlFromSig.match(/<KY_QT>([^<]+)<\/KY_QT>/i);
+      if (match) rawKyQt = match[1].trim();
+    }
+    if (!rawKyQt && customFileBase64) {
+      try {
+        const decoded = atob(customFileBase64);
+        const match = decoded.match(/<KY_QT>([^<]+)<\/KY_QT>/i);
+        if (match) rawKyQt = match[1].trim();
+      } catch {
+        // Ignore decode error
+      }
+    }
+
+    let finalKyQt = rawKyQt.replace(/[^0-9]/g, "");
+    if (finalKyQt.length === 6) {
+      const first2 = Number(finalKyQt.slice(0, 2));
+      const last4 = Number(finalKyQt.slice(2));
+      // Nếu dạng MMYYYY -> đảo về YYYYMM
+      if (first2 >= 1 && first2 <= 12 && last4 >= 2000) {
+        finalKyQt = `${last4}${String(first2).padStart(2, "0")}`;
+      }
+    } else {
+      // Mặc định tháng năm hiện tại nếu không tìm thấy
+      finalKyQt = getTodayYmd().slice(0, 6);
+    }
+
     const params = new URLSearchParams();
     params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
     params.append("loaiHs", "73");
     params.append("maCskcb", maCskcb);
+    params.append("kyQT", finalKyQt);
     params.append("fileHsBase64", base64);
     if (signature?.tranId) {
       params.append("tranId", signature.tranId);
@@ -433,17 +463,18 @@ export async function sendHs09ToBhxhGateway(
       maGiaoDich:
         data.maGiaoDich ||
         (isOk
-          ? `HSDC09BH_${maCskcb}_${getTodayYmd()}_${Date.now().toString().slice(-6)}`
+          ? `HSDC09BH_${maCskcb}_${finalKyQt}_${Date.now().toString().slice(-6)}`
           : ""),
       thongDiep:
         data.thongDiep ||
         data.ghiChu ||
         (isOk
-          ? `Tiếp nhận thành công ${items.length} hồ sơ điều chỉnh Mẫu 09/BH vào Hệ thống Giám định BHYT`
+          ? `Tiếp nhận thành công ${items.length} hồ sơ điều chỉnh Mẫu 09/BH (Kỳ QT: ${finalKyQt.slice(4)}/${finalKyQt.slice(0, 4)}) vào Hệ thống Giám định BHYT`
           : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
       thoiGianTiepNhan: data.thoiGianTiepNhan || getThoiGianTiepNhan(),
       totalRecords: items.length,
       loaiHs: "73",
+      kyQT: data.kyQT || finalKyQt,
     };
   } catch (err: unknown) {
     const errorMsg =

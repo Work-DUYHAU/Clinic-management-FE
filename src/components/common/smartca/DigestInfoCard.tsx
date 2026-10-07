@@ -21,8 +21,8 @@ export const DigestInfoCard: React.FC<DigestInfoCardProps> = ({
   onCopyDigest,
 }) => {
   return (
-    <div className="p-3.5 bg-slate-50/60 border border-slate-200 rounded-xl space-y-2">
-      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+    <div className="p-2.5 sm:p-3 bg-slate-50/60 border border-slate-200 rounded-xl space-y-1">
+      <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
         <div className="min-w-0 flex-1 pr-2">
           <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
             Tệp Tin Ký Số (Quy Trình 1 - SmartCA)

@@ -6,8 +6,6 @@ import {
   Cpu,
   Stethoscope,
   Wrench,
-  ShieldCheck,
-  Database,
 } from "lucide-react";
 import {
   DmBpcmTab,
@@ -17,9 +15,8 @@ import {
   DmDichVuTab,
   DmTbDvktTab,
 } from "../components/danh-muc";
-import { DEFAULT_MA_CSKCB, DEFAULT_CLINIC_NAME } from "../utils/shared/excelXmlShared";
 
-type CatalogTab =
+export type CatalogTab =
   | "01_bpcm"
   | "02_nhanluc"
   | "03_thuoc"
@@ -36,13 +33,27 @@ interface TabItem {
   featured?: boolean;
 }
 
-interface DanhMucPageProps {
+export interface DanhMucPageProps {
   isActive?: boolean;
+  activeCatalogTab?: CatalogTab;
+  onCatalogTabChange?: (tab: CatalogTab) => void;
 }
 
-export const DanhMucPage: React.FC<DanhMucPageProps> = ({ isActive = true }) => {
-  const [activeCatalogTab, setActiveCatalogTab] =
-    useState<CatalogTab>("01_bpcm");
+export const DanhMucPage: React.FC<DanhMucPageProps> = ({
+  isActive = true,
+  activeCatalogTab: externalTab,
+  onCatalogTabChange,
+}) => {
+  const [internalTab, setInternalTab] = useState<CatalogTab>("01_bpcm");
+  const activeCatalogTab = externalTab ?? internalTab;
+
+  const handleTabChange = (tabId: CatalogTab) => {
+    if (onCatalogTabChange) {
+      onCatalogTabChange(tabId);
+    } else {
+      setInternalTab(tabId);
+    }
+  };
 
   const catalogTabs: TabItem[] = [
     {
@@ -95,37 +106,6 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({ isActive = true }) => 
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Header Card */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#1677ff] font-bold text-xs border border-blue-200 flex items-center gap-1">
-              <Database size={12} />
-              <span>Hệ Thống Danh Mục Chuẩn BHXH Việt Nam</span>
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200 flex items-center gap-1">
-              <ShieldCheck size={12} />
-              <span>Sẵn Sàng Ký Số Trực Tuyến</span>
-            </span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-2">
-            Quản Lý Danh Mục BHYT & Đồng Bộ Cổng EGW
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Mã CSKCB:{" "}
-            <strong className="text-slate-800 font-mono font-bold">
-              {DEFAULT_MA_CSKCB}
-            </strong>{" "}
-            • Cơ sở:{" "}
-            <strong className="text-slate-800 font-bold">
-              {DEFAULT_CLINIC_NAME}
-            </strong>{" "}
-            • Phiên bản API Gateway:{" "}
-            <strong className="text-[#1677ff] font-bold">DanhMucGW 2026</strong>
-          </p>
-        </div>
-      </div>
-
       {/* 6 Tab Switcher Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {catalogTabs.map((tab) => {
@@ -135,7 +115,7 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({ isActive = true }) => 
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveCatalogTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden flex flex-col justify-between ${
                 isActive
                   ? "bg-white border-[#1677ff] shadow-sm ring-2 ring-blue-500/10"

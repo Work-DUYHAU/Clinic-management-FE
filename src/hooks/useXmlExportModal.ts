@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useToast } from "../context/ToastContext";
 import { extractXmlSignature } from "../utils/xmlDsigEngine";
 import { BhxhChungTuService } from "../services/bhxh/bhxhChungTuService";
+import { isBhxhGatewaySuccess } from "../utils/shared/excelXmlShared";
 
 export type XmlExportTabType = "base64" | "smartca";
 
@@ -112,10 +113,7 @@ export function useXmlExportModal<T, R = any>({
     try {
       const res = await sendGateway(items, signatureResult, fileBase64);
       setSendResult(res);
-      const isSuccess =
-        String((res as any)?.maKetQua) === "200" ||
-        (res as any)?.isOk === true ||
-        Boolean((res as any)?.maGiaoDich && !(res as any)?.isError);
+      const isSuccess = isBhxhGatewaySuccess(res);
 
       if (isSuccess) {
         const msg = getSendSuccessMessage

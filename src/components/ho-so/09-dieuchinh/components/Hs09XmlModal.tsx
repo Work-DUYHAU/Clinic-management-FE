@@ -8,7 +8,11 @@ import {
   downloadHs09XmlFile,
   sendHs09ToBhxhGateway,
 } from "../../../../utils/hs09DieuChinhXmlEngine";
-import { xmlToBase64 } from "../../../../utils/shared/excelXmlShared";
+import {
+  xmlToBase64,
+  DEFAULT_MA_CSKCB,
+  getTodayYmd,
+} from "../../../../utils/shared/excelXmlShared";
 import { XmlExportModal } from "../../../common";
 import { useXmlExportModal } from "../../../../hooks";
 
@@ -84,6 +88,10 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
     onSendSuccess,
   });
 
+  const itemKyQt = items[0]?.ttXml1?.kyQt?.trim();
+  const kyQT = itemKyQt && itemKyQt.length === 6 ? itemKyQt : getTodayYmd().slice(0, 6);
+  const defaultFileName = `HSDC09BH_${DEFAULT_MA_CSKCB}_${kyQT}.xml`;
+
   return (
     <XmlExportModal
       isOpen={isOpen}
@@ -95,6 +103,7 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
       xmlContent={xmlContent}
       base64Content={base64Content}
       loaiHsCode="73"
+      customFileName={defaultFileName}
       tab={tab}
       onTabChange={setTab}
       onExportXml={handleDownloadXml}

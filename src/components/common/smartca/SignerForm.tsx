@@ -20,14 +20,9 @@ import {
 
 export interface SignerFormProps {
   config: SmartCaPersistentConfig;
-  signerName?: string;
-  setSignerName?: (name: string) => void;
-  signerEmail?: string;
-  setSignerEmail?: (email: string) => void;
   idType: IdentityType;
   identityValue: string;
   onIdentityChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectIdType?: (type: IdentityType) => void;
   password: string;
   setPassword: (pwd: string) => void;
   showPassword: boolean;
@@ -74,8 +69,8 @@ export const SignerForm: React.FC<SignerFormProps> = ({
   }, [identityValue, idType]);
 
   return (
-    <div className="p-4 sm:p-5 bg-white border border-slate-200 rounded-2xl space-y-4 shadow-xs">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+    <div className="p-3 sm:p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
         <div>
           <h4 className="text-sm sm:text-base font-extrabold text-slate-900">
             {signMode === "Q2" ? (
@@ -108,9 +103,9 @@ export const SignerForm: React.FC<SignerFormProps> = ({
       </div>
 
       {/* 2 Ô NHẬP LIỆU: TÀI KHOẢN & MẬT KHẨU TRÊN CÙNG 1 HÀNG */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
         {/* TÀI KHOẢN SMARTCA */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
             <span>
               Tài Khoản SmartCA(MST/CCCD)
@@ -131,7 +126,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
                 IDENTITY_PLACEHOLDERS[idType] ||
                 "Nhập Mã số thuế CSKCB (10 hoặc 13-14 số)"
               }
-              className={`w-full px-3.5 py-2.5 rounded-xl border bg-white text-sm font-mono font-semibold text-slate-900 focus:outline-none transition-all shadow-2xs pr-16 ${
+              className={`w-full px-3 py-2 rounded-xl border bg-white text-sm font-mono font-semibold text-slate-900 focus:outline-none transition-all shadow-2xs pr-16 ${
                 identityStatus === null
                   ? "border-slate-300 focus:ring-2 focus:ring-blue-500"
                   : identityStatus.isValid
@@ -145,7 +140,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
           </div>
 
           {/* GỢI Ý & TRẠNG THÁI KIỂM TRA ĐỊNH DANH */}
-          <div className="flex items-center justify-between text-[11px] px-1 min-h-[18px]">
+          <div className="flex items-center justify-between text-[11px] px-1 min-h-[15px]">
             <span className="text-slate-500">
               {IDENTITY_DESCRIPTIONS[idType] ||
                 "10 hoặc 13–14 ký tự (DN / Cơ sở KCB)"}
@@ -176,7 +171,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
         </div>
 
         {/* MẬT KHẨU TÀI KHOẢN SMARTCA */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
             <span>
               Mật Khẩu Tài Khoản SmartCA:{" "}
@@ -192,7 +187,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Nhập mật khẩu tài khoản VNPT SmartCA"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 transition-all shadow-2xs"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 transition-all shadow-2xs"
             />
             <button
               type="button"
@@ -202,7 +197,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          <div className="flex items-center justify-between text-[11px] px-1 text-slate-400 min-h-[18px]">
+          <div className="flex items-center justify-between text-[11px] px-1 text-slate-400 min-h-[15px]">
             <span>Mật khẩu chữ ký số xác thực SmartCA</span>
           </div>
         </div>
@@ -210,7 +205,7 @@ export const SignerForm: React.FC<SignerFormProps> = ({
 
       {/* TÙY CHỌN GỘP QUY TRÌNH: TỰ ĐỘNG GỬI CỔNG BHXH */}
       {!hideAutoSendCheckbox && (
-        <div className="p-3 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between transition-all select-none">
+        <div className="p-2.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between transition-all select-none">
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input
               type="checkbox"

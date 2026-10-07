@@ -3,6 +3,7 @@ import {
   Database,
   FileText,
   ShieldAlert,
+  FileSignature,
   LogOut,
   Stethoscope,
   Building2,
@@ -12,7 +13,7 @@ import {
 import { useToast } from "../context/ToastContext";
 import { DEFAULT_MA_CSKCB, DEFAULT_MA_TINH, DEFAULT_CLINIC_NAME } from "../utils/shared/excelXmlShared";
 
-export type MainTabType = "danh-muc" | "ho-so";
+export type MainTabType = "danh-muc" | "ho-so" | "chung-tu";
 export type HoSoTabType = "01_tonghop" | "09_xuattoan";
 
 interface SidebarProps {
@@ -31,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const toast = useToast();
 
   return (
-    <aside className="w-72 bg-[#001529] text-slate-300 flex flex-col flex-shrink-0 h-screen sticky top-0 z-40 border-r border-slate-800 shadow-xl">
+    <aside className="w-72 bg-[#001529] text-slate-300 flex flex-col flex-shrink-0 h-full z-40 border-r border-slate-800 shadow-xl">
       {/* Brand Header */}
       <div className="p-5 flex items-center gap-3.5 border-b border-slate-800/80 bg-[#001122]">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 flex-shrink-0">
@@ -200,6 +201,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
             </div>
             {activeTab === "ho-so" && hoSoTab === "09_xuattoan" && (
+              <ChevronRight size={14} className="text-white flex-shrink-0" />
+            )}
+          </button>
+        </div>
+
+        {/* ============================================================
+            3. PHÂN HỆ HỒ SƠ CHỨNG TỪ ĐIỆN TỬ (TT 25 & BHXH 2025)
+        ============================================================ */}
+        <div className="mt-2 space-y-1.5">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 flex items-center justify-between">
+            <span>3. CHỨNG TỪ ĐIỆN TỬ</span>
+            <span className="text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded font-mono">
+              TT 25
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate("chung-tu")}
+            className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-200 group relative ${
+              activeTab === "chung-tu"
+                ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40"
+                : "hover:bg-slate-800/70 text-slate-300 hover:text-white bg-slate-900/30 border border-slate-800/60"
+            }`}
+          >
+            <div
+              className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                activeTab === "chung-tu"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-800 text-indigo-400 group-hover:bg-slate-700"
+              }`}
+            >
+              <FileSignature size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold flex items-center justify-between gap-1">
+                <span className="truncate">Hồ Sơ Chứng Từ</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex-shrink-0 ${
+                    activeTab === "chung-tu"
+                      ? "bg-white/20 text-white"
+                      : "bg-indigo-950 text-indigo-300 border border-indigo-800/50"
+                  }`}
+                >
+                  TT 25
+                </span>
+              </div>
+              <span
+                className={`text-[11px] block truncate mt-0.5 ${
+                  activeTab === "chung-tu" ? "text-indigo-100" : "text-slate-400"
+                }`}
+              >
+                CT01, CT07, GBT, GCS...
+              </span>
+            </div>
+            {activeTab === "chung-tu" && (
               <ChevronRight size={14} className="text-white flex-shrink-0" />
             )}
           </button>

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useClipboard } from "../../../hooks/useClipboard";
 import type { ExtractedSignatureInfo } from "../../../utils/xmlDsigEngine";
+import { isBhxhGatewaySuccess } from "../../../utils/shared/excelXmlShared";
 
 export interface BhxhFlowStepperProps {
   /** Hồ sơ đã có chữ ký số hợp lệ */
@@ -54,34 +55,34 @@ const STEP_STYLES: Record<
   { circle: string; title: string; line: string }
 > = {
   completed: {
-    circle: "bg-emerald-600 text-white shadow-2xs",
-    title: "text-emerald-800 font-bold",
+    circle: "bg-emerald-500 text-white shadow-2xs",
+    title: "text-slate-800 font-bold",
     line: "bg-emerald-500",
   },
   active: {
     circle:
-      "bg-blue-600 text-white shadow-xs animate-pulse ring-2 ring-blue-300",
-    title: "text-blue-700 font-extrabold",
-    line: "bg-blue-500 animate-pulse",
+      "bg-blue-600 text-white shadow-xs animate-pulse ring-4 ring-blue-100",
+    title: "text-blue-700 font-bold",
+    line: "bg-blue-500",
   },
   ready: {
-    circle: "bg-amber-500 text-white shadow-2xs",
-    title: "text-amber-700 font-bold",
+    circle: "bg-amber-500 text-white shadow-2xs ring-4 ring-amber-50",
+    title: "text-slate-800 font-bold",
     line: "bg-slate-200",
   },
   warning: {
-    circle: "bg-amber-600 text-white shadow-2xs",
+    circle: "bg-amber-600 text-white shadow-2xs ring-4 ring-amber-50",
     title: "text-amber-700 font-bold",
     line: "bg-amber-500",
   },
   error: {
-    circle: "bg-rose-600 text-white shadow-xs ring-2 ring-rose-300",
-    title: "text-rose-700 font-extrabold",
+    circle: "bg-rose-600 text-white shadow-xs ring-4 ring-rose-100",
+    title: "text-rose-700 font-bold",
     line: "bg-rose-500",
   },
   pending: {
-    circle: "bg-slate-200 text-slate-500 font-semibold",
-    title: "text-slate-500 font-medium",
+    circle: "bg-white border-2 border-slate-200 text-slate-400",
+    title: "text-slate-600 font-semibold",
     line: "bg-slate-200",
   },
 };
@@ -110,20 +111,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
       : apiResponse?.code != null
         ? String(apiResponse.code)
         : null;
-
-  const isApiSuccess =
-    rawMaKetQua === "200" ||
-    (apiResponse?.isOk === true &&
-      rawMaKetQua !== "400" &&
-      rawMaKetQua !== "401" &&
-      rawMaKetQua !== "500") ||
-    Boolean(
-      apiResponse?.maGiaoDich &&
-      !apiResponse?.isError &&
-      rawMaKetQua !== "400" &&
-      rawMaKetQua !== "401" &&
-      rawMaKetQua !== "500",
-    );
+  const isApiSuccess = isBhxhGatewaySuccess(apiResponse);
 
   const maGiaoDich =
     apiResponse?.maGiaoDich ||
@@ -161,14 +149,16 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
   const soHoSo = apiResponse?.soHoSo || "";
 
   // 2. Trạng thái các bước theo DỮ LIỆU THỰC TẾ
-  // Chỉ hoàn thành bước 1 khi thực sự có bản ghi (> 0) hoặc đã nạp file tùy chỉnh
-  const isStep1Done = (itemsCount != null && itemsCount > 0) || Boolean(hasCustomUploadedFile);
-  const isStep2Done = Boolean(isSigned);
-  const isStep2Active = Boolean(isSigning);
   const isStep3Done = hasApiResponse;
-  const isStep3Active = isSendingApi && !hasApiResponse;
   const isStep4Done = hasApiResponse && isApiSuccess;
   const isStep4Error = hasApiResponse && !isApiSuccess;
+  const isStep1Done =
+    (itemsCount != null && itemsCount > 0) ||
+    Boolean(hasCustomUploadedFile) ||
+    isStep3Done;
+  const isStep2Done = Boolean(isSigned) || isStep3Done;
+  const isStep2Active = Boolean(isSigning) && !isStep3Done;
+  const isStep3Active = isSendingApi && !hasApiResponse;
   const isStep4Active = isSendingApi && !hasApiResponse;
 
   const steps: Array<{
@@ -181,22 +171,17 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     {
       step: 1,
       title: "1. Lập Hồ Sơ",
-      subtext:
-        itemsCount > 0
-          ? `${itemsCount} ${itemLabel}`
-          : hasCustomUploadedFile
-            ? "Đã nạp file"
-            : "Chờ dữ liệu",
+      subtext: isStep1Done ? "Đã nạp file" : "Chờ dữ liệu",
       state: isStep1Done ? "completed" : "pending",
       icon: isStep1Done ? (
-        <Check size={11} strokeWidth={3} />
+        <Check size={18} strokeWidth={2.5} />
       ) : (
-        <FileCheck size={11} />
+        <FileCheck size={18} />
       ),
     },
     {
       step: 2,
-      title: "2. Ký SmartCA",
+      title: "2. Ký Số SmartCA",
       subtext: isStep2Done
         ? signatureInfo?.signingTime
           ? `Ký: ${signatureInfo.signingTime.split(" ")[0]}`
@@ -206,43 +191,41 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
           : "Chờ ký số",
       state: isStep2Done ? "completed" : isStep2Active ? "active" : "pending",
       icon: isStep2Done ? (
-        <Check size={11} strokeWidth={3} />
+        <Check size={18} strokeWidth={2.5} />
       ) : isStep2Active ? (
-        <Loader2 size={11} className="animate-spin" />
+        <Loader2 size={18} className="animate-spin" />
       ) : (
-        <ShieldCheck size={11} />
+        <ShieldCheck size={18} />
       ),
     },
     {
       step: 3,
       title: "3. Gửi Cổng BHXH",
       subtext: isStep3Done
-        ? "Đã chuyển"
+        ? "Đã gửi"
         : isStep3Active
           ? "Đang gửi..."
           : isStep2Done
             ? "Sẵn sàng"
             : "Chờ ký số",
       state: isStep3Done
-        ? isStep4Error
-          ? "warning"
-          : "completed"
+        ? "completed"
         : isStep3Active
           ? "active"
           : isStep2Done
             ? "ready"
             : "pending",
       icon: isStep3Done ? (
-        <Check size={11} strokeWidth={3} />
+        <Check size={18} strokeWidth={2.5} />
       ) : isStep3Active ? (
-        <Loader2 size={11} className="animate-spin" />
+        <Loader2 size={18} className="animate-spin" />
       ) : (
-        <Send size={10} />
+        <Send size={16} />
       ),
     },
     {
       step: 4,
-      title: "4. Tiếp Nhận",
+      title: "4. Cổng Tiếp Nhận",
       subtext: isStep4Done
         ? rawMaKetQua
           ? `Mã: ${rawMaKetQua}`
@@ -262,13 +245,15 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
             ? "active"
             : "pending",
       icon: isStep4Done ? (
-        <Check size={11} strokeWidth={3} />
+        <Check size={18} strokeWidth={2.5} />
       ) : isStep4Error ? (
-        <AlertTriangle size={11} />
+        <AlertTriangle size={18} />
       ) : isStep4Active ? (
-        <Loader2 size={11} className="animate-spin" />
+        <Loader2 size={18} className="animate-spin" />
       ) : (
-        <CheckCircle2 size={11} />
+        <span className="font-semibold text-xs sm:text-sm text-slate-400">
+          4
+        </span>
       ),
     },
   ];
@@ -342,55 +327,72 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs select-none">
-        <div className="flex items-center justify-between gap-1 sm:gap-2">
+      {/* Khung Stepper chuẩn theo hình ảnh giao diện */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs select-none">
+        <div className="flex items-start">
           {steps.map((st, idx) => {
             const style = STEP_STYLES[st.state];
+            const isFirst = idx === 0;
             const isLast = idx === steps.length - 1;
             const nextStep = steps[idx + 1];
-            const connectorActive =
+            const isLineToThisDone =
+              st.state === "completed" || st.state === "active";
+            const isLineToNextDone =
               nextStep &&
               (nextStep.state === "completed" ||
                 nextStep.state === "active" ||
-                nextStep.state === "error" ||
-                nextStep.state === "warning");
-            const connectorStyle = nextStep
-              ? STEP_STYLES[nextStep.state].line
-              : "bg-slate-200";
+                nextStep.state === "warning" ||
+                nextStep.state === "error");
 
             return (
-              <React.Fragment key={st.step}>
-                <div className="flex items-center gap-1.5 shrink-0">
+              <div
+                key={st.step}
+                className="flex-1 relative flex flex-col items-center text-center"
+              >
+                {/* Đường kẻ ngang nửa trái */}
+                {!isFirst && (
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] transition-all shrink-0 ${style.circle}`}
-                  >
-                    {st.icon}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`text-xs whitespace-nowrap ${style.title}`}
-                    >
-                      {st.title}
-                    </span>
-                    <span
-                      className="text-[10px] text-slate-400 font-normal hidden lg:inline truncate max-w-[85px]"
-                      title={st.subtext}
-                    >
-                      ({st.subtext})
-                    </span>
-                  </div>
+                    className={`absolute top-4 sm:top-5 right-1/2 left-0 h-[2px] -translate-y-1/2 z-0 transition-all duration-300 ${
+                      st.state === "error"
+                        ? "bg-rose-400"
+                        : isLineToThisDone
+                          ? "bg-emerald-500"
+                          : "bg-slate-200"
+                    }`}
+                  />
+                )}
+                {/* Đường kẻ ngang nửa phải */}
+                {!isLast && (
+                  <div
+                    className={`absolute top-4 sm:top-5 left-1/2 right-0 h-[2px] -translate-y-1/2 z-0 transition-all duration-300 ${
+                      nextStep?.state === "error"
+                        ? "bg-rose-400"
+                        : isLineToNextDone
+                          ? "bg-emerald-500"
+                          : "bg-slate-200"
+                    }`}
+                  />
+                )}
+
+                {/* Circle biểu tượng */}
+                <div
+                  className={`relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${style.circle}`}
+                >
+                  {st.icon}
                 </div>
 
-                {!isLast && (
-                  <div className="flex-1 h-[2px] min-w-[12px] sm:min-w-[20px] bg-slate-200 rounded-full overflow-hidden mx-1">
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        connectorActive ? connectorStyle : "w-0"
-                      }`}
-                    />
+                {/* Tên bước & phụ đề bên dưới */}
+                <div className="mt-2 text-center px-1">
+                  <div
+                    className={`text-xs sm:text-sm font-semibold tracking-tight transition-colors ${style.title}`}
+                  >
+                    {st.title}
                   </div>
-                )}
-              </React.Fragment>
+                  <div className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                    {st.subtext}
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

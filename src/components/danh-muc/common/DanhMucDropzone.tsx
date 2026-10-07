@@ -145,6 +145,7 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   onOpenXmlModal,
   xmlLabel,
   xmlTooltip,
+  onClearData,
   buttonLabel = "Chọn Tệp Excel / XML",
 }) => {
   const {
@@ -241,6 +242,7 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
               onOpenSchemaModal={onOpenSchemaModal}
               onSwitchSheet={onSwitchSheet}
               extraBadge={uploadStats.extraBadge}
+              onClearFile={onClearData}
             />
           </div>
         )}
