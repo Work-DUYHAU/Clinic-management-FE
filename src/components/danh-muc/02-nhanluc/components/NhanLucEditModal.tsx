@@ -106,13 +106,13 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
+        className="bg-white rounded-md max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-100 text-[#1677ff]">
+              <div className="p-2 rounded-md bg-blue-100 text-[#1677ff]">
                 <Users size={20} />
               </div>
               <div>
@@ -125,7 +125,7 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
+              className="w-8 h-8 rounded-sm hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer"
             >
               &times;
             </button>
@@ -133,7 +133,7 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
 
           <div className="p-6 overflow-y-auto flex-1 space-y-4 text-xs">
             {/* Section 1: Định danh */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Họ và Tên (HO_TEN)"
                 required
@@ -182,7 +182,7 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
             </div>
 
             {/* Section 2: Chứng chỉ hành nghề */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Mã CCHN (MACCHN)"
                 placeholder="vd: 001234/HNO-CCHN"
@@ -218,7 +218,7 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
             </div>
 
             {/* Section 3: Thời gian làm việc */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Thời Gian Ngày"
                 placeholder="0730-1630"
@@ -258,13 +258,13 @@ const NhanLucEditModalContent: React.FC<NhanLucEditModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-sm text-xs font-bold cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20"
+              className="flex items-center gap-1.5 px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm text-xs font-bold shadow-sm cursor-pointer"
             >
               <Check size={14} />
               <span>Lưu Thông Tin Nhân Lực</span>

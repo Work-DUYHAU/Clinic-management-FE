@@ -30,7 +30,7 @@ export const InfoGrid: React.FC<InfoGridProps> = ({
       : 'grid-cols-2 sm:grid-cols-4';
 
   return (
-    <div className={`grid ${colClass} gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 ${className}`}>
+    <div className={`grid ${colClass} gap-3 bg-slate-50 p-3.5 rounded-sm border border-slate-200 ${className}`}>
       {items.map((it, idx) => {
         const spanClass = it.colSpan ? `sm:col-span-${it.colSpan}` : '';
         const textColor = it.danger
@@ -38,7 +38,7 @@ export const InfoGrid: React.FC<InfoGridProps> = ({
           : it.success
           ? 'text-emerald-700 font-bold'
           : it.highlight
-          ? 'text-indigo-700 font-bold'
+          ? 'text-blue-700 font-bold'
           : it.bold
           ? 'text-slate-900 font-bold'
           : 'text-slate-800 font-medium';

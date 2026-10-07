@@ -44,7 +44,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   step,
   autoFocus
 }) => {
-  const baseInputStyle = `w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all ${
+  const baseInputStyle = `w-full px-3 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 transition-all ${
     mono ? 'font-mono' : ''
   } ${bold ? 'font-bold' : 'font-medium'} ${disabled ? 'bg-slate-100 cursor-not-allowed' : ''}`;
 

@@ -252,20 +252,20 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         className="hidden"
       />
 
-      {/* 1. Header Banner Siêu Gọn (Không chiếm chỗ, tích hợp nút nộp tệp nhiều sheet) */}
-      <div className="bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 rounded-xl py-3 px-5 text-white shadow-md flex items-center justify-between gap-4 border border-indigo-800/40">
+      {/* 1. Header Banner Gọn Gàng, Góc Cạnh */}
+      <div className="bg-[#0f172a] rounded-md py-3 px-5 text-white shadow-sm flex items-center justify-between gap-4 border border-slate-800">
         <div className="space-y-0.5 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/25 text-indigo-300 border border-indigo-400/30">
+            <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 font-mono">
               Phân Hệ 3
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-              Thông Tư 25/2025/TT-BYT & QĐ 2025
+            <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-mono">
+              TT 25/2025/TT-BYT & QĐ 2025
             </span>
           </div>
-          <h1 className="text-sm md:text-base font-extrabold tracking-tight flex items-center gap-2 text-white truncate">
-            <FileSignature size={18} className="text-indigo-400 flex-shrink-0" />
-            <span>Hồ Sơ Chứng Từ & Giấy Tờ Điện Tử</span>
+          <h1 className="text-sm md:text-base font-bold tracking-tight flex items-center gap-2 text-white truncate">
+            <FileSignature size={17} className="text-blue-400 flex-shrink-0" />
+            <span>Hồ Sơ Chứng Từ &amp; Giấy Tờ Điện Tử</span>
           </h1>
         </div>
 
@@ -273,22 +273,22 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         <button
           type="button"
           onClick={handleTriggerMultiSheetUpload}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#1677ff] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap flex-shrink-0"
+          className="px-3.5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap flex-shrink-0 border border-blue-500/50"
           title="Nạp tệp Excel chứa nhiều Sheet chứng từ để ký số và gửi Cổng BHXH"
         >
-          <Layers size={15} />
+          <Layers size={14} />
           <span>Nộp Tệp Tổng Hợp (Nhiều Sheet)</span>
         </button>
       </div>
 
       {/* Thông báo trạng thái tệp đang sẵn sàng nếu người dùng đóng modal */}
       {modalConfig.xmlContent && !isSignModalOpen && (
-        <div className="p-3 bg-indigo-50/90 border border-indigo-200 rounded-xl flex items-center justify-between gap-3 text-xs shadow-2xs">
+        <div className="p-3 bg-blue-50/90 border border-blue-200 rounded-md flex items-center justify-between gap-3 text-xs shadow-2xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span className="font-bold text-indigo-950 truncate">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-bold text-slate-900 truncate">
               Hồ sơ đã nạp sẵn sàng:{" "}
-              <span className="font-semibold text-indigo-800">
+              <span className="font-semibold text-blue-800">
                 {modalConfig.fileName}
               </span>{" "}
               ({modalConfig.itemsCount} chứng từ - Loại {modalConfig.code})
@@ -298,16 +298,16 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
             <button
               type="button"
               onClick={handleExportXml}
-              className="px-2.5 py-1 text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg font-bold text-[11px] cursor-pointer transition-colors"
+              className="px-2.5 py-1 text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-sm font-bold text-[11px] cursor-pointer transition-colors"
             >
               Tải XML
             </button>
             <button
               type="button"
               onClick={() => setIsSignModalOpen(true)}
-              className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-[11px] cursor-pointer transition-colors shadow-xs"
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-sm font-bold text-[11px] cursor-pointer transition-colors shadow-xs"
             >
-              Mở Cửa Sổ Ký & Gửi Cổng
+              Mở Cửa Sổ Ký &amp; Gửi Cổng
             </button>
           </div>
         </div>
@@ -318,24 +318,24 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
           <span>Danh Mục 9 Biểu Mẫu Chứng Từ</span>
           <span className="text-[11px] text-slate-400 font-normal lowercase hidden sm:inline">
-            (chọn mẫu để nạp tệp & ký số)
+            (chọn mẫu để nạp tệp &amp; ký số)
           </span>
         </span>
-        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-sm font-mono">
           9 Biểu Mẫu Chuẩn
         </span>
       </div>
 
-      {/* 3. Lưới 9 mẫu chứng từ thiết kế siêu gọn (3 cột x 3 dòng, vừa vặn không scrollbar) */}
+      {/* 3. Lưới 9 mẫu chứng từ thiết kế góc cạnh, vững chãi */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {TT25_DOC_DEFINITIONS.map((doc) => (
           <div
             key={doc.id}
             onClick={() => handleTriggerDocUpload(doc)}
-            className="p-3 rounded-xl border border-slate-200/90 hover:border-indigo-400 bg-white hover:bg-indigo-50/20 transition-all cursor-pointer group flex flex-col justify-between gap-1.5 shadow-2xs hover:shadow-xs active:scale-98"
+            className="p-3 rounded-md border border-slate-200/90 hover:border-blue-500 bg-white hover:bg-blue-50/15 transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-2xs hover:shadow-xs"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-colors text-slate-700">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-colors text-slate-700 font-mono">
                 {doc.badge}
               </span>
               <span className="text-[10px] font-mono text-slate-400">
@@ -344,19 +344,19 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
             </div>
 
             <div className="min-w-0">
-              <h4 className="text-xs font-bold text-slate-800 group-hover:text-indigo-950 transition-colors truncate">
+              <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
                 {doc.title}
               </h4>
-              <p className="text-[11px] text-slate-400 group-hover:text-slate-600 truncate">
+              <p className="text-[11px] text-slate-500 group-hover:text-slate-700 truncate mt-0.5 font-normal">
                 {doc.desc}
               </p>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-indigo-600 group-hover:text-indigo-700">
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-blue-600 group-hover:text-blue-700">
               <span className="flex items-center gap-1 text-[10px]">
-                <Upload size={11} /> Nạp tệp & ký số
+                <Upload size={11} /> Nạp tệp &amp; ký số
               </span>
-              <ChevronRight size={12} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              <ChevronRight size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
             </div>
           </div>
         ))}

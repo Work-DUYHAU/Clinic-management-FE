@@ -127,14 +127,14 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
       tabIndex={-1}
     >
       <div
-        className="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden border border-rose-200 select-none animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-md max-w-xl w-full shadow-2xl overflow-hidden border border-rose-200 select-none animate-in fade-in zoom-in-95 duration-200"
         onMouseDown={handleStopPropagation}
         onClick={handleStopPropagation}
       >
         {/* Modal Header */}
         <div className="p-5 bg-gradient-to-r from-rose-50 via-rose-100/50 to-white border-b border-rose-200 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20 shrink-0">
+            <div className="w-11 h-11 rounded-md bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-600/20 shrink-0">
               <ShieldAlert size={22} />
             </div>
             <div>
@@ -142,7 +142,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
                 <h3 className="text-base font-extrabold text-slate-900">
                   {displayTitle}
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-extrabold uppercase font-mono">
+                <span className="px-2 py-0.5 rounded-sm bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-extrabold uppercase font-mono">
                   {String(errorCode)}
                 </span>
               </div>
@@ -154,7 +154,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-rose-200/60 active:scale-95 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer transition-colors shrink-0"
+            className="w-8 h-8 rounded-sm hover:bg-rose-200/60 active:scale-95 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer transition-colors shrink-0"
             title="Đóng (Esc)"
           >
             <X size={18} />
@@ -165,7 +165,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
         <div className="p-6 space-y-4 text-xs text-slate-700 max-h-[70vh] overflow-y-auto">
           {/* 1. Hộp thông tin lỗi chi tiết */}
           {(errorMessage || metaInfo) && (
-            <div className="p-4 bg-slate-900 text-slate-200 rounded-xl border border-slate-800 space-y-2 font-mono text-[11px]">
+            <div className="p-4 bg-slate-900 text-slate-200 rounded-sm border border-slate-800 space-y-2 font-mono text-[11px]">
               <div className="flex items-center justify-between text-rose-400 font-bold border-b border-slate-800 pb-1.5">
                 <span className="flex items-center gap-1.5">
                   <AlertTriangle size={13} />
@@ -203,7 +203,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
           {/* 2. Nguyên nhân & Hướng dẫn khắc phục */}
           {reasons && reasons.length > 0 && (
-            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2 text-amber-900">
+            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-sm space-y-2 text-amber-900">
               <div className="font-extrabold flex items-center gap-1.5 text-amber-950">
                 <Terminal size={14} className="text-amber-700" />
                 Nguyên nhân có thể xảy ra & Hướng dẫn xử lý:
@@ -225,7 +225,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
             <button
               type="button"
               onClick={handleCopyError}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-sm bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               {copied ? (
                 <Check size={14} className="text-emerald-600" />
@@ -243,7 +243,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
               <button
                 type="button"
                 onClick={onSecondaryAction}
-                className="px-4 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 rounded-sm bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <RotateCcw size={13} />
                 <span>{secondaryButtonText}</span>
@@ -253,7 +253,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
             <button
               type="button"
               onClick={onPrimaryAction || onClose}
-              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shadow-sm"
+              className="px-5 py-2 rounded-sm bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shadow-sm"
             >
               {primaryButtonText}
             </button>

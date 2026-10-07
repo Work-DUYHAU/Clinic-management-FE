@@ -41,32 +41,32 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
       {/* Header Search & Actions */}
-      <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-extrabold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
               Danh Sách Thiết Bị / Vật Tư Y Tế Áp Dụng BHYT
             </h3>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-cyan-100 text-cyan-800 border border-cyan-200">
+            <span className="text-[10px] px-2 py-0.5 rounded-sm font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 font-mono">
               {items.length} bản ghi
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Mẫu 04/DM theo quy định TT 04/2017/TT-BYT, TT 24/2025/TT-BYT & QĐ 3176/QĐ-BYT
+          <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+            Mẫu 04/DM theo quy định TT 04/2017/TT-BYT, TT 24/2025/TT-BYT &amp; QĐ 3176/QĐ-BYT
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative flex-1 md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input
               type="text"
               placeholder="Tìm kiếm theo mã, tên TBYT, nhóm, hãng SX, số LH..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-2xs"
+              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-2xs font-medium"
             />
           </div>
         </div>

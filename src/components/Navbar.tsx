@@ -94,19 +94,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             const CatalogIcon = currentCatalog.icon;
             return (
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-blue-50 text-[#1677ff] border border-blue-100 flex-shrink-0">
+                <div className="p-2 rounded-md bg-blue-50/80 text-blue-600 border border-blue-200/80 flex-shrink-0">
                   <CatalogIcon size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span className="text-sm font-bold text-slate-800">
+                    <span className="text-sm font-bold text-slate-900 tracking-tight">
                       {currentCatalog.title}
                     </span>
-                    <span className="text-[10px] font-bold bg-blue-50 text-[#1677ff] border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
                       {currentCatalog.badge}
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 whitespace-nowrap block">
+                  <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
                     {currentCatalog.sub}
                   </span>
                 </div>
@@ -115,60 +115,58 @@ export const Navbar: React.FC<NavbarProps> = ({
           })()
         ) : hoSoTab === "01_tonghop" ? (
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-blue-50 text-[#1677ff] border border-blue-100 flex-shrink-0">
+            <div className="p-2 rounded-md bg-blue-50/80 text-blue-600 border border-blue-200/80 flex-shrink-0">
               <FileText size={18} />
             </div>
             <div>
               <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-900 tracking-tight">
                   Bộ 1: Bảng Tổng Hợp Chi Phí KCB
                 </span>
-                <span className="text-[10px] font-bold bg-blue-50 text-[#1677ff] border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
                   Mẫu 01/BH
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block">
-                Giám sát tổng hợp chi phí KCB BHYT, kiểm tra thẻ và kết xuất XML
-                130
+              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
+                Giám sát tổng hợp chi phí KCB BHYT, kiểm tra thẻ và kết xuất XML 130
               </span>
             </div>
           </div>
         ) : activeTab === "chung-tu" ? (
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex-shrink-0">
+            <div className="p-2 rounded-md bg-indigo-50/80 text-indigo-600 border border-indigo-200/80 flex-shrink-0">
               <FileSignature size={18} />
             </div>
             <div>
               <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-800">
-                  3. Hồ Sơ Chứng Từ Điện Tử
+                <span className="text-sm font-bold text-slate-900 tracking-tight">
+                  Phân Hệ: Hồ Sơ Chứng Từ Điện Tử
                 </span>
-                <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
                   TT 25 & BHXH 2025
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block">
+              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
                 Nộp hồ sơ CT01, CT07, Giấy báo tử, Giấy chứng sinh chuẩn liên thông Cổng BHXH
               </span>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 flex-shrink-0">
+            <div className="p-2 rounded-md bg-amber-50/80 text-amber-600 border border-amber-200/80 flex-shrink-0">
               <ShieldAlert size={18} />
             </div>
             <div>
               <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-900 tracking-tight">
                   Bộ 2: Xử Lý Xuất Toán BHYT
                 </span>
-                <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
                   Mẫu 09/BH
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block">
-                Tiếp nhận thông báo xuất toán từ Cổng BHXH, lập giải trình và
-                theo dõi thu hồi
+              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
+                Tiếp nhận thông báo xuất toán từ Cổng BHXH, lập giải trình và theo dõi thu hồi
               </span>
             </div>
           </div>
@@ -176,16 +174,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Right Gateway Status & Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Calendar Badge */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 font-medium">
-          <Calendar size={14} className="text-emerald-600" />
+        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-md text-xs text-slate-600 font-medium">
+          <Calendar size={13} className="text-slate-500" />
           <span>{today}</span>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-semibold text-emerald-700">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Cổng BHXH</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50/90 border border-emerald-200 rounded-md text-xs font-semibold text-emerald-800">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Cổng BHXH: Hoạt động</span>
         </div>
 
         <button
@@ -196,11 +194,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               "Cổng Tiếp Nhận BHXH",
             )
           }
-          className="relative p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+          className="relative p-2 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
           title="Thông báo Cổng Giám định"
         >
-          <Bell size={17} />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500"></span>
+          <Bell size={16} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500"></span>
         </button>
       </div>
     </header>

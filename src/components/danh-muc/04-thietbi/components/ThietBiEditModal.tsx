@@ -101,13 +101,13 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
+        className="bg-white rounded-md max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-100 text-[#1677ff]">
+              <div className="p-2 rounded-md bg-blue-100 text-[#1677ff]">
                 <Cpu size={20} />
               </div>
               <div>
@@ -120,7 +120,7 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
+              className="w-8 h-8 rounded-sm hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer"
             >
               &times;
             </button>
@@ -128,7 +128,7 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
 
           <div className="p-6 overflow-y-auto flex-1 space-y-4 text-xs">
             {/* Group 1: Thông tin cơ bản */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Mã Vật Tư (MA_VAT_TU)"
                 required
@@ -183,7 +183,7 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
             </div>
 
             {/* Group 2: Đơn giá & Thầu */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Đơn Giá (VNĐ)"
                 type="number"
@@ -216,7 +216,7 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
                 type="number"
                 min={0}
                 value={formData.soLuong}
-                onChange={(v) => setFormData({ ...formData, soLuong: Number(v) })}
+                onChange={(e) => setFormData({ ...formData, soLuong: Number(e) })}
               />
               <FormField
                 label="Loại Thầu"
@@ -242,7 +242,7 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
             </div>
 
             {/* Group 3: Thời hạn & CSKCB */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200">
               <FormField
                 label="Mã CSKCB"
                 required
@@ -275,13 +275,13 @@ const ThietBiEditModalContent: React.FC<ThietBiEditModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-sm text-xs font-bold cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20"
+              className="flex items-center gap-1.5 px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm text-xs font-bold shadow-sm cursor-pointer"
             >
               <Check size={14} />
               <span>Lưu Thông Tin Thiết Bị</span>

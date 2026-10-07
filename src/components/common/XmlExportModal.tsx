@@ -276,7 +276,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
       tabIndex={-1}
     >
       <div
-        className="bg-white rounded-2xl max-w-4xl w-full h-[88vh] max-h-[850px] flex flex-col shadow-2xl overflow-hidden border border-slate-200 select-none"
+        className="bg-white rounded-md max-w-4xl w-full h-[88vh] max-h-[850px] flex flex-col shadow-2xl overflow-hidden border border-slate-200 select-none"
         onMouseDown={handleStopPropagation}
         onClick={handleStopPropagation}
       >
@@ -284,7 +284,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0 select-none">
           <div className="flex items-center gap-3">
             <div
-              className={`p-2.5 rounded-xl ${
+              className={`p-2.5 rounded-md ${
                 isSigned
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-blue-100 text-[#1677ff]"
@@ -297,33 +297,29 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                 <h3 className="text-base font-extrabold text-slate-900">
                   {title}
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-blue-100 text-blue-800 border border-blue-200">
                   {loaiHsBadge}
                 </span>
                 {isSigned && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 animate-pulse">
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                     <Check size={11} /> ĐÃ KÝ SỐ XMLDSIG
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>
-                  Dữ liệu hiện hành • {itemsCount} {itemLabel}
+                  <b>{itemsCount}</b> {itemLabel}
                 </span>
+                <span>•</span>
+                <span className="font-mono text-slate-700 font-semibold">{effectiveFileName}</span>
                 {sourceFileInfo?.fileName && (
                   <>
-                    {" "}
-                    • Nguồn:{" "}
-                    <b className="font-semibold text-slate-700">
-                      {sourceFileInfo.fileName}
-                      {sourceFileInfo.selectedSheet
-                        ? ` [${sourceFileInfo.selectedSheet}]`
-                        : ""}
-                    </b>
+                    <span>•</span>
+                    <span className="text-slate-500 truncate max-w-[200px]" title={sourceFileInfo.fileName}>
+                      Nguồn: {sourceFileInfo.fileName}
+                    </span>
                   </>
-                )}{" "}
-                • Tệp:{" "}
-                <b className="font-mono text-slate-700">{effectiveFileName}</b>
+                )}
               </p>
             </div>
           </div>
@@ -331,7 +327,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             type="button"
             onMouseDown={handleCloseModal}
             onClick={handleCloseModal}
-            className="w-8 h-8 rounded-lg hover:bg-slate-200 active:scale-95 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer select-none transition-colors"
+            className="w-8 h-8 rounded-sm hover:bg-slate-200 active:scale-95 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer select-none transition-colors"
             title="Đóng (Esc)"
           >
             &times;
@@ -346,12 +342,12 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
               <button
                 type="button"
                 onClick={handleSelectTabSmartCa}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 rounded-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                   effectiveTab === "smartca"
-                    ? "bg-indigo-600 text-white shadow-xs"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : isSigned
                       ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300"
-                      : "bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200"
+                      : "bg-white text-blue-700 hover:bg-blue-50 border border-blue-200"
                 }`}
               >
                 <Fingerprint size={13} />
@@ -365,7 +361,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             <button
               type="button"
               onClick={handleSelectTabBase64}
-              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              className={`px-2.5 py-1.5 rounded-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                 effectiveTab === "base64"
                   ? "bg-blue-600 text-white shadow-xs"
                   : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -381,7 +377,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             {effectiveTab === "smartca" && !isSigned && (
               <>
                 {/* Radio chọn Ký tự động Q2 / Xác nhận qua App Q1 */}
-                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-sm border border-slate-200 shadow-2xs">
                   <label className="flex items-center gap-1 cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-colors">
                     <input
                       type="radio"
@@ -409,14 +405,14 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
 
                 {/* Checkbox: Tự động gửi Cổng BHXH */}
                 <label
-                  className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg cursor-pointer text-slate-700 hover:text-emerald-700 font-semibold transition-colors shadow-2xs"
+                  className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-sm cursor-pointer text-slate-700 hover:text-emerald-700 font-semibold transition-colors shadow-2xs"
                   title="Tự động gửi hồ sơ lên Cổng BHXH ngay khi ký số thành công"
                 >
                   <input
                     type="checkbox"
                     checked={autoSendOnSign}
                     onChange={(e) => handleToggleAutoSend(e.target.checked)}
-                    className="w-3 h-3 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600 rounded"
+                    className="w-3 h-3 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600 rounded-sm"
                   />
                   <span>Tự gửi BHXH</span>
                 </label>
@@ -427,7 +423,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             <button
               type="button"
               onClick={() => setShowXmlPreview(true)}
-              className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-400 rounded-lg cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-all shadow-2xs"
+              className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-400 rounded-sm cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-all shadow-2xs"
               title="Xem trước cấu trúc mã XML (hỗ trợ giải mã từng chứng từ tệp tổng hợp)"
             >
               <Eye size={13} className="text-blue-600" />
@@ -439,8 +435,8 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
         {/* Modal Body Container */}
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {itemsCount === 0 && !signedXml && effectiveTab !== "smartca" ? (
-            <div className="p-8 m-auto text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 space-y-4 max-w-lg">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+            <div className="p-8 m-auto text-center bg-slate-50 rounded-md border border-dashed border-slate-300 space-y-4 max-w-lg">
+              <div className="w-12 h-12 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
                 <AlertTriangle size={24} />
               </div>
               <div className="space-y-1">
@@ -459,7 +455,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                   <button
                     type="button"
                     onClick={handleSelectTabSmartCa}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
+                    className="px-4 py-2.5 rounded-sm bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
                   >
                     <Fingerprint size={15} />
                     <span>Ký Số SmartCA</span>
@@ -508,7 +504,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                     <button
                       type="button"
                       onClick={handleCopyBase64}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
                     >
                       {isKeyCopied("base64") ? (
                         <Check size={14} className="text-emerald-600" />
@@ -525,7 +521,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                       onDragStart={handlePreventDrag}
                       spellCheck={false}
                       value={effectiveBase64}
-                      className="w-full h-full p-4 bg-slate-900 text-sky-400 font-mono text-[11px] rounded-2xl resize-none outline-none leading-relaxed border border-slate-800 selection:bg-blue-600 selection:text-white no-drag-select"
+                      className="w-full h-full p-4 bg-slate-900 text-sky-400 font-mono text-[11px] rounded-sm resize-none outline-none leading-relaxed border border-slate-800 selection:bg-blue-600 selection:text-white no-drag-select"
                     />
                   </div>
                 </div>
@@ -552,7 +548,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
               type="button"
               onMouseDown={handleCloseModal}
               onClick={handleCloseModal}
-              className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer select-none"
+              className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 active:scale-95 text-slate-700 rounded-sm text-xs font-bold transition-all cursor-pointer select-none"
             >
               Đóng
             </button>
@@ -565,7 +561,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                   type="button"
                   disabled={footerSignAction.isInitiating}
                   onClick={footerSignAction.trigger}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 disabled:opacity-60 ${
+                  className={`px-6 py-2.5 rounded-sm text-xs font-bold text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-60 ${
                     footerSignAction.isInitiating
                       ? "bg-slate-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 shadow-blue-600/25"

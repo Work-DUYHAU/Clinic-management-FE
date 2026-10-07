@@ -41,18 +41,18 @@ export const NhanLucTable: React.FC<NhanLucTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
       {/* Table Search & Filter Bar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm kiếm theo họ tên, CCCD/Định danh, mã khoa, số CCHN, phạm vi CM..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-medium"
             />
           </div>
           {searchTerm && (
@@ -117,23 +117,23 @@ export const NhanLucTable: React.FC<NhanLucTableProps> = ({
               </tr>
             ) : (
               items.map((item, idx) => (
-                <tr key={item.id || item.soDinhDanh || idx} className="hover:bg-indigo-50/30 transition-colors group">
+                <tr key={item.id || item.soDinhDanh || idx} className="hover:bg-blue-50/25 transition-colors group">
                   <td className="py-3 px-2 text-center font-bold text-slate-400 w-[52px] min-w-[52px] max-w-[52px] sticky left-0 bg-white group-hover:bg-slate-50 z-10">
                     {item.stt || idx + 1}
                   </td>
                   <td className="py-3 px-3 font-bold text-slate-900 whitespace-nowrap sticky left-[52px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200/80 shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                      <div className="w-7 h-7 rounded-sm bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
                         {item.hoTen.charAt(0)}
                       </div>
                       <span>{item.hoTen}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-3 font-mono font-bold text-indigo-700 whitespace-nowrap">
+                  <td className="py-3 px-3 font-mono font-bold text-blue-700 whitespace-nowrap">
                     {item.soDinhDanh}
                   </td>
                   <td className="py-3 px-3 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold ${
                       item.gioiTinh === 1 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                     }`}>
                       {item.gioiTinh === 1 ? 'Nam' : item.gioiTinh === 2 ? 'Nữ' : 'Khác'}

@@ -51,13 +51,13 @@ export const Hs01Table: React.FC<Hs01TableProps> = ({
   }, [items, currentPage, pageSize]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
       {/* Search & Filter Toolbar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/70">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Search Box */}
           <div className="relative w-full sm:w-72">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm theo họ tên, mã thẻ, mã bệnh, mã CSKCB..."
@@ -66,20 +66,20 @@ export const Hs01Table: React.FC<Hs01TableProps> = ({
                 onSearchChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
             />
           </div>
 
           {/* Filter Loại KCB */}
           <div className="flex items-center gap-1.5">
-            <Filter size={14} className="text-slate-400" />
+            <Filter size={13} className="text-slate-400" />
             <select
               value={filterLoaiKcb}
               onChange={(e) => {
                 onFilterLoaiKcbChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 font-medium cursor-pointer"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-700 outline-none focus:border-blue-500 font-medium cursor-pointer"
             >
               <option value="all">Tất cả loại KCB</option>
               {LOAI_KCB_OPTIONS.map((o) => (
@@ -97,7 +97,7 @@ export const Hs01Table: React.FC<Hs01TableProps> = ({
               onFilterTrangThaiChange(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 outline-none focus:border-indigo-500 font-medium cursor-pointer"
+            className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-700 outline-none focus:border-blue-500 font-medium cursor-pointer"
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="hop_le">Hợp lệ (Sẵn sàng gửi)</option>
@@ -123,9 +123,9 @@ export const Hs01Table: React.FC<Hs01TableProps> = ({
           <button
             type="button"
             onClick={onAddNew}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             <span>Thêm Hồ Sơ Mới</span>
           </button>
         </div>

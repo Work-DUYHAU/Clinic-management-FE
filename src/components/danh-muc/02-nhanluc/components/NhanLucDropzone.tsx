@@ -32,7 +32,7 @@ export const NhanLucDropzone: React.FC<NhanLucDropzoneProps> = ({
 }) => {
   return (
     <DanhMucDropzone
-      themeColor="indigo"
+      themeColor="blue"
       isLoadingFile={isLoadingFile}
       loadingTitle="Đang đọc và bóc tách file Excel Nhân lực..."
       title="Nạp Tệp Excel Danh Mục Nhân Lực (Mẫu 02/DM) Từ Máy Tính"
@@ -53,7 +53,7 @@ export const NhanLucDropzone: React.FC<NhanLucDropzoneProps> = ({
               fileName: fileUploadStats.fileName,
               availableSheets: fileUploadStats.sheets,
               extraBadge: (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-lg text-[11px]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-sm text-[11px] font-mono">
                   <CheckCircle2 size={13} />
                   <span>Sẵn sàng sinh chuỗi XML &amp; Base64 Loại 71</span>
                 </div>

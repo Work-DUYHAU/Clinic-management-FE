@@ -87,30 +87,30 @@ export const ThuocPxListEditor: React.FC<ThuocPxListEditorProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info Box */}
-      <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-xs text-amber-900 shadow-2xs">
+      <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-md flex items-start gap-3 text-xs text-amber-900 shadow-2xs">
         <AlertCircle size={17} className="text-amber-600 mt-0.5 flex-shrink-0" />
         <div className="space-y-1">
           <p className="font-bold flex items-center gap-1.5 text-amber-950">
             <span>Quy định tính giá Thuốc phóng xạ / Chất đánh dấu (Mẫu 05/DM - Loại HS 12):</span>
             {serviceCode && (
-              <span className="font-mono px-1.5 py-0.2 bg-amber-200/70 rounded text-[11px]">
+              <span className="font-mono px-1.5 py-0.2 bg-amber-200/70 rounded-sm text-[11px]">
                 [{serviceCode}] {serviceName}
               </span>
             )}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] text-amber-800 pt-0.5">
             <p>
-              • <strong>Chất đánh dấu:</strong> <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">(Đơn giá × Định mức TT) ÷ Định mức NSX</code>
+              • <strong>Chất đánh dấu:</strong> <code className="bg-amber-100 px-1 py-0.5 rounded-sm font-mono font-bold">(Đơn giá × Định mức TT) ÷ Định mức NSX</code>
             </p>
             <p>
-              • <strong>Thuốc phóng xạ:</strong> <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">(Đơn giá × Liều BQ) ÷ Tỷ lệ TT BQ</code>
+              • <strong>Thuốc phóng xạ:</strong> <code className="bg-amber-100 px-1 py-0.5 rounded-sm font-mono font-bold">(Đơn giá × Liều BQ) ÷ Tỷ lệ TT BQ</code>
             </p>
           </div>
         </div>
       </div>
 
       {/* Table of Drugs with Sticky Columns */}
-      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+      <div className="border border-slate-200 rounded-md overflow-hidden shadow-2xs bg-white">
         <div className="overflow-x-auto max-h-[420px] relative">
           <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[1450px]">
             <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] border-b border-slate-200 sticky top-0 z-20 shadow-2xs">

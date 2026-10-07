@@ -138,11 +138,11 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="bg-white w-full max-w-3xl rounded-md shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+            <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
               <FileSpreadsheet size={18} />
             </div>
             <div>
@@ -152,7 +152,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
               <p className="text-[11px] text-slate-500">Quy chuẩn Loại HS 73 - GuiHoSoDieuChinh09BH</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"><X size={16} /></button>
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-sm cursor-pointer"><X size={16} /></button>
         </div>
 
         {/* Tab Navigation */}
@@ -166,8 +166,8 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id as typeof activeTab)}
-              className={`py-2.5 px-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition-all ${
-                activeTab === t.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              className={`py-2.5 px-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               <t.icon size={13} /> {t.label}
@@ -205,19 +205,19 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setDsXml1DieuChinh(p => [...p, { stt: p.length + 1, truongTtGoc: '', ttGoc: '', truongTtDieuChinh: '', ttDieuChinh: '', lyDoDieuChinh: '' }])}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold text-xs"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-sm font-bold text-xs cursor-pointer"
                 >
                   <Plus size={13} /> Thêm Thẻ XML1
                 </button>
               </div>
               {dsXml1DieuChinh.length === 0 ? (
-                <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-sm border border-dashed border-slate-200">
                   Chưa có thông tin điều chỉnh hành chính. Bấm <b>"Thêm Thẻ XML1"</b> để thêm.
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                   {dsXml1DieuChinh.map((item, idx) => (
-                    <div key={idx} className="p-2.5 bg-blue-50/40 rounded-xl border border-blue-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                    <div key={idx} className="p-2.5 bg-blue-50/40 rounded-sm border border-blue-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                       <div className="sm:col-span-3">
                         <FormField label="Trường Gốc" placeholder="vd: MA_BENH_CHINH" value={item.truongTtGoc} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtGoc: v } : it))} mono bold />
                       </div>
@@ -231,7 +231,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         <FormField label="Giá Trị Mới" placeholder="Giá trị mới" value={item.ttDieuChinh} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, ttDieuChinh: v } : it))} mono bold />
                       </div>
                       <div className="sm:col-span-1 flex justify-center pt-3 sm:pt-0">
-                        <button type="button" onClick={() => setDsXml1DieuChinh(p => p.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></button>
+                        <button type="button" onClick={() => setDsXml1DieuChinh(p => p.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"><Trash2 size={14} /></button>
                       </div>
                       <div className="sm:col-span-12">
                         <FormField label="Lý Do Điều Chỉnh" placeholder="Nhập lý do điều chỉnh" value={item.lyDoDieuChinh} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, lyDoDieuChinh: v } : it))} />
@@ -246,26 +246,26 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
           {activeTab === 'expenses' && (
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-bold text-indigo-700 uppercase">Danh sách chi phí điều chỉnh</span>
+                <span className="text-[11px] font-bold text-blue-700 uppercase">Danh sách chi phí điều chỉnh</span>
                 <button
                   type="button"
                   onClick={() => setDsChiPhiDieuChinh(p => [...p, { stt: p.length + 1, soBangXml: 3, idCp: '', sttXml: p.length + 1, ngayYl: '', trangThai: 1, truongTtGoc: '', ttGoc: '', tuChoi: '', truongTtDieuChinh: '', ttDieuChinh: '', lyDoDieuChinh: '' }])}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg font-bold text-xs"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-sm font-bold text-xs cursor-pointer"
                 >
                   <Plus size={13} /> Thêm Mục Chi Phí
                 </button>
               </div>
               {dsChiPhiDieuChinh.length === 0 ? (
-                <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-sm border border-dashed border-slate-200">
                   Chưa có chi phí điều chỉnh. Bấm <b>"Thêm Mục Chi Phí"</b> để thêm.
                 </div>
               ) : (
                 <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
                   {dsChiPhiDieuChinh.map((cp, idx) => (
-                    <div key={idx} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                      <div className="flex justify-between items-center text-xs font-bold text-indigo-700">
+                    <div key={idx} className="p-2.5 bg-slate-50 rounded-sm border border-slate-200 space-y-2">
+                      <div className="flex justify-between items-center text-xs font-bold text-blue-700">
                         <span>Mục #{idx + 1} (Bảng XML{cp.soBangXml})</span>
-                        <button type="button" onClick={() => setDsChiPhiDieuChinh(p => p.filter((_, i) => i !== idx))} className="text-slate-400 hover:text-rose-600"><Trash2 size={13} /></button>
+                        <button type="button" onClick={() => setDsChiPhiDieuChinh(p => p.filter((_, i) => i !== idx))} className="text-slate-400 hover:text-rose-600 cursor-pointer"><Trash2 size={13} /></button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                         <FormField
@@ -302,8 +302,8 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-          <button type="button" onClick={onClose} className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold">Hủy</button>
-          <button type="button" onClick={handleSave} className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs">
+          <button type="button" onClick={onClose} className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-sm text-xs font-semibold cursor-pointer">Hủy</button>
+          <button type="button" onClick={handleSave} className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm text-xs font-semibold shadow-xs cursor-pointer">
             <Check size={14} /> <span>{initialData ? 'Lưu Thay Đổi' : 'Tạo Hồ Sơ 09'}</span>
           </button>
         </div>

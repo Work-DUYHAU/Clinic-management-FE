@@ -49,11 +49,11 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
   const sigCount = signatureInfo.signatureCount || 1;
 
   return (
-    <div className="p-3.5 sm:p-4 bg-emerald-50/50 border border-emerald-200/90 rounded-2xl space-y-3 animate-fadeIn">
+    <div className="p-3.5 sm:p-4 bg-emerald-50/50 border border-emerald-200/90 rounded-md space-y-3 animate-fadeIn">
       {/* Header trạng thái chữ ký số W3C */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-8 h-8 rounded-md bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
             <ShieldCheck size={18} />
           </div>
           <div>
@@ -64,7 +64,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
                   : "Chữ ký số hợp lệ (Chuẩn W3C XMLDSig)"}
               </h4>
               {isMultiSigned && (
-                <span className="px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded-full text-[10px] font-bold">
+                <span className="px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded-sm text-[10px] font-bold">
                   Đồng ký
                 </span>
               )}
@@ -90,7 +90,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
           {signatureInfo.signatures.map((sig, idx) => (
             <div
               key={sig.signatureId || idx}
-              className="p-2.5 bg-white rounded-xl border border-emerald-200 text-xs text-slate-700 shadow-2xs"
+              className="p-2.5 bg-white rounded-sm border border-emerald-200 text-xs text-slate-700 shadow-2xs"
             >
               <div className="font-bold text-slate-900 border-b border-slate-100 pb-1 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-emerald-700 font-bold text-[11px]">
@@ -125,7 +125,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
         </div>
       ) : (
         /* Tóm tắt 1 dòng cho chữ ký đơn để giao diện cực kỳ tinh gọn */
-        <div className="p-2.5 sm:p-3 bg-white rounded-xl border border-emerald-200/80 shadow-2xs text-[11px] grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="p-2.5 sm:p-3 bg-white rounded-sm border border-emerald-200/80 shadow-2xs text-[11px] grid grid-cols-1 sm:grid-cols-3 gap-2">
           <div
             className="sm:col-span-1 truncate"
             title={`Chủ thể: ${signatureInfo.subjectDN || signerName || "—"}${
@@ -169,7 +169,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
             type="button"
             disabled={isSendingApi}
             onClick={onDirectSendBhxh}
-            className={`px-3.5 py-1.5 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ${
+            className={`px-3.5 py-1.5 text-white rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer ${
               isSendingApi
                 ? "bg-slate-400 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
@@ -185,7 +185,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
           <button
             type="button"
             onClick={onDownloadSignedXml}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
           >
             <Download size={13} />
             <span>Tải XML Đã Ký</span>
@@ -195,7 +195,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
         <button
           type="button"
           onClick={onCopySignedXml}
-          className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+          className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
         >
           {copiedKey === "signedXml" ? (
             <Check size={13} className="text-emerald-600" />
@@ -211,7 +211,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
           <button
             type="button"
             onClick={onCountersign}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
             title="Ký thêm chữ ký (bác sĩ hoặc thủ trưởng CSKCB) bảo toàn chữ ký cũ"
           >
             <UserPlus size={13} />
@@ -222,7 +222,7 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
         <button
           type="button"
           onClick={onResetAndResign}
-          className="px-3 py-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ml-auto cursor-pointer active:scale-95"
+          className="px-3 py-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all ml-auto cursor-pointer active:scale-95"
         >
           <RefreshCw size={12} />
           <span>Ký Lại</span>
