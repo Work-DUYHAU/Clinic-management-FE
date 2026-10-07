@@ -13,8 +13,6 @@ import type { SmartCaPersistentConfig } from "../../../services/smartca/smartcaC
 import {
   type IdentityType,
   IDENTITY_LIMITS,
-  IDENTITY_PLACEHOLDERS,
-  IDENTITY_DESCRIPTIONS,
   validateIdentity,
 } from "../../../utils/validators";
 
@@ -71,49 +69,57 @@ export const SignerForm: React.FC<SignerFormProps> = ({
   return (
     <div className="p-3 sm:p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
-        <div>
-          <h4 className="text-sm sm:text-base font-extrabold text-slate-900">
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
             {signMode === "Q2" ? (
-              <span className="flex items-center gap-1.5 text-blue-700">
-                <Zap size={18} className="fill-blue-600 text-blue-600" />
-                <span>
-                  Ký Số Tự Động VNPT SmartCA (Smart OTP qua Secret Key)
-                </span>
-              </span>
+              <>
+                <Zap size={16} className="fill-blue-600 text-blue-600" />
+                <span>Ký số tự động VNPT SmartCA</span>
+              </>
             ) : (
-              "Ký Số Phê Duyệt Qua App VNPT SmartCA (Q1)"
+              <span>Ký số duyệt qua App SmartCA</span>
             )}
           </h4>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {signMode === "Q2"
-              ? "Tự động sinh mã Smart OTP từ Secret Key & hoàn tất ký số trong 1 click, không cần mở app điện thoại"
-              : "Nhập tài khoản SmartCA nhận thông báo phê duyệt trên thiết bị"}
-          </p>
         </div>
 
         <span
-          className={`text-xs font-bold px-3 py-1 rounded-full border ${
+          className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border ${
             config.env === "production"
               ? "bg-emerald-50 text-emerald-800 border-emerald-200"
               : "bg-blue-50 text-blue-800 border-blue-200"
           }`}
         >
-          {config.env === "production" ? "VNPT Production" : "VNPT Demo/Test"}
+          {config.env === "production" ? "VNPT Production" : "VNPT Demo"}
         </span>
       </div>
 
       {/* 2 Ô NHẬP LIỆU: TÀI KHOẢN & MẬT KHẨU TRÊN CÙNG 1 HÀNG */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start pt-1">
         {/* TÀI KHOẢN SMARTCA */}
         <div className="space-y-1">
           <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
             <span>
-              Tài Khoản SmartCA(MST/CCCD)
-              <span className="text-rose-500">*</span>
+              Tài khoản (MST / CCCD) <span className="text-rose-500">*</span>
             </span>
-            <span className="text-[11px] text-slate-400 font-normal">
-              (Tài khoản chứng thư số VNPT)
-            </span>
+            {identityStatus && (
+              <span
+                className={`text-[11px] flex items-center gap-1 font-semibold ${
+                  identityStatus.isValid ? "text-emerald-600" : "text-amber-600"
+                }`}
+              >
+                {identityStatus.isValid ? (
+                  <>
+                    <CheckCircle2 size={12} className="text-emerald-600" />
+                    <span>Hợp lệ</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={12} className="text-amber-500" />
+                    <span>Sai định dạng</span>
+                  </>
+                )}
+              </span>
+            )}
           </label>
 
           <div className="relative">
@@ -122,109 +128,58 @@ export const SignerForm: React.FC<SignerFormProps> = ({
               maxLength={IDENTITY_LIMITS[idType] || 20}
               value={identityValue}
               onChange={onIdentityChange}
-              placeholder={
-                IDENTITY_PLACEHOLDERS[idType] ||
-                "Nhập Mã số thuế CSKCB (10 hoặc 13-14 số)"
-              }
-              className={`w-full px-3 py-2 rounded-xl border bg-white text-sm font-mono font-semibold text-slate-900 focus:outline-none transition-all shadow-2xs pr-16 ${
+              placeholder="Nhập Mã số thuế / CCCD"
+              className={`w-full px-3 py-2 rounded-sm border bg-white text-sm font-mono font-semibold text-slate-900 focus:outline-none transition-all shadow-2xs pr-14 ${
                 identityStatus === null
-                  ? "border-slate-300 focus:ring-2 focus:ring-blue-500"
+                  ? "border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20"
                   : identityStatus.isValid
-                    ? "border-emerald-400 focus:ring-2 focus:ring-emerald-500 bg-emerald-50/20"
-                    : "border-amber-300 focus:ring-2 focus:ring-amber-500"
+                    ? "border-emerald-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500/20"
+                    : "border-amber-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20"
               }`}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono font-semibold text-slate-400 pointer-events-none select-none">
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-medium text-slate-400 pointer-events-none select-none">
               {identityValue.length}/{IDENTITY_LIMITS[idType] || 14}
             </div>
-          </div>
-
-          {/* GỢI Ý & TRẠNG THÁI KIỂM TRA ĐỊNH DANH */}
-          <div className="flex items-center justify-between text-[11px] px-1 min-h-[15px]">
-            <span className="text-slate-500">
-              {IDENTITY_DESCRIPTIONS[idType] ||
-                "10 hoặc 13–14 ký tự (DN / Cơ sở KCB)"}
-            </span>
-            {identityStatus && (
-              <span
-                className={`flex items-center gap-1 font-semibold ${
-                  identityStatus.isValid ? "text-emerald-600" : "text-amber-600"
-                }`}
-              >
-                {identityStatus.isValid ? (
-                  <>
-                    <CheckCircle2 size={13} className="text-emerald-600" />
-                    <span>Định dạng hợp lệ</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle size={13} className="text-amber-500" />
-                    <span>
-                      Chưa đúng định dạng ({identityValue.length}/
-                      {IDENTITY_LIMITS[idType]})
-                    </span>
-                  </>
-                )}
-              </span>
-            )}
           </div>
         </div>
 
         {/* MẬT KHẨU TÀI KHOẢN SMARTCA */}
         <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-            <span>
-              Mật Khẩu Tài Khoản SmartCA:{" "}
-              <span className="text-rose-500">*</span>
-            </span>
-            <span className="text-[11px] text-slate-400 font-normal">
-              (Xác thực API VNPT)
-            </span>
+          <label className="text-xs font-bold text-slate-700 block">
+            Mật khẩu SmartCA <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu tài khoản VNPT SmartCA"
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 transition-all shadow-2xs"
+              placeholder="Nhập mật khẩu SmartCA"
+              className="w-full px-3 py-2 rounded-sm border border-slate-300 bg-white text-sm font-mono text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 pr-10 transition-all shadow-2xs"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
-          </div>
-          <div className="flex items-center justify-between text-[11px] px-1 text-slate-400 min-h-[15px]">
-            <span>Mật khẩu chữ ký số xác thực SmartCA</span>
           </div>
         </div>
       </div>
 
       {/* TÙY CHỌN GỘP QUY TRÌNH: TỰ ĐỘNG GỬI CỔNG BHXH */}
       {!hideAutoSendCheckbox && (
-        <div className="p-2.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between transition-all select-none">
-          <label className="flex items-center gap-2.5 cursor-pointer">
+        <div className="p-2.5 bg-blue-50/60 border border-blue-200/70 rounded-sm flex items-center justify-between transition-all select-none">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={Boolean(autoSendOnSign)}
               onChange={(e) => onToggleAutoSend?.(e.target.checked)}
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+              className="w-4 h-4 rounded-sm text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
             />
-            <div>
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <span>
-                  Gộp quy trình: Tự động gửi lên Cổng BHXH ngay khi ký số hoàn
-                  tất
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Hồ sơ sau khi ký số thành công sẽ tự động gửi thẳng đến Cổng
-                Tiếp Nhận BHXH, không cần thao tác thêm.
-              </div>
-            </div>
+            <span className="text-xs font-semibold text-slate-800">
+              Tự động gửi lên Cổng BHXH ngay sau khi ký số thành công
+            </span>
           </label>
         </div>
       )}

@@ -96,7 +96,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
   itemLabel = "bản ghi",
   fileName,
   hasCustomUploadedFile = false,
-  signatureInfo,
+  signatureInfo: _signatureInfo,
   onResendApi,
   onDownloadSignedXml,
   onResetAll,
@@ -170,8 +170,8 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
   }> = [
     {
       step: 1,
-      title: "1. Lập Hồ Sơ",
-      subtext: isStep1Done ? "Đã nạp file" : "Chờ dữ liệu",
+      title: "Lập Hồ Sơ",
+      subtext: isStep1Done ? "Đã có tệp" : "",
       state: isStep1Done ? "completed" : "pending",
       icon: isStep1Done ? (
         <Check size={18} strokeWidth={2.5} />
@@ -181,14 +181,12 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     },
     {
       step: 2,
-      title: "2. Ký Số SmartCA",
+      title: "Ký SmartCA",
       subtext: isStep2Done
-        ? signatureInfo?.signingTime
-          ? `Ký: ${signatureInfo.signingTime.split(" ")[0]}`
-          : "Đã ký số"
+        ? "Đã ký số"
         : isStep2Active
           ? "Đang ký..."
-          : "Chờ ký số",
+          : "",
       state: isStep2Done ? "completed" : isStep2Active ? "active" : "pending",
       icon: isStep2Done ? (
         <Check size={18} strokeWidth={2.5} />
@@ -200,14 +198,12 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     },
     {
       step: 3,
-      title: "3. Gửi Cổng BHXH",
+      title: "Gửi BHXH",
       subtext: isStep3Done
         ? "Đã gửi"
         : isStep3Active
           ? "Đang gửi..."
-          : isStep2Done
-            ? "Sẵn sàng"
-            : "Chờ ký số",
+          : "",
       state: isStep3Done
         ? "completed"
         : isStep3Active
@@ -225,18 +221,14 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     },
     {
       step: 4,
-      title: "4. Cổng Tiếp Nhận",
+      title: "Tiếp Nhận",
       subtext: isStep4Done
-        ? rawMaKetQua
-          ? `Mã: ${rawMaKetQua}`
-          : "Thành công"
+        ? "Thành công"
         : isStep4Error
-          ? rawMaKetQua
-            ? `Lỗi ${rawMaKetQua}`
-            : "Chưa nhận"
+          ? "Chưa tiếp nhận"
           : isStep4Active
-            ? "Đang phản hồi..."
-            : "Chờ kết quả",
+            ? "Đang xử lý..."
+            : "",
       state: isStep4Done
         ? "completed"
         : isStep4Error
@@ -328,7 +320,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
   return (
     <div className="space-y-4">
       {/* Khung Stepper chuẩn theo hình ảnh giao diện */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs select-none">
+      <div className="bg-white border border-slate-200/90 rounded-md p-4 sm:p-5 shadow-2xs select-none">
         <div className="flex items-start">
           {steps.map((st, idx) => {
             const style = STEP_STYLES[st.state];
@@ -388,9 +380,11 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                   >
                     {st.title}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 leading-tight">
-                    {st.subtext}
-                  </div>
+                  {st.subtext && (
+                    <div className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                      {st.subtext}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -399,8 +393,8 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
       </div>
 
       {isSendingApi && !hasApiResponse && (
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex items-center gap-3.5 animate-fadeIn">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-600/20">
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center gap-3.5 animate-fadeIn">
+          <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Loader2 size={20} className="animate-spin" />
           </div>
           <div>
@@ -417,7 +411,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
 
       {hasApiResponse && (
         <div
-          className={`p-4 sm:p-5 rounded-2xl border transition-all animate-fadeIn space-y-4 shadow-2xs ${
+          className={`p-4 sm:p-5 rounded-md border transition-all animate-fadeIn space-y-4 shadow-2xs ${
             isApiSuccess
               ? "bg-emerald-50/70 border-emerald-300"
               : "bg-rose-50/70 border-rose-300"
@@ -427,7 +421,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
           <div className="flex items-center justify-between flex-wrap gap-2.5">
             <div className="flex items-center gap-2.5">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 ${
+                className={`w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0 ${
                   isApiSuccess ? "bg-emerald-600" : "bg-rose-600"
                 }`}
               >
@@ -450,7 +444,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                   </h4>
                   {rawMaKetQua && (
                     <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                      className={`px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-wider ${
                         isApiSuccess
                           ? "bg-emerald-200/80 text-emerald-900 border border-emerald-300"
                           : "bg-rose-200/80 text-rose-900 border border-rose-300"
@@ -478,7 +472,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                 <button
                   type="button"
                   onClick={onDownloadSignedXml}
-                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                  className="px-3 py-1.5 rounded-sm bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
                 >
                   <Download size={13} />
                   <span>Tải XML Đã Ký</span>
@@ -489,7 +483,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                   type="button"
                   onClick={onResendApi}
                   disabled={isSendingApi}
-                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                  className="px-3 py-1.5 rounded-sm bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
                 >
                   <RotateCcw size={13} />
                   <span>Gửi Lại</span>
@@ -499,7 +493,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                 <button
                   type="button"
                   onClick={onResetAll}
-                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
+                  className="px-3 py-1.5 rounded-sm bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
                 >
                   <span>Làm Mới</span>
                 </button>
@@ -513,7 +507,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
               {infoItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between ${
+                  className={`p-3 bg-white rounded-sm border border-slate-200 shadow-2xs flex items-center justify-between ${
                     item.span || ""
                   }`}
                 >
@@ -544,7 +538,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
                           item.copyKey,
                         )
                       }
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors shrink-0"
+                      className="p-1.5 rounded-sm text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors shrink-0"
                       title={`Sao chép ${item.label}`}
                     >
                       {isKeyCopied(item.copyKey) ? (

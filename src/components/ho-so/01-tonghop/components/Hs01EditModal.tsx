@@ -96,11 +96,11 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 ant-modal-anim" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-2xl bg-indigo-100 text-indigo-700">
+            <div className="p-2 rounded-md bg-blue-100 text-[#1677ff]">
               <FileText size={20} />
             </div>
             <div>
@@ -108,7 +108,7 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
               <p className="text-[11px] text-slate-500">20 trường thông tin chuẩn Cổng giám định BHYT (XML &lt;HSTH01BH&gt;)</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold">
+          <button type="button" onClick={onClose} className="w-8 h-8 rounded-sm hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold cursor-pointer">
             <X size={18} />
           </button>
         </div>
@@ -117,10 +117,10 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
           {/* Section 1: Thông tin người bệnh */}
           <div>
-            <h4 className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <User size={13} /> <span>1. Thông Tin Người Bệnh &amp; Thẻ BHYT</span>
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-slate-50/60 p-3 rounded-sm border border-slate-200/80">
               <FormField label="Họ và tên người bệnh" required placeholder="NGUYỄN VĂN A" value={form.hoTen} onChange={(v) => setForm({ ...form, hoTen: v.toUpperCase() })} bold className="lg:col-span-2" />
               <FormField label="Mã thẻ BHYT" required maxLength={15} placeholder="DN4791234567890" value={form.maTheBhyt} onChange={(v) => setForm({ ...form, maTheBhyt: v.toUpperCase() })} mono bold />
               <FormField label="Giới tính" type="select" required value={form.gioiTinh} onChange={(v) => setForm({ ...form, gioiTinh: v })} options={[{ value: '1', label: '1 - Nam' }, { value: '2', label: '2 - Nữ' }, { value: '3', label: '3 - Khác' }]} />
@@ -130,9 +130,9 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
               <div className="space-y-1">
                 <label className="block text-[11px] font-semibold text-slate-600">Kỳ Quyết Toán *</label>
                 <div className="flex items-center gap-1">
-                  <input type="text" required maxLength={2} placeholder="MM" value={form.thangQt} onChange={(e) => setForm({ ...form, thangQt: e.target.value })} className="w-12 px-1.5 py-1.5 bg-white border border-slate-200 rounded-xl text-center text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-500" />
+                  <input type="text" required maxLength={2} placeholder="MM" value={form.thangQt} onChange={(e) => setForm({ ...form, thangQt: e.target.value })} className="w-12 px-1.5 py-1.5 bg-white border border-slate-200 rounded-sm text-center text-xs font-mono font-bold text-slate-800 outline-none focus:border-blue-600" />
                   <span>/</span>
-                  <input type="number" required placeholder="YYYY" value={form.namQt} onChange={(e) => setForm({ ...form, namQt: Number(e.target.value) })} className="w-16 px-1.5 py-1.5 bg-white border border-slate-200 rounded-xl text-center text-xs font-mono font-bold text-slate-800 outline-none focus:border-indigo-500" />
+                  <input type="number" required placeholder="YYYY" value={form.namQt} onChange={(e) => setForm({ ...form, namQt: Number(e.target.value) })} className="w-16 px-1.5 py-1.5 bg-white border border-slate-200 rounded-sm text-center text-xs font-mono font-bold text-slate-800 outline-none focus:border-blue-600" />
                 </div>
               </div>
             </div>
@@ -140,10 +140,10 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
 
           {/* Section 2: Thông tin KCB */}
           <div>
-            <h4 className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Calendar size={13} /> <span>2. Thông Tin Khám Chữa Bệnh &amp; Thời Gian</span>
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-slate-50/60 p-3 rounded-sm border border-slate-200/80">
               <FormField label="Mã Bệnh ICD-10" required maxLength={7} placeholder="I10" value={form.maBenhChinh} onChange={(v) => setForm({ ...form, maBenhChinh: v.toUpperCase() })} mono bold />
               <FormField label="Hình thức KCB" type="select" required value={form.maLoaiKcb} onChange={(v) => setForm({ ...form, maLoaiKcb: v })} options={LOAI_KCB_OPTIONS.map((o) => ({ value: o.code, label: `[${o.code}] ${o.name}` }))} />
               <FormField label="Thời điểm vào KCB" required maxLength={12} placeholder="YYYYMMDDHHmm" value={form.ngayVao} onChange={(v) => setForm({ ...form, ngayVao: v })} mono />
@@ -155,10 +155,10 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
 
           {/* Section 3: Cơ cấu chi phí */}
           <div>
-            <h4 className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <DollarSign size={13} /> <span>3. Cơ Cấu Chi Phí KBCB &amp; Đề Nghị Thanh Toán</span>
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-slate-50/60 p-3 rounded-sm border border-slate-200/80">
               <FormField label="Tổng chi BV (T_TONGCHI_BV)" type="number" min={0} step="0.01" required value={form.tTongchiBv} onChange={(v) => updateCost('tTongchiBv', Number(v))} mono bold />
               <FormField label="Tổng chi BH (T_TONGCHI_BH)" type="number" min={0} step="0.01" required value={form.tTongchiBh} onChange={(v) => updateCost('tTongchiBh', Number(v))} mono bold />
               <FormField label="BHYT Thanh Toán (T_BHTT)" type="number" min={0} step="0.01" required value={form.tBhtt} onChange={(v) => updateCost('tBhtt', Number(v))} mono bold />
@@ -170,8 +170,8 @@ export const Hs01EditModal: React.FC<Hs01EditModalProps> = ({
 
           {/* Action Buttons */}
           <div className="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-xs">Hủy Bỏ</button>
-            <button type="submit" className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 flex items-center gap-1.5">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-sm font-bold text-xs cursor-pointer">Hủy Bỏ</button>
+            <button type="submit" className="px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
               <Check size={14} /> <span>{initialData ? 'Cập Nhật Hồ Sơ 01/BH' : 'Lưu Hồ Sơ Mới'}</span>
             </button>
           </div>

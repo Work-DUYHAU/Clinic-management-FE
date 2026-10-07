@@ -35,7 +35,7 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
 
   return (
     <DanhMucDropzone
-      themeColor="indigo"
+      themeColor="blue"
       isLoadingFile={isLoadingFile}
       loadingTitle="Đang đọc và phân tích file Excel / XML Hồ sơ điều chỉnh 09/BH..."
       title="Nạp Tệp Excel / XML Hồ Sơ Điều Chỉnh Mẫu 09/BH (Loại HS 73)"
@@ -54,7 +54,7 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
               fileName: fileUploadStats.fileName,
               availableSheets: fileUploadStats.availableSheets,
               extraBadge: (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-lg text-[11px]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-sm text-[11px] font-mono">
                   <CheckCircle2 size={13} />
                   <span>Sẵn sàng sinh XML &amp; Base64 Loại HS 73</span>
                 </div>

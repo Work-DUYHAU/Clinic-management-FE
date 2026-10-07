@@ -73,18 +73,18 @@ export const ThuocTable: React.FC<ThuocTableProps> = ({
   onDelete
 }) => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
       {/* Table Search & Filter Bar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm kiếm theo mã thuốc, tên thuốc, hoạt chất, số đăng ký..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#1677ff] focus:ring-2 focus:ring-blue-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
             />
           </div>
           {searchTerm && (

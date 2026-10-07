@@ -124,7 +124,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto p-4 rounded-2xl border ${borderClass} ${shadowClass} transition-all duration-300 transform translate-y-0 opacity-100 flex items-start gap-3 backdrop-blur-md relative overflow-hidden`}
+              className={`pointer-events-auto p-4 rounded-md border ${borderClass} ${shadowClass} transition-all duration-300 transform translate-y-0 opacity-100 flex items-start gap-3 backdrop-blur-md relative overflow-hidden`}
               style={{ animation: 'slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
             >
               <div className="mt-0.5">{icon}</div>
@@ -141,7 +141,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-sm hover:bg-slate-100 transition-colors"
               >
                 <X size={14} />
               </button>
@@ -169,10 +169,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Modern Confirmation Dialog Modal */}
       {confirmModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[99999] p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-md max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3.5">
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${
                   confirmModal.danger
                     ? 'bg-rose-50 text-rose-600 border border-rose-100'
                     : 'bg-blue-50 text-[#1677ff] border border-blue-100'
@@ -195,7 +195,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type="button"
                 onClick={handleConfirmCancel}
                 disabled={isConfirmLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-sm text-xs font-bold transition-colors cursor-pointer"
               >
                 {confirmModal.cancelText || 'Hủy Bỏ'}
               </button>
@@ -203,10 +203,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type="button"
                 onClick={handleConfirmOk}
                 disabled={isConfirmLoading}
-                className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md ${
+                className={`px-4 py-2 rounded-sm text-xs font-bold text-white transition-all shadow-sm cursor-pointer ${
                   confirmModal.danger
-                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
-                    : 'bg-[#1677ff] hover:bg-blue-600 shadow-blue-500/20'
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-[#1677ff] hover:bg-blue-600'
                 }`}
               >
                 {isConfirmLoading ? 'Đang Xử Lý...' : confirmModal.okText || 'Đồng Ý'}

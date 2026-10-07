@@ -63,11 +63,11 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 ant-modal-anim">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-md max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/90">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-100 text-[#1677ff]">
+            <div className="p-2.5 rounded-md bg-blue-100 text-[#1677ff]">
               <Layers size={22} />
             </div>
             <div>
@@ -75,7 +75,7 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
                 <h3 className="text-base font-black text-slate-900">
                   Bảng Đối Soát Khớp Cột Chuẩn BHXH ({schemaFields.length} Trường)
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#1677ff] border border-blue-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-blue-100 text-[#1677ff] border border-blue-200">
                   {loaiHsBadge}
                 </span>
               </div>
@@ -88,7 +88,7 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
+            className="w-8 h-8 rounded-sm hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
           >
             &times;
           </button>
@@ -96,24 +96,24 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
 
         {/* Modal Sub-Header Stats */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="p-3 bg-white rounded-sm border border-slate-200 shadow-2xs flex items-center justify-between">
             <span className="text-slate-500 font-medium">Tổng cột khớp nhận diện:</span>
             <strong className="text-slate-900 font-bold text-sm">
               {matchedCount}/{schemaFields.length} trường
             </strong>
           </div>
 
-          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="p-3 bg-white rounded-sm border border-slate-200 shadow-2xs flex items-center justify-between">
             <span className="text-slate-500 font-medium">Trường bắt buộc:</span>
             <strong className={`font-bold text-sm ${isFullyMatched ? 'text-emerald-700' : 'text-amber-600'}`}>
               {matchedRequiredCount}/{requiredFields.length} trường
             </strong>
           </div>
 
-          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="p-3 bg-white rounded-sm border border-slate-200 shadow-2xs flex items-center justify-between">
             <span className="text-slate-500 font-medium">Trạng thái cấu trúc:</span>
             <span
-              className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full text-[11px] ${
+              className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-sm text-[11px] ${
                 isFullyMatched
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -134,7 +134,7 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
               placeholder="Tìm kiếm trường theo mã (vd: MA_KHOA, TU_NGAY) hoặc tên tiếng Việt..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1677ff] focus:ring-2 focus:ring-blue-500/10 font-medium"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-800 outline-none focus:border-[#1677ff] focus:ring-1 focus:ring-blue-500/20 font-medium"
             />
           </div>
         </div>
@@ -198,18 +198,18 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
 
                     <td className="py-3 px-3.5 text-center border-b border-slate-100">
                       {field.required ? (
-                        <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="px-2 py-0.5 rounded-sm font-bold text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
                           Bắt buộc
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] text-slate-500 bg-slate-100">
+                        <span className="px-2 py-0.5 rounded-sm text-[10px] text-slate-500 bg-slate-100">
                           Tùy chọn
                         </span>
                       )}
                     </td>
 
                     <td className="py-3 px-3.5 text-center font-mono text-[11px] text-slate-600 border-b border-slate-100">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      <span className="px-2 py-0.5 rounded-sm bg-slate-100 text-slate-700">
                         {field.type}
                       </span>
                     </td>
@@ -217,7 +217,7 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
                     <td className="py-3 px-3.5 border-b border-slate-100">
                       {isMatched ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-emerald-800 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                          <span className="font-mono text-emerald-800 font-bold bg-emerald-50 px-2 py-1 rounded-sm border border-emerald-200">
                             {excelColName || field.key}
                           </span>
                         </div>
@@ -230,17 +230,17 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
 
                     <td className="py-3 px-3.5 text-center border-b border-slate-100">
                       {isMatched ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <Check size={12} />
                           <span>Đã khớp chuẩn</span>
                         </span>
                       ) : field.required ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                           <X size={12} />
                           <span>Thiếu trường</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-medium bg-slate-100 text-slate-600">
                           <span>Tự động gán rỗng</span>
                         </span>
                       )}
@@ -260,7 +260,7 @@ export const SchemaMappingModal: React.FC<SchemaMappingModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-xl font-bold shadow-md shadow-blue-500/20"
+            className="px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm font-bold shadow-sm"
           >
             Đã Hiểu & Đóng
           </button>

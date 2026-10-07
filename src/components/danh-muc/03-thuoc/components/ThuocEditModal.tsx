@@ -137,14 +137,14 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
+        className="bg-white rounded-md max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Modal Header */}
           <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-blue-100 text-[#1677ff]">
+              <div className="p-2.5 rounded-md bg-blue-100 text-[#1677ff]">
                 <Pill size={22} />
               </div>
               <div>
@@ -157,7 +157,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
+              className="w-8 h-8 rounded-sm hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center font-bold text-lg cursor-pointer"
             >
               &times;
             </button>
@@ -221,7 +221,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="vd: 40.123 hoặc 90.001"
                     value={formData.maThuoc}
                     onChange={(e) => setFormData({ ...formData, maThuoc: e.target.value })}
@@ -233,7 +233,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="vd: Panadol Extra 500mg/65mg"
                     value={formData.tenThuoc}
                     onChange={(e) => setFormData({ ...formData, tenThuoc: e.target.value })}
@@ -244,7 +244,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Tên Hoạt Chất (TEN_HOAT_CHAT)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="vd: Paracetamol, Amoxicillin + Acid clavulanic"
                     value={formData.tenHoatChat || ''}
                     onChange={(e) => setFormData({ ...formData, tenHoatChat: e.target.value })}
@@ -254,7 +254,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Loại Thuốc (LOAI_THUOC) *</label>
                   <select
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
                     value={formData.loaiThuoc}
                     onChange={(e) => setFormData({ ...formData, loaiThuoc: Number(e.target.value) })}
                   >
@@ -275,7 +275,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Hàm Lượng (HAM_LUONG)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="vd: 500mg hoặc 250ml"
                     value={formData.hamLuong || ''}
                     onChange={(e) => setFormData({ ...formData, hamLuong: e.target.value })}
@@ -287,7 +287,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Viên, Lọ, Chai, Túi, Gói..."
                     value={formData.donViTinh}
                     onChange={(e) => setFormData({ ...formData, donViTinh: e.target.value })}
@@ -298,7 +298,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Đường Dùng (DUONG_DUNG)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Uống, Tiêm bắp, Truyền TM..."
                     value={formData.duongDung}
                     onChange={(e) => setFormData({ ...formData, duongDung: e.target.value })}
@@ -310,7 +310,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="1.01 (Uống), 2.01 (Tiêm)..."
                     value={formData.maDuongDung}
                     onChange={(e) => setFormData({ ...formData, maDuongDung: e.target.value })}
@@ -321,7 +321,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Dạng Bào Chế (DANG_BAO_CHE)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Viên nén, Dung dịch tiêm..."
                     value={formData.dangBaoChe || ''}
                     onChange={(e) => setFormData({ ...formData, dangBaoChe: e.target.value })}
@@ -333,7 +333,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="VN-22134-19..."
                     value={formData.soDangKy}
                     onChange={(e) => setFormData({ ...formData, soDangKy: e.target.value })}
@@ -346,7 +346,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="number"
                     required
                     min={0}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     value={formData.donGia}
                     onChange={(e) => setFormData({ ...formData, donGia: Number(e.target.value) })}
                   />
@@ -358,7 +358,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="number"
                     required
                     min={0}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-blue-700 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-blue-700 outline-none focus:border-blue-500"
                     value={formData.donGiaBh}
                     onChange={(e) => setFormData({ ...formData, donGiaBh: Number(e.target.value) })}
                   />
@@ -369,7 +369,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="number"
                     min={0}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     value={formData.soLuong || ''}
                     onChange={(e) => setFormData({ ...formData, soLuong: e.target.value ? Number(e.target.value) : undefined })}
                   />
@@ -384,7 +384,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Quy Cách Đóng Gói (QUY_CACH)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Hộp 10 vỉ x 10 viên..."
                     value={formData.quyCach || ''}
                     onChange={(e) => setFormData({ ...formData, quyCach: e.target.value })}
@@ -395,7 +395,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Nước Sản Xuất (NUOC_SX)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Việt Nam, Pháp, Đức..."
                     value={formData.nuocSx || ''}
                     onChange={(e) => setFormData({ ...formData, nuocSx: e.target.value })}
@@ -406,7 +406,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Nhà Sản Xuất (NHA_SX)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Tên công ty sản xuất..."
                     value={formData.nhaSx || ''}
                     onChange={(e) => setFormData({ ...formData, nhaSx: e.target.value })}
@@ -417,7 +417,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Nhà Thầu / Đơn Vị Cung Ứng (NHA_THAU)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Công ty trúng thầu..."
                     value={formData.nhaThau || ''}
                     onChange={(e) => setFormData({ ...formData, nhaThau: e.target.value })}
@@ -428,7 +428,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Thông Tin Gói Thầu (TT_THAU)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="01/2026/QĐ-SYT..."
                     value={formData.ttThau || ''}
                     onChange={(e) => setFormData({ ...formData, ttThau: e.target.value })}
@@ -438,7 +438,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Loại Thầu (LOAI_THAU)</label>
                   <select
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     value={formData.loaiThau || ''}
                     onChange={(e) => setFormData({ ...formData, loaiThau: e.target.value ? Number(e.target.value) : undefined })}
                   >
@@ -456,7 +456,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Hình Thức Thầu (HT_THAU)</label>
                   <select
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     value={formData.htThau || ''}
                     onChange={(e) => setFormData({ ...formData, htThau: e.target.value ? Number(e.target.value) : undefined })}
                   >
@@ -478,7 +478,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     maxLength={8}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="YYYYMMDD (20260101)"
                     value={formData.tuNgayHd || ''}
                     onChange={(e) => setFormData({ ...formData, tuNgayHd: e.target.value })}
@@ -490,7 +490,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     maxLength={8}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="YYYYMMDD (20261231)"
                     value={formData.denNgayHd || ''}
                     onChange={(e) => setFormData({ ...formData, denNgayHd: e.target.value })}
@@ -505,7 +505,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Bộ Phận Vị Thuốc (BO_PHAN_VT)</label>
                   <select
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     value={formData.boPhanVt || ''}
                     onChange={(e) => setFormData({ ...formData, boPhanVt: e.target.value ? Number(e.target.value) : undefined })}
                   >
@@ -523,7 +523,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Tên Khoa Học Dược Liệu (TEN_KHOA_HOC)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs italic text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs italic text-slate-900 outline-none focus:border-blue-500"
                     placeholder="vd: Zingiber officinale..."
                     value={formData.tenKhoaHoc || ''}
                     onChange={(e) => setFormData({ ...formData, tenKhoaHoc: e.target.value })}
@@ -534,7 +534,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Nguồn Gốc (NGUON_GOC)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Nuôi trồng, Thu hái tự nhiên..."
                     value={formData.nguonGoc || ''}
                     onChange={(e) => setFormData({ ...formData, nguonGoc: e.target.value })}
@@ -545,7 +545,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Phương Pháp Chế Biến (PP_CHEBIEN)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Mã PP chế biến BYT..."
                     value={formData.ppChebien || ''}
                     onChange={(e) => setFormData({ ...formData, ppChebien: e.target.value })}
@@ -556,7 +556,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Tiêu Chuẩn Chất Lượng (TCCL)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs text-slate-900 outline-none focus:border-blue-500"
                     placeholder="DĐVN V..."
                     value={formData.tccl || ''}
                     onChange={(e) => setFormData({ ...formData, tccl: e.target.value })}
@@ -569,7 +569,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="number"
                     step="0.1"
                     min={0}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     value={formData.tlhhCb || ''}
                     onChange={(e) => setFormData({ ...formData, tlhhCb: e.target.value ? Number(e.target.value) : undefined })}
                   />
@@ -581,7 +581,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="number"
                     step="0.1"
                     min={0}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     value={formData.tlhhBq || ''}
                     onChange={(e) => setFormData({ ...formData, tlhhBq: e.target.value ? Number(e.target.value) : undefined })}
                   />
@@ -591,7 +591,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Mã DVKT Thuốc Phóng Xạ (MA_DVKT)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="07 ký tự đầu mã DVKT..."
                     value={formData.maDvkt || ''}
                     onChange={(e) => setFormData({ ...formData, maDvkt: e.target.value })}
@@ -609,7 +609,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="text"
                     required
                     maxLength={8}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     placeholder="20260101"
                     value={formData.tuNgay}
                     onChange={(e) => setFormData({ ...formData, tuNgay: e.target.value })}
@@ -622,7 +622,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <input
                     type="text"
                     maxLength={8}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="Để trống nếu đang áp dụng"
                     value={formData.denNgay || ''}
                     onChange={(e) => setFormData({ ...formData, denNgay: e.target.value })}
@@ -635,7 +635,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                     type="text"
                     required
                     maxLength={5}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono font-bold text-slate-900 outline-none focus:border-blue-500"
                     value={formData.maCskcb}
                     onChange={(e) => setFormData({ ...formData, maCskcb: e.target.value })}
                   />
@@ -645,7 +645,7 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
                   <label className="block font-bold text-slate-700 mb-1">Mã CSKCB Nơi Chuyển Đến (MA_CSKCB_THUOC)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-sm text-xs font-mono text-slate-900 outline-none focus:border-blue-500"
                     placeholder="C.XXXXX (nếu nhận điều chuyển)"
                     value={formData.maCskcbThuoc || ''}
                     onChange={(e) => setFormData({ ...formData, maCskcbThuoc: e.target.value })}
@@ -665,13 +665,13 @@ const ThuocEditModalContent: React.FC<ThuocEditModalContentProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"
+                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-sm text-xs font-bold cursor-pointer"
               >
                 Hủy Bỏ
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20"
+                className="px-5 py-2 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm text-xs font-bold shadow-sm cursor-pointer"
               >
                 Lưu Mặt Hàng Thuốc (03/DM)
               </button>

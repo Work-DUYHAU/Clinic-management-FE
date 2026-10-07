@@ -22,18 +22,18 @@ export const DichVuTable: React.FC<DichVuTableProps> = ({
   onManageThuocPx
 }) => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
       {/* Table Search & Filter Bar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm kiếm theo mã DV, tên DVKT, quy trình, quyết định..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-medium"
             />
           </div>
           {searchTerm && (
@@ -54,7 +54,7 @@ export const DichVuTable: React.FC<DichVuTableProps> = ({
           <button
             type="button"
             onClick={onAddNew}
-            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
             <Plus size={14} />
             <span>Thêm DVKT</span>
@@ -102,11 +102,11 @@ export const DichVuTable: React.FC<DichVuTableProps> = ({
               items.map((item, idx) => {
                 const hasThuocPx = item.dsThuocPx && item.dsThuocPx.length > 0;
                 return (
-                  <tr key={item.id || item.maDichVu || idx} className="hover:bg-emerald-50/30 transition-colors group">
+                  <tr key={item.id || item.maDichVu || idx} className="hover:bg-blue-50/25 transition-colors group">
                     <td className="py-3 px-2 text-center font-bold text-slate-400 sticky left-0 bg-white group-hover:bg-slate-50 z-10 w-[52px] min-w-[52px] max-w-[52px]">
                       {item.stt || idx + 1}
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-emerald-700 sticky left-[52px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200/80 shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)] min-w-[140px]">
+                    <td className="py-3 px-3 font-mono font-bold text-blue-700 sticky left-[52px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200/80 shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)] min-w-[140px]">
                       {item.maDichVu}
                     </td>
                     <td className="py-3 px-3 font-bold text-slate-900 max-w-[260px] truncate" title={item.tenDichVu}>

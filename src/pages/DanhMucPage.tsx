@@ -106,8 +106,8 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* 6 Tab Switcher Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* 6 Tab Switcher Grid - Phong cách góc cạnh, chuyên nghiệp */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {catalogTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeCatalogTab === tab.id;
@@ -116,23 +116,27 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
               key={tab.id}
               type="button"
               onClick={() => handleTabChange(tab.id)}
-              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden flex flex-col justify-between ${
+              className={`p-3 rounded-md border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between cursor-pointer ${
                 isActive
-                  ? "bg-white border-[#1677ff] shadow-sm ring-2 ring-blue-500/10"
-                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                  ? "bg-white border-blue-600 shadow-sm border-t-[3px] border-t-blue-600 ring-1 ring-blue-500/20"
+                  : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div
-                  className={`p-1.5 rounded-lg ${isActive ? "bg-blue-50 text-[#1677ff]" : "bg-slate-100 text-slate-600"}`}
+                  className={`p-1.5 rounded-sm ${
+                    isActive
+                      ? "bg-blue-50 text-blue-600 border border-blue-200/60"
+                      : "bg-slate-100 text-slate-500 border border-slate-200/60"
+                  }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={15} />
                 </div>
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm font-mono ${
                     isActive
-                      ? "bg-blue-100 text-[#1677ff]"
-                      : "bg-slate-100 text-slate-500"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "bg-slate-100 text-slate-500 border border-slate-200/60"
                   }`}
                 >
                   {tab.badge}
@@ -140,11 +144,13 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
               </div>
               <div>
                 <div
-                  className={`text-xs font-bold leading-snug ${isActive ? "text-[#1677ff]" : "text-slate-800"}`}
+                  className={`text-xs font-bold leading-tight ${
+                    isActive ? "text-blue-600" : "text-slate-800"
+                  }`}
                 >
                   {tab.label}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5 font-medium line-clamp-2 leading-tight">
+                <div className="text-[11px] text-slate-500 mt-1 font-normal line-clamp-2 leading-snug">
                   {tab.sub}
                 </div>
               </div>

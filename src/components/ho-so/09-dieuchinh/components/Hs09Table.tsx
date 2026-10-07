@@ -75,14 +75,14 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
   }, [items, currentPage, pageSize]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
       {/* Search & Filter Toolbar */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/50">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
           {/* Search Box */}
           <div className="relative w-full sm:w-56 md:w-64 shrink-0">
             <Search
-              size={15}
+              size={14}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
             />
             <input
@@ -93,12 +93,12 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 onSearchChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-medium"
             />
           </div>
 
           {/* Filter Bảng XML */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
             <Layers size={13} className="text-slate-400 shrink-0" />
             <select
               value={filterSoBangXml}
@@ -118,7 +118,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           </div>
 
           {/* Filter Nhóm Lỗi Xuất Toán */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
             <Filter size={13} className="text-slate-400 shrink-0" />
             <select
               value={filterNhomLoi}
@@ -138,7 +138,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           </div>
 
           {/* Filter Trạng thái */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+          <div className="flex items-center bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
             <select
               value={filterTrangThai}
               onChange={(e) => {
@@ -179,9 +179,9 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           <button
             type="button"
             onClick={onAddNew}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-semibold shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-sm text-xs font-semibold shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             <span>Thêm Hồ Sơ 09</span>
           </button>
         </div>

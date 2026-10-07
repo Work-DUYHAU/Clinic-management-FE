@@ -114,7 +114,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-scaleUp text-slate-100"
+        className="bg-slate-900 border border-slate-700 rounded-md w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-scaleUp text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Modal Xem Trước XML */}
@@ -131,7 +131,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
                   {fileName}
                 </h4>
                 {isSigned && (
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-extrabold uppercase tracking-wider flex-shrink-0">
+                  <span className="px-2 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-extrabold uppercase tracking-wider flex-shrink-0">
                     Đã Ký Số
                   </span>
                 )}
@@ -148,7 +148,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
             <button
               type="button"
               onClick={() => onCopy(currentDisplayXml, "modalPreviewXml")}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+              className="px-3 py-1.5 rounded-sm bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
             >
               {copiedKey === "modalPreviewXml" ? (
                 <>
@@ -166,7 +166,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-sm transition-colors cursor-pointer"
               title="Đóng xem trước"
             >
               <XCircle size={18} />
@@ -177,11 +177,11 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
         {/* Thanh chuyển đổi Tab khi có chứa các file băm Base64 */}
         {hasBase64Files && (
           <div className="px-5 py-2.5 bg-slate-900 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <div className="flex items-center bg-slate-950 p-1 rounded-sm border border-slate-800">
               <button
                 type="button"
                 onClick={() => setActiveTab("rawChild")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                   activeTab === "rawChild"
                     ? "bg-blue-600 text-white shadow-xs"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -189,7 +189,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
               >
                 <FileCode size={13} />
                 <span>XML Gốc Trước Khi Băm Base64</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-blue-500/30 text-blue-200 text-[10px]">
+                <span className="px-1.5 py-0.2 rounded-sm bg-blue-500/30 text-blue-200 text-[10px]">
                   {decodedFiles.length}
                 </span>
               </button>
@@ -197,7 +197,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("package")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-sm text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                   activeTab === "package"
                     ? "bg-slate-800 text-white shadow-xs"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -218,7 +218,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
                 <select
                   value={selectedChildIndex}
                   onChange={(e) => setSelectedChildIndex(Number(e.target.value))}
-                  className="px-2.5 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-emerald-300 focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-[260px] truncate"
+                  className="px-2.5 py-1 bg-slate-950 border border-slate-700 rounded-sm text-xs font-mono text-emerald-300 focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-[260px] truncate"
                 >
                   <option value={-1}>Toàn bộ {decodedFiles.length} hồ sơ</option>
                   {decodedFiles.map((f, i) => (
@@ -252,7 +252,7 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors cursor-pointer border border-slate-700"
+            className="px-4 py-1.5 rounded-sm bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors cursor-pointer border border-slate-700"
           >
             Đóng
           </button>

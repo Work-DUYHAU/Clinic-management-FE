@@ -9,6 +9,7 @@ import {
   Building2,
   ChevronRight,
   User,
+  Activity,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { DEFAULT_MA_CSKCB, DEFAULT_MA_TINH, DEFAULT_CLINIC_NAME } from "../utils/shared/excelXmlShared";
@@ -31,270 +32,204 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const toast = useToast();
 
+  const isDanhMucActive = activeTab === "danh-muc";
+  const isHoSo01Active = activeTab === "ho-so" && hoSoTab === "01_tonghop";
+  const isHoSo09Active = activeTab === "ho-so" && hoSoTab === "09_xuattoan";
+  const isChungTuActive = activeTab === "chung-tu";
+
   return (
-    <aside className="w-72 bg-[#001529] text-slate-300 flex flex-col flex-shrink-0 h-full z-40 border-r border-slate-800 shadow-xl">
-      {/* Brand Header */}
-      <div className="p-5 flex items-center gap-3.5 border-b border-slate-800/80 bg-[#001122]">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 flex-shrink-0">
-          <Stethoscope size={22} className="stroke-[2.5]" />
+    <aside className="w-68 bg-[#0a1120] text-slate-300 flex flex-col flex-shrink-0 h-full z-40 border-r border-slate-800/90 shadow-2xl select-none font-sans">
+      {/* 1. Header Thương Hiệu - Thiết kế góc cạnh, vững chãi */}
+      <div className="px-4 py-4.5 border-b border-slate-800/80 bg-[#070d18] flex items-center gap-3">
+        <div className="w-9 h-9 rounded-md bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 flex-shrink-0 shadow-inner">
+          <Stethoscope size={20} className="stroke-[2.2]" />
         </div>
-        <div className="min-w-0">
-          <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-1.5 leading-tight truncate">
-            {DEFAULT_CLINIC_NAME}{" "}
-            <span className="text-[10px] bg-blue-500/20 text-blue-400 font-semibold px-1.5 py-0.5 rounded border border-blue-500/30 flex-shrink-0">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-bold text-slate-100 tracking-tight truncate leading-tight">
+              {DEFAULT_CLINIC_NAME}
+            </span>
+            <span className="text-[10px] font-semibold uppercase px-1 py-0.2 rounded-sm bg-blue-500/15 text-blue-400 border border-blue-500/30 font-mono flex-shrink-0">
               BHYT
             </span>
-          </h2>
-          <span className="text-[11px] text-slate-400 block truncate font-medium">
-            Hệ Thống KCB & Giám Định
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium block truncate mt-0.5">
+            Cổng Giám Định & Dữ Liệu XML
           </span>
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="p-4 flex-1 flex flex-col gap-2 overflow-y-auto">
-        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 flex items-center justify-between">
-          <span>PHÂN HỆ NGHIỆP VỤ</span>
-          <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded font-mono">
-            QĐ 130
-          </span>
-        </div>
-
-        {/* ============================================================
-            1. PHÂN HỆ DANH MỤC (Gọn gàng, không để cả mớ sub-items)
-        ============================================================ */}
-        <button
-          type="button"
-          onClick={() => onNavigate("danh-muc")}
-          className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all duration-200 group relative ${
-            activeTab === "danh-muc"
-              ? "bg-[#1677ff] text-white font-semibold shadow-lg shadow-blue-600/30 ring-1 ring-blue-400/40"
-              : "hover:bg-slate-800/70 text-slate-300 hover:text-white bg-slate-900/30 border border-slate-800/60"
-          }`}
-        >
-          <div
-            className={`p-2.5 rounded-lg transition-colors flex-shrink-0 ${
-              activeTab === "danh-muc"
-                ? "bg-white/20 text-white"
-                : "bg-slate-800 text-blue-400 group-hover:bg-slate-700"
+      {/* 2. Menu Điều Hướng Nghiệp Vụ */}
+      <nav className="px-2.5 py-3 flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+        {/* Nhóm 1: Danh Mục KCB */}
+        <div>
+          <div className="px-2 pb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <span>QUẢN LÝ DANH MỤC</span>
+            <span className="text-[10px] text-slate-400 font-mono">QĐ 130</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate("danh-muc")}
+            className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 transition-colors duration-150 border text-xs ${
+              isDanhMucActive
+                ? "bg-blue-600/15 text-blue-300 font-semibold border-blue-500/40 border-l-[3px] border-l-blue-500 shadow-sm"
+                : "bg-slate-900/40 text-slate-300 hover:text-white hover:bg-slate-800/60 border-slate-800/60"
             }`}
           >
-            <Database size={18} />
+            <Database
+              size={16}
+              className={`flex-shrink-0 ${isDanhMucActive ? "text-blue-400" : "text-slate-400"}`}
+            />
+            <span className="flex-1 truncate">Danh Mục KCB</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium font-mono ${
+                isDanhMucActive
+                  ? "bg-blue-500/25 text-blue-200 border border-blue-400/30"
+                  : "bg-slate-800 text-slate-400 border border-slate-700/50"
+              }`}
+            >
+              6 Biểu Mẫu
+            </span>
+            {isDanhMucActive && <ChevronRight size={14} className="text-blue-400 flex-shrink-0" />}
+          </button>
+        </div>
+
+        {/* Nhóm 2: Hồ Sơ Khám Chữa Bệnh */}
+        <div>
+          <div className="px-2 pb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            HỒ SƠ KHÁM CHỮA BỆNH
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold flex items-center justify-between gap-1">
-              <span className="truncate">1. Danh Mục KCB</span>
+          <div className="flex flex-col gap-1.5">
+            {/* Bộ 1: Bảng tổng hợp KCB (01/BH) */}
+            <button
+              type="button"
+              onClick={() => onNavigate("ho-so", "01_tonghop")}
+              className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 transition-colors duration-150 border text-xs ${
+                isHoSo01Active
+                  ? "bg-blue-600/15 text-blue-300 font-semibold border-blue-500/40 border-l-[3px] border-l-blue-500 shadow-sm"
+                  : "bg-slate-900/40 text-slate-300 hover:text-white hover:bg-slate-800/60 border-slate-800/60"
+              }`}
+            >
+              <FileText
+                size={16}
+                className={`flex-shrink-0 ${isHoSo01Active ? "text-blue-400" : "text-slate-400"}`}
+              />
+              <span className="flex-1 truncate">Bảng Tổng Hợp KCB</span>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "danh-muc"
-                    ? "bg-white/20 text-white"
-                    : "bg-blue-950 text-blue-300 border border-blue-800/50"
+                className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium font-mono ${
+                  isHoSo01Active
+                    ? "bg-blue-500/25 text-blue-200 border border-blue-400/30"
+                    : "bg-slate-800 text-slate-400 border border-slate-700/50"
                 }`}
               >
-                6 Biểu Mẫu
+                01/BH
               </span>
-            </div>
-            <span
-              className={`text-[11px] block truncate mt-0.5 ${activeTab === "danh-muc" ? "text-blue-100" : "text-slate-400"}`}
-            >
-              BPCM, Thuốc, TBYT, DVKT...
-            </span>
-          </div>
-          {activeTab === "danh-muc" && (
-            <ChevronRight size={15} className="text-white flex-shrink-0" />
-          )}
-        </button>
+              {isHoSo01Active && <ChevronRight size={14} className="text-blue-400 flex-shrink-0" />}
+            </button>
 
-        {/* ============================================================
-            2. PHÂN HỆ HỒ SƠ BHYT (Với 2 bộ hồ sơ chính)
-        ============================================================ */}
-        <div className="mt-2 space-y-1.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1">
-            2. HỒ SƠ KHÁM CHỮA BỆNH
-          </div>
-
-          {/* Bộ 1: Bảng Tổng Hợp KCB (01/BH) */}
-          <button
-            type="button"
-            onClick={() => onNavigate("ho-so", "01_tonghop")}
-            className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-200 group relative ${
-              activeTab === "ho-so" && hoSoTab === "01_tonghop"
-                ? "bg-[#1677ff] text-white font-semibold shadow-lg shadow-blue-600/30 ring-1 ring-blue-400/40"
-                : "hover:bg-slate-800/70 text-slate-300 hover:text-white bg-slate-900/30 border border-slate-800/60"
-            }`}
-          >
-            <div
-              className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                activeTab === "ho-so" && hoSoTab === "01_tonghop"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-800 text-cyan-400 group-hover:bg-slate-700"
+            {/* Bộ 2: Xử lý xuất toán (09/BH) */}
+            <button
+              type="button"
+              onClick={() => onNavigate("ho-so", "09_xuattoan")}
+              className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 transition-colors duration-150 border text-xs ${
+                isHoSo09Active
+                  ? "bg-amber-500/15 text-amber-300 font-semibold border-amber-500/40 border-l-[3px] border-l-amber-500 shadow-sm"
+                  : "bg-slate-900/40 text-slate-300 hover:text-white hover:bg-slate-800/60 border-slate-800/60"
               }`}
             >
-              <FileText size={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold flex items-center justify-between gap-1">
-                <span className="truncate">Bộ 1: Bảng Tổng Hợp</span>
+              <ShieldAlert
+                size={16}
+                className={`flex-shrink-0 ${isHoSo09Active ? "text-amber-400" : "text-slate-400"}`}
+              />
+              <span className="flex-1 truncate">Hồ Sơ Điều Chỉnh</span>
+              {pendingXuattoanCount > 0 ? (
+                <span className="text-[10px] bg-rose-600 text-white font-bold px-1.5 py-0.5 rounded-sm font-mono animate-pulse">
+                  {pendingXuattoanCount}
+                </span>
+              ) : (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex-shrink-0 ${
-                    activeTab === "ho-so" && hoSoTab === "01_tonghop"
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-800 text-slate-300"
+                  className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium font-mono ${
+                    isHoSo09Active
+                      ? "bg-amber-500/25 text-amber-200 border border-amber-400/30"
+                      : "bg-slate-800 text-slate-400 border border-slate-700/50"
                   }`}
                 >
-                  01/BH
+                  09/BH
                 </span>
-              </div>
-              <span
-                className={`text-[11px] block truncate mt-0.5 ${activeTab === "ho-so" && hoSoTab === "01_tonghop" ? "text-blue-100" : "text-slate-400"}`}
-              >
-                Chi phí KCB & XML 130
-              </span>
-            </div>
-            {activeTab === "ho-so" && hoSoTab === "01_tonghop" && (
-              <ChevronRight size={14} className="text-white flex-shrink-0" />
-            )}
-          </button>
-
-          {/* Bộ 2: Xử Lý Xuất Toán (09/BH) */}
-          <button
-            type="button"
-            onClick={() => onNavigate("ho-so", "09_xuattoan")}
-            className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-200 group relative ${
-              activeTab === "ho-so" && hoSoTab === "09_xuattoan"
-                ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold shadow-lg shadow-amber-600/30 ring-1 ring-amber-400/40"
-                : "hover:bg-slate-800/70 text-slate-300 hover:text-white bg-slate-900/30 border border-slate-800/60"
-            }`}
-          >
-            <div
-              className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                activeTab === "ho-so" && hoSoTab === "09_xuattoan"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-800 text-amber-400 group-hover:bg-slate-700"
-              }`}
-            >
-              <ShieldAlert size={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold flex items-center justify-between gap-1">
-                <span className="truncate">Bộ 2: Xử Lý Xuất Toán</span>
-                {pendingXuattoanCount > 0 ? (
-                  <span className="text-[10px] bg-rose-500 text-white font-bold px-1.5 py-0.5 rounded-full animate-pulse whitespace-nowrap flex-shrink-0">
-                    {pendingXuattoanCount}
-                  </span>
-                ) : (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex-shrink-0 ${
-                      activeTab === "ho-so" && hoSoTab === "09_xuattoan"
-                        ? "bg-white/20 text-white"
-                        : "bg-slate-800 text-slate-300"
-                    }`}
-                  >
-                    09/BH
-                  </span>
-                )}
-              </div>
-              <span
-                className={`text-[11px] block truncate mt-0.5 ${activeTab === "ho-so" && hoSoTab === "09_xuattoan" ? "text-amber-100" : "text-slate-400"}`}
-              >
-                Giải trình & thu hồi
-              </span>
-            </div>
-            {activeTab === "ho-so" && hoSoTab === "09_xuattoan" && (
-              <ChevronRight size={14} className="text-white flex-shrink-0" />
-            )}
-          </button>
+              )}
+              {isHoSo09Active && <ChevronRight size={14} className="text-amber-400 flex-shrink-0" />}
+            </button>
+          </div>
         </div>
 
-        {/* ============================================================
-            3. PHÂN HỆ HỒ SƠ CHỨNG TỪ ĐIỆN TỬ (TT 25 & BHXH 2025)
-        ============================================================ */}
-        <div className="mt-2 space-y-1.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 flex items-center justify-between">
-            <span>3. CHỨNG TỪ ĐIỆN TỬ</span>
-            <span className="text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded font-mono">
-              TT 25
-            </span>
+        {/* Nhóm 3: Chứng Từ Điện Tử */}
+        <div>
+          <div className="px-2 pb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <span>CHỨNG TỪ ĐIỆN TỬ</span>
+            <span className="text-[10px] text-slate-400 font-mono">TT 25</span>
           </div>
-
           <button
             type="button"
             onClick={() => onNavigate("chung-tu")}
-            className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-200 group relative ${
-              activeTab === "chung-tu"
-                ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40"
-                : "hover:bg-slate-800/70 text-slate-300 hover:text-white bg-slate-900/30 border border-slate-800/60"
+            className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 transition-colors duration-150 border text-xs ${
+              isChungTuActive
+                ? "bg-blue-600/15 text-blue-300 font-semibold border-blue-500/40 border-l-[3px] border-l-blue-500 shadow-sm"
+                : "bg-slate-900/40 text-slate-300 hover:text-white hover:bg-slate-800/60 border-slate-800/60"
             }`}
           >
-            <div
-              className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                activeTab === "chung-tu"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-800 text-indigo-400 group-hover:bg-slate-700"
+            <FileSignature
+              size={16}
+              className={`flex-shrink-0 ${isChungTuActive ? "text-blue-400" : "text-slate-400"}`}
+            />
+            <span className="flex-1 truncate">Chứng Từ KCB</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium font-mono ${
+                isChungTuActive
+                  ? "bg-blue-500/25 text-blue-200 border border-blue-400/30"
+                  : "bg-slate-800 text-slate-400 border border-slate-700/50"
               }`}
             >
-              <FileSignature size={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold flex items-center justify-between gap-1">
-                <span className="truncate">Hồ Sơ Chứng Từ</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex-shrink-0 ${
-                    activeTab === "chung-tu"
-                      ? "bg-white/20 text-white"
-                      : "bg-indigo-950 text-indigo-300 border border-indigo-800/50"
-                  }`}
-                >
-                  TT 25
-                </span>
-              </div>
-              <span
-                className={`text-[11px] block truncate mt-0.5 ${
-                  activeTab === "chung-tu" ? "text-indigo-100" : "text-slate-400"
-                }`}
-              >
-                CT01, CT07, GBT, GCS...
-              </span>
-            </div>
-            {activeTab === "chung-tu" && (
-              <ChevronRight size={14} className="text-white flex-shrink-0" />
-            )}
+              TT 25
+            </span>
+            {isChungTuActive && <ChevronRight size={14} className="text-blue-400 flex-shrink-0" />}
           </button>
         </div>
 
-        {/* Hospital Meta Card */}
-        <div className="mt-auto pt-4">
-          <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800/80 text-xs flex flex-col gap-2">
+        {/* 3. Panel Thông Tin Cơ Sở - Góc cạnh, súc tích */}
+        <div className="mt-auto pt-2">
+          <div className="p-3 bg-slate-900/80 rounded-md border border-slate-800/80 text-xs flex flex-col gap-2">
             <div className="flex items-center justify-between font-semibold text-slate-200 pb-1.5 border-b border-slate-800">
-              <span className="flex items-center gap-1.5 text-blue-400 font-bold">
-                <Building2 size={14} /> CSKCB {DEFAULT_MA_CSKCB}
+              <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                <Building2 size={13} className="text-blue-400" /> CSKCB {DEFAULT_MA_CSKCB}
               </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold">
+              <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700/60 px-1.5 py-0.2 rounded-sm font-mono">
                 Tỉnh {DEFAULT_MA_TINH}
               </span>
             </div>
-            <div className="text-[11px] text-slate-400 leading-snug truncate">
-              {DEFAULT_CLINIC_NAME}
-            </div>
             <div className="flex items-center justify-between text-[11px] text-slate-400">
-              <span>Trạng thái Cổng:</span>
-              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>{" "}
-                Sẵn sàng
+              <span className="flex items-center gap-1.5">
+                <Activity size={12} className="text-emerald-400" /> Cổng BHXH:
+              </span>
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Kết nối ổn định
               </span>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* User Profile Bar */}
-      <div className="p-4 border-t border-slate-800/80 bg-[#001122] flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
-          <User size={18} />
+      {/* 4. Footer Người Dùng / Đăng Xuất */}
+      <div className="px-3 py-3 border-t border-slate-800/80 bg-[#070d18] flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-md bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-300 flex-shrink-0">
+          <User size={15} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-white truncate">
-            Ban Chuyên Viên CNTT
+          <div className="text-xs font-semibold text-slate-200 truncate">
+            Chuyên Viên CNTT
+          </div>
+          <div className="text-[10px] text-slate-400 font-mono truncate">
+            QuanTriVien@cskcb
           </div>
         </div>
         <button
@@ -303,22 +238,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => {
             toast.showConfirm({
               title: "Đăng Xuất Hệ Thống",
-              content:
-                "Bạn có chắc chắn muốn kết thúc phiên làm việc hiện tại?",
+              content: "Bạn có chắc chắn muốn kết thúc phiên làm việc hiện tại?",
               okText: "Đăng Xuất",
               cancelText: "Ở Lại",
               danger: true,
               onOk: () => {
                 toast.success(
                   "Đã đăng xuất khỏi phiên làm việc an toàn.",
-                  "Đăng Xuất Thành Công",
+                  "Đăng Xuất Thành Công"
                 );
               },
             });
           }}
-          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 rounded-md transition-colors"
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
         </button>
       </div>
     </aside>
