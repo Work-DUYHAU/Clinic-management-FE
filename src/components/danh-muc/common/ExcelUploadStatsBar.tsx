@@ -72,7 +72,9 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
         <div className="flex flex-wrap items-center gap-3.5">
           <span className="text-slate-500">
             Sheet đã nạp:{' '}
-            <strong className="text-slate-900 font-bold">{selectedSheet}</strong>
+            <strong className="text-slate-900 font-bold">
+              {selectedSheet === '__ALL__' ? 'Toàn bộ File (Tất cả sheets)' : selectedSheet}
+            </strong>
           </span>
 
           <span className="text-slate-500">
@@ -130,12 +132,27 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
 
       {/* Switch sheet buttons if workbook contains multiple sheets */}
       {availableSheets && availableSheets.length > 1 && onSwitchSheet && (
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80">
-          <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
+        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80 flex-wrap">
+          <span className="text-xs font-semibold text-slate-600 flex items-center gap-1 shrink-0">
             <FileSpreadsheet size={13} className={currentTheme.iconColor} />
-            Các Sheet trong file ({availableSheets.length} sheets):
+            Chọn Sheet ({availableSheets.length} sheets):
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Tùy chọn nạp Full File (tất cả các sheets gộp lại) */}
+            <button
+              type="button"
+              onClick={() => onSwitchSheet('__ALL__')}
+              className={`text-xs px-2.5 py-1 rounded-sm font-medium transition-all flex items-center gap-1.5 border cursor-pointer ${
+                selectedSheet === '__ALL__'
+                  ? `${currentTheme.sheetActiveBg} text-white shadow-xs font-bold border-transparent`
+                  : 'bg-white hover:bg-slate-200/80 text-blue-700 border-blue-200 hover:border-blue-300 font-semibold'
+              }`}
+              title="Đọc và gộp toàn bộ dữ liệu từ tất cả các sheet trong file"
+            >
+              <span>Toàn bộ File (Tất cả sheets)</span>
+              {selectedSheet === '__ALL__' && <Check size={11} className="inline ml-0.5" />}
+            </button>
+
             {availableSheets.map((item) => {
               const name = typeof item === 'string' ? item : item.name;
               const rowCount = typeof item === 'object' ? item.rowCount : undefined;

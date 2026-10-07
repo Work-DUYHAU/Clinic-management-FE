@@ -4,6 +4,7 @@ import {
   HS01_SCHEMA_FIELDS,
   parseHs01ExcelFile,
   parseHs01Worksheet,
+  parseHs01AllSheets,
   downloadHs01ExcelTemplate,
   type ParseHs01ExcelResult,
   type SendHs01GatewayResult,
@@ -81,20 +82,32 @@ export const Hs01TongHopTab: React.FC = () => {
   const handleSwitchSheet = (sheetName: string) => {
     if (!fileUploadStats?.workbook) return;
     try {
-      const ws = fileUploadStats.workbook.Sheets[sheetName];
-      const result = parseHs01Worksheet(
-        ws,
-        sheetName,
-        fileUploadStats.availableSheets,
-        fileUploadStats.fileName,
-        fileUploadStats.workbook,
-      );
+      let result: ParseHs01ExcelResult;
+      if (sheetName === "__ALL__") {
+        result = parseHs01AllSheets(
+          fileUploadStats.workbook,
+          fileUploadStats.fileName,
+        );
+        toast.info(
+          `Đã nạp toàn bộ các sheet trong file (${result.items.length} hồ sơ)`,
+          "Đọc Full File Excel",
+        );
+      } else {
+        const ws = fileUploadStats.workbook.Sheets[sheetName];
+        result = parseHs01Worksheet(
+          ws,
+          sheetName,
+          fileUploadStats.availableSheets,
+          fileUploadStats.fileName,
+          fileUploadStats.workbook,
+        );
+        toast.info(
+          `Đã chuyển sang Sheet "${sheetName}" (${result.items.length} hồ sơ)`,
+          "Chuyển Sheet Dữ Liệu",
+        );
+      }
       setItems(result.items);
       setFileUploadStats(result);
-      toast.info(
-        `Đã chuyển sang Sheet "${sheetName}" (${result.items.length} hồ sơ)`,
-        "Chuyển Sheet Dữ Liệu",
-      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Lỗi khi chuyển sheet";
       toast.error(msg, "Lỗi Đọc Sheet");
