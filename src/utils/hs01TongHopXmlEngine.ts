@@ -163,6 +163,68 @@ export function parseHs01Worksheet(
 }
 
 /**
+ * Tùy chọn gộp toàn bộ các sheet trong file Excel thành 1 tập dữ liệu duy nhất
+ */
+export function parseHs01AllSheets(
+  workbook: XLSX.WorkBook,
+  fileName: string,
+  defaultMaCskcb = DEFAULT_MA_CSKCB,
+): ParseHs01ExcelResult {
+  const availableSheets = workbook.SheetNames || [];
+  const combinedItems: Hs01TongHopItem[] = [];
+  let combinedValid = 0;
+  let combinedInvalid = 0;
+  let masterDetectedHeaders: { [colIdx: number]: string } = {};
+
+  availableSheets.forEach((sheetName) => {
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) return;
+    const res = parseHs01Worksheet(
+      ws,
+      sheetName,
+      availableSheets,
+      fileName,
+      workbook,
+      defaultMaCskcb,
+    );
+
+    if (res.items.length > 0) {
+      if (Object.keys(masterDetectedHeaders).length === 0) {
+        masterDetectedHeaders = res.detectedHeaders;
+      }
+      res.items.forEach((item) => {
+        // Cập nhật lại stt nối tiếp liên tục
+        combinedItems.push({
+          ...item,
+          id: `${sheetName}-${item.id}`,
+          stt: combinedItems.length + 1,
+        });
+        if (item.isValid) combinedValid++;
+        else combinedInvalid++;
+      });
+    }
+  });
+
+  const matchedKeys = new Set(Object.values(masterDetectedHeaders));
+  const missingRequired = HS01_SCHEMA_FIELDS.filter(
+    (f) => f.required && !matchedKeys.has(f.key),
+  ).map((f) => f.key);
+
+  return {
+    items: combinedItems,
+    totalRows: combinedItems.length,
+    validRows: combinedValid,
+    invalidRows: combinedInvalid,
+    detectedHeaders: masterDetectedHeaders,
+    missingRequiredFields: missingRequired,
+    availableSheets,
+    selectedSheet: "__ALL__",
+    fileName,
+    workbook,
+  };
+}
+
+/**
  * Parse trực tiếp tệp XML Mẫu 01/BH (<HSTH01BH>) thành danh sách Hs01TongHopItem
  */
 export function parseHs01XmlText(
@@ -303,6 +365,10 @@ export async function parseHs01ExcelFile(
   // 2. Xử lý tệp Excel (.xlsx, .xls)
   const workbook = await readExcelFile(file);
   const availableSheets = workbook.SheetNames;
+
+  if (selectedSheetName === "__ALL__") {
+    return parseHs01AllSheets(workbook, file.name, defaultMaCskcb);
+  }
 
   const hintKeywords = ["HSTH01", "01BH", "TongHop", "Mẫu 01", "Hồ sơ"];
 
