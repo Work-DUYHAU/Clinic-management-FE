@@ -11,6 +11,7 @@ import {
   RotateCcw,
   ExternalLink,
   FileCheck,
+  CheckCircle2Icon,
 } from "lucide-react";
 import { useClipboard } from "../../../hooks/useClipboard";
 import type { ExtractedSignatureInfo } from "../../../utils/xmlDsigEngine";
@@ -182,11 +183,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     {
       step: 2,
       title: "Ký SmartCA",
-      subtext: isStep2Done
-        ? "Đã ký số"
-        : isStep2Active
-          ? "Đang ký..."
-          : "",
+      subtext: isStep2Done ? "Đã ký số" : isStep2Active ? "Đang ký..." : "",
       state: isStep2Done ? "completed" : isStep2Active ? "active" : "pending",
       icon: isStep2Done ? (
         <Check size={18} strokeWidth={2.5} />
@@ -199,11 +196,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
     {
       step: 3,
       title: "Gửi BHXH",
-      subtext: isStep3Done
-        ? "Đã gửi"
-        : isStep3Active
-          ? "Đang gửi..."
-          : "",
+      subtext: isStep3Done ? "Đã gửi" : isStep3Active ? "Đang gửi..." : "",
       state: isStep3Done
         ? "completed"
         : isStep3Active
@@ -243,9 +236,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
       ) : isStep4Active ? (
         <Loader2 size={18} className="animate-spin" />
       ) : (
-        <span className="font-semibold text-xs sm:text-sm text-slate-400">
-          4
-        </span>
+        <CheckCircle2Icon size={18} />
       ),
     },
   ];

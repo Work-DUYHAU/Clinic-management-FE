@@ -77,8 +77,11 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
   );
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
+  const [signingItems, setSigningItems] = useState<HoSoDieuChinh09Item[]>([]);
+
   // Dùng chung 1 modal duy nhất: Bấm "Ký Số" ở Navbar hay ở Dropzone đều mở modal này
   useRegisterSignModal(true, () => {
+    setSigningItems(items.slice(0, 10));
     setXmlModalTab("smartca");
     setIsXmlModalOpen(true);
   });
@@ -158,6 +161,7 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
       onOk: () => {
         setItems([]);
         setFileUploadStats(null);
+        setSigningItems([]);
         toast.warning(
           "Đã xóa toàn bộ dữ liệu bảng hồ sơ điều chỉnh",
           "Xóa Dữ Liệu",
@@ -224,19 +228,64 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
     setIsDetailModalOpen(true);
   };
 
+  const handleBulkSign = (selected: HoSoDieuChinh09Item[]) => {
+    if (selected.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất 1 hồ sơ để ký số!");
+      return;
+    }
+    if (selected.length > 10) {
+      toast.warning("Quy chuẩn BHXH quy định mỗi lần ký tối đa 10 hồ sơ!");
+      return;
+    }
+    setSigningItems(selected);
+    setXmlModalTab("smartca");
+    setIsXmlModalOpen(true);
+  };
+
+  const handleUnsign = (itemsToUnsign: HoSoDieuChinh09Item[]) => {
+    if (itemsToUnsign.length === 0) return;
+    toast.showConfirm({
+      title: "Xác nhận hủy chữ ký số",
+      content: `Bạn có chắc chắn muốn hủy chữ ký số của ${itemsToUnsign.length} hồ sơ? Hồ sơ sẽ mở khóa cho phép chỉnh sửa lại thông tin.`,
+      okText: "Hủy Chữ Ký",
+      cancelText: "Giữ lại",
+      danger: true,
+      onOk: () => {
+        const unsignIds = new Set(itemsToUnsign.map((i) => i.id));
+        setItems((prev) =>
+          prev.map((i) =>
+            unsignIds.has(i.id) && i.tinhTrangGui === 0
+              ? { ...i, ttKySo: 0, trangThai: "da_lap_bieu" }
+              : i,
+          ),
+        );
+        toast.success(
+          `Đã hủy chữ ký số của ${itemsToUnsign.length} hồ sơ thành công!`,
+          "Hủy Ký Số",
+        );
+      },
+    });
+  };
+
   const handleSendSuccess = (result: SendHs09GatewayResult) => {
+    const targetIds = new Set(
+      (signingItems.length > 0 ? signingItems : items).map((i) => i.id),
+    );
     setItems((prev) =>
       prev.map((i) =>
-        i.trangThai === "chap_nhan" || i.trangThai === "tu_choi"
-          ? i
-          : {
+        targetIds.has(i.id)
+          ? {
               ...i,
+              ttKySo: 2,
+              tinhTrangGui: 2,
               trangThai: "da_gui_cong",
               ngayGiaiTrinh: getTodayIsoDate(),
               maGiaoDichBhxh: result.maGiaoDich,
-            },
+            }
+          : i,
       ),
     );
+    setSigningItems([]);
   };
 
   // Filtered Items
@@ -281,6 +330,11 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
 
   const schemaProps = useSchemaMappingProps(HS09_SCHEMA_FIELDS, fileUploadStats);
 
+  const effectiveSigningItems = useMemo(() => {
+    if (signingItems.length > 0) return signingItems;
+    return items.slice(0, 10);
+  }, [signingItems, items]);
+
   return (
     <div className="space-y-6">
       {/* 2. Dropzone & Action Toolbar */}
@@ -293,10 +347,12 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
         onDownloadTemplate={handleDownloadTemplate}
         onClearData={handleClearData}
         onOpenXmlModal={() => {
+          setSigningItems(items.slice(0, 10));
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
         onOpenApiTab={() => {
+          setSigningItems(items.slice(0, 10));
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
@@ -327,6 +383,8 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
         onEdit={handleEdit}
         onDelete={handleDelete}
         onViewDetail={handleViewDetail}
+        onBulkSign={handleBulkSign}
+        onUnsign={handleUnsign}
       />
 
       {/* MODALS */}
@@ -349,8 +407,11 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
       {/* XML / Base64 / API Modal */}
       <Hs09XmlModal
         isOpen={isXmlModalOpen}
-        onClose={() => setIsXmlModalOpen(false)}
-        items={items}
+        onClose={() => {
+          setIsXmlModalOpen(false);
+          setSigningItems([]);
+        }}
+        items={effectiveSigningItems}
         defaultTab={xmlModalTab}
         onSendSuccess={handleSendSuccess}
         fileUploadStats={fileUploadStats}

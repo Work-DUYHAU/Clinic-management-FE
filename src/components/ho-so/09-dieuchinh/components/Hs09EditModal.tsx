@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, FileSpreadsheet, User, Layers, DollarSign, ShieldCheck, Check } from 'lucide-react';
+import { X, Plus, Trash2, FileSpreadsheet, User, Layers, DollarSign, ShieldCheck, Check, Paperclip, Upload, FileText } from 'lucide-react';
 import type {
   HoSoDieuChinh09Item,
   TtXml1DieuChinhItem,
@@ -53,6 +53,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
   const [form, setForm] = useState(getDefaultForm);
   const [dsXml1DieuChinh, setDsXml1DieuChinh] = useState<TtXml1DieuChinhItem[]>([]);
   const [dsChiPhiDieuChinh, setDsChiPhiDieuChinh] = useState<ChiPhiDieuChinhItem[]>([]);
+  const [taiLieuDinhKem, setTaiLieuDinhKem] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -80,10 +81,12 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
         });
         setDsXml1DieuChinh(initialData.dsXml1DieuChinh || []);
         setDsChiPhiDieuChinh(initialData.dsChiPhiDieuChinh || []);
+        setTaiLieuDinhKem(initialData.taiLieuDinhKem || []);
       } else {
         setForm(getDefaultForm());
         setDsXml1DieuChinh([]);
         setDsChiPhiDieuChinh([]);
+        setTaiLieuDinhKem([]);
       }
       setActiveTab('info');
     }
@@ -95,10 +98,46 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
     setForm(prev => ({ ...prev, [key]: val }));
   };
 
+  const handleAddAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('Kích thước tệp đính kèm không được vượt quá 5 MB (Quy định Phụ lục I BHXH Mục 8)!', 'Tệp Quá Lớn');
+      e.target.value = '';
+      return;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const ALLOWED_EXT = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'];
+    if (!ext || !ALLOWED_EXT.includes(ext)) {
+      toast.error('Định dạng tệp không được hỗ trợ! Chỉ chấp nhận: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG.', 'Sai Định Dạng');
+      e.target.value = '';
+      return;
+    }
+    setTaiLieuDinhKem(prev => [...prev, file.name]);
+    toast.success(`Đã thêm tệp đính kèm: ${file.name}`);
+    e.target.value = '';
+  };
+
+  const handleRemoveAttachment = (idx: number) => {
+    setTaiLieuDinhKem(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSave = () => {
     if (!form.maLk.trim()) return toast.error('Mã LK không được để trống!');
     if (!form.hoTen.trim()) return toast.error('Họ tên bệnh nhân không được để trống!');
     if (!form.maThe.trim()) return toast.error('Mã thẻ BHYT không được để trống!');
+    // Validate LYDO_DIEUCHINH bắt buộc cho tất cả dòng XML1 (Phụ lục I BHXH Mục 3.2)
+    const xml1MissingLydo = dsXml1DieuChinh.findIndex((dc) => !dc.lyDoDieuChinh.trim());
+    if (xml1MissingLydo !== -1) {
+      setActiveTab('xml1_diff');
+      return toast.error(`Dòng điều chỉnh hành chính #${xml1MissingLydo + 1}: Lý do điều chỉnh không được để trống!`, 'Thiếu Lý Do Điều Chỉnh');
+    }
+    const cpMissingLydo = dsChiPhiDieuChinh.findIndex((cp) => !cp.lyDoDieuChinh.trim());
+    if (cpMissingLydo !== -1) {
+      setActiveTab('expenses');
+      return toast.error(`Mục chi phí #${cpMissingLydo + 1}: Lý do điều chỉnh không được để trống!`, 'Thiếu Lý Do Điều Chỉnh');
+    }
 
     onSave({
       id: initialData?.id || `hs09-${Date.now()}`,
@@ -121,17 +160,26 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
         kyQt: form.kyQt.trim() || getTodayYmd().slice(0, 6),
         trangThai: Number(form.trangThaiXml1) || 1
       },
-      dsXml1DieuChinh,
-      dsChiPhiDieuChinh,
+      // Auto-map TRUONG_TT_DIEUCHINH = TRUONG_TT_GOC trước khi lưu
+      dsXml1DieuChinh: dsXml1DieuChinh.map((dc) => ({
+        ...dc,
+        truongTtDieuChinh: dc.truongTtDieuChinh || dc.truongTtGoc,
+      })),
+      dsChiPhiDieuChinh: dsChiPhiDieuChinh.map((cp) => ({
+        ...cp,
+        truongTtDieuChinh: cp.truongTtDieuChinh || cp.truongTtGoc || '',
+      })),
       khoaDieuTri: form.khoaDieuTri.trim(),
       nhomLoi: form.nhomLoi.trim(),
       tienXuatToan: Number(form.tienXuatToan) || 0,
       tienDeNghiThanhToanLai: Number(form.tienDeNghiThanhToanLai) || 0,
       tienChapNhanLai: initialData?.tienChapNhanLai || 0,
-      taiLieuDinhKem: initialData?.taiLieuDinhKem || [],
+      taiLieuDinhKem,
       nguoiGiaiTrinh: form.nguoiLapBieu.trim(),
       ngayGiaiTrinh: getTodayYmd(),
       trangThai: form.trangThai,
+      ttKySo: initialData?.ttKySo ?? 0,
+      tinhTrangGui: initialData?.tinhTrangGui ?? 0,
       isValid: true
     });
   };
@@ -219,13 +267,24 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                   {dsXml1DieuChinh.map((item, idx) => (
                     <div key={idx} className="p-2.5 bg-blue-50/40 rounded-sm border border-blue-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                       <div className="sm:col-span-3">
-                        <FormField label="Trường Gốc" placeholder="vd: MA_BENH_CHINH" value={item.truongTtGoc} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtGoc: v } : it))} mono bold />
+                        <FormField label="Trường Gốc" placeholder="vd: MA_BENH_CHINH" value={item.truongTtGoc}
+                          onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtGoc: v, truongTtDieuChinh: v } : it))} mono bold />
                       </div>
                       <div className="sm:col-span-2">
                         <FormField label="Giá Trị Cũ" placeholder="Giá trị cũ" value={item.ttGoc} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, ttGoc: v } : it))} mono />
                       </div>
                       <div className="sm:col-span-3">
-                        <FormField label="Trường Điều Chỉnh" placeholder="vd: MA_BENH_CHINH" value={item.truongTtDieuChinh} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtDieuChinh: v } : it))} mono />
+                        {/* TRUONG_TT_DIEUCHINH: tự động = TRUONG_TT_GOC, disabled theo Phụ lục I Mục 3.2 */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 mb-1">Trường Điều Chỉnh <span className="text-slate-400 font-normal">(tự động)</span></label>
+                          <input
+                            type="text"
+                            value={item.truongTtDieuChinh || item.truongTtGoc}
+                            disabled
+                            className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-sm text-xs font-mono text-slate-500 cursor-not-allowed"
+                            title="Tự động điền theo Trường Thông Tin Gốc (QD 326 Mục 3.2)"
+                          />
+                        </div>
                       </div>
                       <div className="sm:col-span-3">
                         <FormField label="Giá Trị Mới" placeholder="Giá trị mới" value={item.ttDieuChinh} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, ttDieuChinh: v } : it))} mono bold />
@@ -234,7 +293,13 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         <button type="button" onClick={() => setDsXml1DieuChinh(p => p.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"><Trash2 size={14} /></button>
                       </div>
                       <div className="sm:col-span-12">
-                        <FormField label="Lý Do Điều Chỉnh" placeholder="Nhập lý do điều chỉnh" value={item.lyDoDieuChinh} onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, lyDoDieuChinh: v } : it))} />
+                        <FormField
+                          label="Lý Do Điều Chỉnh"
+                          placeholder="Bắt buộc: nhập lý do điều chỉnh"
+                          value={item.lyDoDieuChinh}
+                          onChange={(v) => setDsXml1DieuChinh(p => p.map((it, i) => i === idx ? { ...it, lyDoDieuChinh: v } : it))}
+                          required
+                        />
                       </div>
                     </div>
                   ))}
@@ -276,12 +341,36 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                           onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, soBangXml: Number(v) } : it))}
                         />
                         <FormField label="ID Chi Phí" placeholder="vd: CP-01" value={cp.idCp} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, idCp: v } : it))} mono />
-                        <FormField label="Trường Sai Gốc" placeholder="vd: DON_GIA" value={cp.truongTtGoc} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtGoc: v } : it))} mono />
+                        <FormField
+                          label="Thao tác chi phí"
+                          type="select"
+                          value={cp.trangThai}
+                          options={[{ value: 2, label: '2 — Sửa thông tin' }, { value: 1, label: '1 — Thu hồi riêng dòng' }]}
+                          onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, trangThai: Number(v) } : it))}
+                        />
+                        <FormField label="Trường Sai Gốc" placeholder="vd: DON_GIA" value={cp.truongTtGoc}
+                          onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtGoc: v, truongTtDieuChinh: v } : it))} mono />
                         <FormField label="Giá Trị Cũ" placeholder="Giá trị cũ" value={cp.ttGoc} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, ttGoc: v } : it))} mono />
-                        <FormField label="Trường ĐC" placeholder="vd: DON_GIA" value={cp.truongTtDieuChinh} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, truongTtDieuChinh: v } : it))} mono />
+                        {/* TRUONG_TT_DIEUCHINH: auto = TRUONG_TT_GOC */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 mb-1">Trường ĐC <span className="text-slate-400 font-normal">(tự động)</span></label>
+                          <input
+                            type="text"
+                            value={cp.truongTtDieuChinh || cp.truongTtGoc || ''}
+                            disabled
+                            className="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-sm text-xs font-mono text-slate-500 cursor-not-allowed"
+                            title="Tự động = Trường Sai Gốc"
+                          />
+                        </div>
                         <FormField label="Giá Trị Mới" placeholder="Giá trị mới" value={cp.ttDieuChinh} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, ttDieuChinh: v } : it))} mono bold />
                         <FormField label="Mã Lỗi Từ Chối" placeholder="vd: SAI_GIACABHYT" value={cp.tuChoi} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, tuChoi: v } : it))} mono />
-                        <FormField label="Lý Do Điều Chỉnh" placeholder="Nhập lý do" value={cp.lyDoDieuChinh} onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, lyDoDieuChinh: v } : it))} />
+                        <FormField
+                          label="Lý Do Điều Chỉnh"
+                          placeholder="Bắt buộc: nhập lý do"
+                          value={cp.lyDoDieuChinh}
+                          onChange={(v) => setDsChiPhiDieuChinh(p => p.map((it, i) => i === idx ? { ...it, lyDoDieuChinh: v } : it))}
+                          required
+                        />
                       </div>
                     </div>
                   ))}
@@ -291,11 +380,68 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
           )}
 
           {activeTab === 'legal' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FormField label="Khoa Điều Trị" placeholder="Nhập khoa điều trị" value={form.khoaDieuTri} onChange={(v) => updateField('khoaDieuTri', v)} />
-              <FormField label="Nhóm Lỗi Xuất Toán" placeholder="vd: CHIDINH_SAI" value={form.nhomLoi} onChange={(v) => updateField('nhomLoi', v)} mono />
-              <FormField label="Tiền Bị Xuất Toán (VNĐ)" type="number" value={form.tienXuatToan} onChange={(v) => updateField('tienXuatToan', v)} mono bold />
-              <FormField label="Tiền Đề Nghị Thanh Toán Lại (VNĐ)" type="number" value={form.tienDeNghiThanhToanLai} onChange={(v) => updateField('tienDeNghiThanhToanLai', v)} mono bold />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField label="Khoa Điều Trị" placeholder="Nhập khoa điều trị" value={form.khoaDieuTri} onChange={(v) => updateField('khoaDieuTri', v)} />
+                <FormField label="Nhóm Lỗi Xuất Toán" placeholder="vd: CHIDINH_SAI" value={form.nhomLoi} onChange={(v) => updateField('nhomLoi', v)} mono />
+                <FormField label="Tiền Bị Xuất Toán (VNĐ)" type="number" value={form.tienXuatToan} onChange={(v) => updateField('tienXuatToan', v)} mono bold />
+                <FormField label="Tiền Đề Nghị Thanh Toán Lại (VNĐ)" type="number" value={form.tienDeNghiThanhToanLai} onChange={(v) => updateField('tienDeNghiThanhToanLai', v)} mono bold />
+              </div>
+
+              {/* Phần tài liệu đính kèm (Mục 8 Phụ lục I BHXH) */}
+              <div className="border-t border-slate-200 pt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Paperclip size={13} className="text-blue-600" />
+                      Tài liệu đính kèm giải trình (Tối đa 5 MB / file)
+                    </span>
+                    <p className="text-[10px] text-slate-500">
+                      Chấp nhận: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-sm font-bold text-xs cursor-pointer transition-colors">
+                    <Upload size={13} />
+                    <span>Đính Kèm Tệp</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                      onChange={handleAddAttachment}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {taiLieuDinhKem.length === 0 ? (
+                  <div className="p-4 text-center text-slate-400 bg-slate-50 rounded-sm border border-dashed border-slate-200 text-[11px]">
+                    Chưa có tài liệu đính kèm nào cho hồ sơ này.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                    {taiLieuDinhKem.map((doc, dIdx) => (
+                      <div
+                        key={dIdx}
+                        className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-sm text-xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <FileText size={14} className="text-blue-600 shrink-0" />
+                          <span className="font-medium text-slate-800 truncate">
+                            {doc}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(dIdx)}
+                          className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
+                          title="Xóa tệp đính kèm này"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

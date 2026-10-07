@@ -12,6 +12,11 @@ import {
   AlertCircle,
   FileCheck2,
   Layers,
+  Lock,
+  CheckSquare2,
+  FileSignature,
+  RotateCcw,
+  XSquare,
   ArrowRight,
 } from "lucide-react";
 import type {
@@ -25,6 +30,8 @@ import {
 } from "../../../../utils/constants/hs09DieuChinhConstants";
 import { formatCurrencyVnd } from "../../../../utils/shared/excelXmlShared";
 import { Pagination } from "../../../common";
+
+const MAX_KY_SO = 10;
 
 interface Hs09TableProps {
   items: HoSoDieuChinh09Item[];
@@ -40,6 +47,14 @@ interface Hs09TableProps {
   onEdit: (item: HoSoDieuChinh09Item) => void;
   onDelete: (item: HoSoDieuChinh09Item) => void;
   onViewDetail: (item: HoSoDieuChinh09Item) => void;
+  /** Callback khi selection thay đổi — trả về mảng các item được chọn */
+  onSelectionChange?: (selectedItems: HoSoDieuChinh09Item[]) => void;
+  /** Callback mở ký số cho các bản ghi đã chọn (tối đa 10 HS) */
+  onBulkSign?: (selectedItems: HoSoDieuChinh09Item[]) => void;
+  /** Callback hủy ký số cho các bản ghi đã ký nhưng chưa gửi cổng */
+  onUnsign?: (itemsToUnsign: HoSoDieuChinh09Item[]) => void;
+  /** Callback hủy phiên làm việc / bỏ chọn */
+  onClearSelection?: () => void;
 }
 
 export const Hs09Table: React.FC<Hs09TableProps> = ({
@@ -56,15 +71,75 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
   onEdit,
   onDelete,
   onViewDetail,
+  onSelectionChange,
+  onBulkSign,
+  onUnsign,
+  onClearSelection,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [expandedRowIds, setExpandedRowIds] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [expandedRowIds, setExpandedRowIds] = useState<Record<string, boolean>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleRowExpand = (id: string) => {
     setExpandedRowIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleSelect = (item: HoSoDieuChinh09Item) => {
+    // Chỉ cho chọn các item chưa gửi cổng
+    if (item.tinhTrangGui === 2) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(item.id)) {
+        next.delete(item.id);
+      } else {
+        next.add(item.id);
+      }
+      onSelectionChange?.(items.filter((i) => next.has(i.id)));
+      return next;
+    });
+  };
+
+  const selectableItems = useMemo(
+    () => items.filter((i) => i.tinhTrangGui !== 2),
+    [items],
+  );
+
+  const isAllSelectableChecked = useMemo(() => {
+    return (
+      selectableItems.length > 0 &&
+      selectableItems.every((i) => selectedIds.has(i.id))
+    );
+  }, [selectableItems, selectedIds]);
+
+  const toggleSelectAll = () => {
+    if (isAllSelectableChecked) {
+      setSelectedIds(new Set());
+      onSelectionChange?.([]);
+    } else {
+      // Chỉ chọn tối đa 10 hồ sơ đầu tiên hoặc toàn bộ nếu <= 10
+      const toSelect = selectableItems.slice(0, MAX_KY_SO);
+      const newSet = new Set(toSelect.map((i) => i.id));
+      setSelectedIds(newSet);
+      onSelectionChange?.(toSelect);
+    }
+  };
+
+  const selectedCount = selectedIds.size;
+  const overLimit = selectedCount > MAX_KY_SO;
+  const selectedItemsList = useMemo(
+    () => items.filter((i) => selectedIds.has(i.id)),
+    [items, selectedIds],
+  );
+  const selectedSignedList = useMemo(
+    () => selectedItemsList.filter((i) => i.ttKySo === 2 && i.tinhTrangGui === 0),
+    [selectedItemsList],
+  );
+
+  const handleClearSelected = () => {
+    setSelectedIds(new Set());
+    onSelectionChange?.([]);
+    onClearSelection?.();
   };
 
   const paginatedItems = useMemo(() => {
@@ -76,6 +151,20 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
   return (
     <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+      {/* Cảnh báo chọn quá giới hạn */}
+      {overLimit && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-semibold">
+          <AlertCircle size={14} className="text-amber-600 shrink-0" />
+          Chỉ được phép chọn tối đa <b>{MAX_KY_SO} hồ sơ</b> cho mỗi lần ký
+          — hiện đang chọn <b>{selectedCount}</b>. Nút “Ký số” sẽ bị khóa đến khi giảm xuống ≤ {MAX_KY_SO}.
+        </div>
+      )}
+      {selectedCount > 0 && !overLimit && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-200 text-blue-800 text-xs font-semibold">
+          <CheckSquare2 size={14} className="text-blue-600 shrink-0" />
+          Đã chọn <b>{selectedCount}</b> hồ sơ — sẵn sàng ký số.
+        </div>
+      )}
       {/* Search & Filter Toolbar */}
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
@@ -174,8 +263,56 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           )}
         </div>
 
-        {/* Action Button: Thêm mới */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {selectedCount > 0 && (
+            <>
+              {/* Nút Ký Số SmartCA */}
+              <button
+                type="button"
+                onClick={() => !overLimit && onBulkSign?.(selectedItemsList)}
+                disabled={overLimit}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold shadow-xs transition-all ${
+                  overLimit
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white cursor-pointer"
+                }`}
+                title={
+                  overLimit
+                    ? "Chỉ được phép chọn tối đa 10 hồ sơ cho mỗi lần ký"
+                    : `Ký số SmartCA ${selectedCount} hồ sơ đã chọn`
+                }
+              >
+                <FileSignature size={14} />
+                <span>Ký Số ({selectedCount})</span>
+              </button>
+
+              {/* Nút Hủy Ký Số (chỉ hiện khi có hồ sơ đã ký chưa gửi) */}
+              {selectedSignedList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onUnsign?.(selectedSignedList)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border border-amber-300 rounded-sm text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                  title={`Hủy ký số ${selectedSignedList.length} hồ sơ chưa gửi cổng`}
+                >
+                  <RotateCcw size={13} />
+                  <span>Hủy Ký ({selectedSignedList.length})</span>
+                </button>
+              )}
+
+              {/* Nút Bỏ chọn */}
+              <button
+                type="button"
+                onClick={handleClearSelected}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-sm text-xs font-semibold transition-all cursor-pointer"
+                title="Bỏ chọn toàn bộ hồ sơ đang chọn"
+              >
+                <XSquare size={13} />
+                <span>Bỏ Chọn</span>
+              </button>
+            </>
+          )}
+
           <button
             type="button"
             onClick={onAddNew}
@@ -192,6 +329,19 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <th className="py-3 px-3 w-8 text-center">
+                <input
+                  type="checkbox"
+                  checked={isAllSelectableChecked}
+                  onChange={toggleSelectAll}
+                  className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
+                  title={
+                    isAllSelectableChecked
+                      ? "Bỏ chọn tất cả"
+                      : "Chọn tối đa 10 hồ sơ"
+                  }
+                />
+              </th>
               <th className="py-3 px-3 w-10 text-center">#</th>
               <th className="py-3 px-3">Mã LK / Kỳ QT</th>
               <th className="py-3 px-4">Bệnh Nhân &amp; Thẻ BHYT</th>
@@ -205,7 +355,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           <tbody className="divide-y divide-slate-100 font-medium">
             {paginatedItems.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-400">
+                <td colSpan={9} className="py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileCheck2 size={36} className="text-slate-300" />
                     <span className="font-semibold text-sm text-slate-500">
@@ -226,7 +376,25 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
                 return (
                   <React.Fragment key={item.id}>
-                    <tr className="hover:bg-indigo-50/30 transition-colors">
+                    <tr className={`hover:bg-indigo-50/30 transition-colors ${
+                        item.ttKySo === 2 ? 'bg-amber-50/40' : ''
+                      }`}>
+                      {/* Checkbox chọn ký */}
+                      <td className="py-3 px-3 text-center">
+                        {item.tinhTrangGui !== 2 ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleSelect(item)}
+                            className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
+                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số' : 'Chọn để ký số'}
+                          />
+                        ) : (
+                          <span title="Đã gửi cổng">
+                            <Lock size={12} className="text-slate-300 mx-auto" />
+                          </span>
+                        )}
+                      </td>
                       {/* Expand / Index */}
                       <td className="py-3 px-3 text-center">
                         <button
@@ -347,7 +515,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
                       {/* Trạng thái */}
                       <td className="py-3 px-3 text-center">
-                        {item.trangThai === "da_gui_cong" ? (
+                        {item.tinhTrangGui === 2 || item.trangThai === "da_gui_cong" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full font-bold text-[10px]">
                             <FileCheck2 size={11} /> Đã gửi cổng
                           </span>
@@ -359,11 +527,17 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full font-bold text-[10px]">
                             <AlertCircle size={11} /> Từ chối
                           </span>
-                        ) : (
+                        ) : item.ttKySo === 2 || item.trangThai === "da_ky_so" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full font-bold text-[10px]">
+                            <Lock size={10} /> Đã ký số
+                          </span>
+                        ) : item.trangThai === "da_lap_bieu" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-full font-bold text-[10px]">
-                            {item.trangThai === "da_lap_bieu"
-                              ? "Đã lập biểu"
-                              : "Chờ xử lý"}
+                            Đã lập biểu
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded-full font-bold text-[10px]">
+                            Chờ xử lý
                           </span>
                         )}
                       </td>
@@ -373,22 +547,42 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => onViewDetail(item)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
                             title="Xem chi tiết hồ sơ điều chỉnh"
                           >
                             <Eye size={15} />
                           </button>
+                          {/* Nút Hủy ký số đơn lẻ khi đã ký nhưng chưa gửi cổng */}
+                          {item.ttKySo === 2 && item.tinhTrangGui === 0 && onUnsign && (
+                            <button
+                              onClick={() => onUnsign([item])}
+                              className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                              title="Hủy chữ ký số hồ sơ này để chỉnh sửa lại"
+                            >
+                              <RotateCcw size={14} />
+                            </button>
+                          )}
                           <button
-                            onClick={() => onEdit(item)}
-                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Chỉnh sửa hồ sơ"
+                            onClick={() => item.ttKySo !== 2 && onEdit(item)}
+                            disabled={item.ttKySo === 2}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              item.ttKySo === 2
+                                ? 'text-slate-300 cursor-not-allowed'
+                                : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer'
+                            }`}
+                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số — không thể sửa (Hãy bấm Hủy Ký nếu cần sửa)' : 'Chỉnh sửa hồ sơ'}
                           >
-                            <Edit2 size={15} />
+                            {item.ttKySo === 2 ? <Lock size={14} /> : <Edit2 size={15} />}
                           </button>
                           <button
-                            onClick={() => onDelete(item)}
-                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Xóa hồ sơ"
+                            onClick={() => item.ttKySo !== 2 && onDelete(item)}
+                            disabled={item.ttKySo === 2}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              item.ttKySo === 2
+                                ? 'text-slate-300 cursor-not-allowed'
+                                : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer'
+                            }`}
+                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số — không thể xóa' : 'Xóa hồ sơ'}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -400,7 +594,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                     {isExpanded && (
                       <tr className="bg-slate-50/70">
                         <td
-                          colSpan={8}
+                          colSpan={9}
                           className="p-4 border-y border-slate-200"
                         >
                           <div className="space-y-4 pl-6 pr-2">

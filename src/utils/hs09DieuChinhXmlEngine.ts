@@ -33,6 +33,24 @@ import type { SmartCaSignatureResult } from "../types/smartcaTypes";
 
 export { xmlToBase64, downloadXmlFile };
 
+/**
+ * Phân loại kịch bản sinh XML của một hồ sơ 09/BH theo QD 326:
+ * - DCHanhChinh_Only: chỉ có danh sách XML1 điều chỉnh (hành chính)
+ * - DCChiPhi_Only: chỉ có danh sách chi phí điều chỉnh
+ * - DC_Mixed: có cả hai danh sách
+ * - ThuHoi_Hoac_XinYK: cả hai rỗng → thu hồi (TRANGTHAI=1) hoặc xin ý kiến (TRANGTHAI=4)
+ */
+export function detectScenario(
+  item: HoSoDieuChinh09Item,
+): 'DCHanhChinh_Only' | 'DCChiPhi_Only' | 'DC_Mixed' | 'ThuHoi_Hoac_XinYK' {
+  const hasXml1 = (item.dsXml1DieuChinh?.length ?? 0) > 0;
+  const hasCp = (item.dsChiPhiDieuChinh?.length ?? 0) > 0;
+  if (hasXml1 && hasCp) return 'DC_Mixed';
+  if (hasXml1) return 'DCHanhChinh_Only';
+  if (hasCp) return 'DCChiPhi_Only';
+  return 'ThuHoi_Hoac_XinYK';
+}
+
 export const matchHs09SchemaKey = createSchemaKeyMatcher(
   HS09_SCHEMA_FIELDS,
   HS09_FIELD_HEURISTICS,
@@ -418,15 +436,12 @@ export async function sendHs09ToBhxhGateway(
       finalKyQt = getTodayYmd().slice(0, 6);
     }
 
+    // Form-Data Payload chuẩn 4 trường theo Mục IX QĐ 326 (Thông tư 12/2026/TT-BTC)
     const params = new URLSearchParams();
     params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
     params.append("loaiHs", "73");
     params.append("maCskcb", maCskcb);
-    params.append("kyQT", finalKyQt);
     params.append("fileHsBase64", base64);
-    if (signature?.tranId) {
-      params.append("tranId", signature.tranId);
-    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -436,14 +451,33 @@ export async function sendHs09ToBhxhGateway(
     };
 
     const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await BhxhChungTuService.fetchGateway(
-      `${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_DIEU_CHINH_09BH}`,
-      {
-        method: "POST",
-        headers,
-        body: params.toString(),
-      },
-    );
+    const url = `${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_DIEU_CHINH_09BH}`;
+
+    // Retry logic: tối đa 3 lần với exponential backoff
+    let response: Response | null = null;
+    let lastFetchError: unknown = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        response = await BhxhChungTuService.fetchGateway(url, {
+          method: "POST",
+          headers,
+          body: params.toString(),
+        });
+        if (response) break;
+      } catch (e) {
+        lastFetchError = e;
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    }
+
+    if (!response) {
+      throw (
+        lastFetchError ||
+        new Error("Không thể kết nối đến máy chủ Cổng BHXH sau 3 lần thử")
+      );
+    }
 
     let data: any = {};
     const text = await response.text();
@@ -458,7 +492,8 @@ export async function sendHs09ToBhxhGateway(
     }
     const isOk =
       String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
-    return {
+
+    const result: SendHs09GatewayResult = {
       maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
       maGiaoDich:
         data.maGiaoDich ||
@@ -476,6 +511,33 @@ export async function sendHs09ToBhxhGateway(
       loaiHs: "73",
       kyQT: data.kyQT || finalKyQt,
     };
+
+    // Audit log giao dịch vào localStorage
+    try {
+      const auditEntry = {
+        id: `audit-hs09-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        loaiHs: "73",
+        maCskcb,
+        maGiaoDich: result.maGiaoDich,
+        maKetQua: result.maKetQua,
+        thongDiep: result.thongDiep,
+        totalRecords: items.length,
+        kyQT: finalKyQt,
+      };
+      const savedLogs = JSON.parse(
+        localStorage.getItem("BHXH_GATEWAY_AUDIT_LOGS") || "[]",
+      );
+      savedLogs.unshift(auditEntry);
+      localStorage.setItem(
+        "BHXH_GATEWAY_AUDIT_LOGS",
+        JSON.stringify(savedLogs.slice(0, 100)),
+      );
+    } catch {
+      // Ignore localStorage error
+    }
+
+    return result;
   } catch (err: unknown) {
     const errorMsg =
       err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";

@@ -8,7 +8,9 @@ import {
   Layers,
   ShieldCheck,
   Copy,
-  Check
+  Check,
+  Paperclip,
+  FileText
 } from 'lucide-react';
 import type {
   HoSoDieuChinh09Item,
@@ -202,11 +204,24 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({ isOpen, onClos
                 { label: 'Nhóm Lỗi', value: item.nhomLoi || '—', highlight: true },
               ]} columns={2} />
               {item.taiLieuDinhKem && item.taiLieuDinhKem.length > 0 && (
-                <div className="bg-slate-50 p-3.5 rounded-sm border border-slate-200">
-                  <span className="text-[11px] font-bold text-slate-600 uppercase block mb-1">Tài Liệu Đính Kèm</span>
-                  <ul className="list-disc list-inside text-slate-700">
-                    {item.taiLieuDinhKem.map((doc, dIdx) => <li key={dIdx}>{doc}</li>)}
-                  </ul>
+                <div className="bg-slate-50 p-3.5 rounded-sm border border-slate-200 space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                    <Paperclip size={13} className="text-blue-600" />
+                    Tài Liệu Đính Kèm ({item.taiLieuDinhKem.length})
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {item.taiLieuDinhKem.map((doc, dIdx) => (
+                      <div
+                        key={dIdx}
+                        className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-sm text-xs"
+                      >
+                        <FileText size={14} className="text-blue-600 shrink-0" />
+                        <span className="font-medium text-slate-800 truncate" title={doc}>
+                          {doc}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

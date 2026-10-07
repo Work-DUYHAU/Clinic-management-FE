@@ -45,7 +45,7 @@ export interface ChiPhiDieuChinhItem {
   idCp: string | number; // ID_CP: ID chi phí (Số 18)
   sttXml: number; // STT_XML: STT dòng trong XML gốc
   ngayYl: string; // NGAY_YL: Ngày y lệnh (12 ký tự YYYYMMDDHHmm hoặc số)
-  trangThai: number; // TRANGTHAI (1: đề nghị điều chỉnh, 2: đề nghị hủy)
+  trangThai: number; // TRANGTHAI tại CHIPHI: 2=Sửa thông tin chi phí, 1=Thu hồi riêng dòng này
   truongTtGoc?: string; // TRUONG_TT_GOC: Trường sai của chi phí (vd: DON_GIA, SO_LUONG, MA_DICH_VU...)
   ttGoc?: string; // TT_GOC: Giá trị ban đầu
   lyDo?: string; // LYDO: Lý do từ chối của BHXH
@@ -58,7 +58,7 @@ export interface ChiPhiDieuChinhItem {
 /**
  * Trạng thái xử lý nội bộ của hồ sơ 09
  */
-export type TrangThaiXuLy09 = 'cho_xu_ly' | 'da_lap_bieu' | 'da_gui_cong' | 'chap_nhan' | 'tu_choi';
+export type TrangThaiXuLy09 = 'cho_xu_ly' | 'da_lap_bieu' | 'da_ky_so' | 'da_gui_cong' | 'chap_nhan' | 'tu_choi';
 
 /**
  * Entity hoàn chỉnh của 1 Hồ sơ điều chỉnh Mẫu 09/BH
@@ -83,6 +83,17 @@ export interface HoSoDieuChinh09Item {
   maGiaoDichBhxh?: string;
   trangThai: TrangThaiXuLy09;
   
+  /**
+   * TT_KYSO theo QĐ 326: 0 = chưa ký, 2 = đã ký số SmartCA
+   * Khi ttKySo = 2 → lock edit/delete cho record này
+   */
+  ttKySo: 0 | 2;
+  /**
+   * TINHTRANGGUI: 0 = chưa gửi cổng, 2 = đã gửi thành công
+   * Khi tinhTrangGui = 2 → lock toàn bộ, không cho Hủy ký số
+   */
+  tinhTrangGui: 0 | 2;
+
   isValid?: boolean;
   errors?: string[];
 }
