@@ -4,14 +4,22 @@ import { Navbar } from './components/Navbar';
 import { DanhMucPage } from './pages/DanhMucPage';
 import { Hs01TongHopTab } from './components/ho-so/01-tonghop/Hs01TongHopTab';
 import { Hs09DieuChinhTab } from './components/ho-so/09-dieuchinh/Hs09DieuChinhTab';
+import { ChungTuPage } from './components/chung-tu/ChungTuPage';
 import { ToastProvider } from './context/ToastContext';
 import { SmartCaProvider } from './context/SmartCaContext';
 import { SignModalProvider } from './context/SignModalContext';
 import type { HoSoDieuChinh09Item } from './types/hs09DieuChinhTypes';
 
+import { useAppRouter } from './hooks/useAppRouter';
+
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<MainTabType>('danh-muc');
-  const [hoSoTab, setHoSoTab] = useState<HoSoTabType>('01_tonghop');
+  const {
+    activeTab,
+    hoSoTab,
+    catalogTab,
+    navigate,
+    setCatalogTab,
+  } = useAppRouter();
   const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>([]);
 
   const pendingXuattoanCount = hs09Items.filter(
@@ -19,17 +27,14 @@ export const App: React.FC = () => {
   ).length;
 
   const handleNavigate = (tab: MainTabType, subTab?: HoSoTabType) => {
-    setActiveTab(tab);
-    if (tab === 'ho-so' && subTab) {
-      setHoSoTab(subTab);
-    }
+    navigate(tab, subTab);
   };
 
   return (
     <ToastProvider>
       <SmartCaProvider>
         <SignModalProvider>
-          <div className="flex min-h-screen w-full bg-[#f1f5f9] text-slate-800 antialiased font-sans">
+          <div className="flex h-screen w-full bg-[#f1f5f9] text-slate-800 antialiased font-sans overflow-hidden">
             {/* Left Sidebar Navigation */}
             <Sidebar
               activeTab={activeTab}
@@ -39,33 +44,43 @@ export const App: React.FC = () => {
             />
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#f1f5f9]">
+            <div className="flex-1 flex flex-col min-w-0 bg-[#f1f5f9] h-full overflow-hidden">
               <Navbar
                 activeTab={activeTab}
                 hoSoTab={hoSoTab}
+                catalogTab={catalogTab}
               />
 
-              <main className="flex-1 p-6 md:p-8 max-w-[1600px] w-full mx-auto">
+              <main className="flex-1 p-6 md:p-8 max-w-[1600px] w-full mx-auto overflow-y-auto no-scrollbar">
                 {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
                 <div className={activeTab === 'danh-muc' ? 'block' : 'hidden'}>
-                  <DanhMucPage isActive={activeTab === 'danh-muc'} />
+                  <DanhMucPage
+                    isActive={activeTab === 'danh-muc'}
+                    activeCatalogTab={catalogTab}
+                    onCatalogTabChange={setCatalogTab}
+                  />
                 </div>
 
-              {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
-              {activeTab === 'ho-so' && (
-                <div className="space-y-6 pb-12">
-                  {hoSoTab === '01_tonghop' && <Hs01TongHopTab />}
-                  {hoSoTab === '09_xuattoan' && (
-                    <Hs09DieuChinhTab
-                      items={hs09Items}
-                      onItemsChange={setHs09Items}
-                    />
-                  )}
-                </div>
-              )}
-            </main>
+                {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
+                {activeTab === 'ho-so' && (
+                  <div className="space-y-6 pb-12">
+                    {hoSoTab === '01_tonghop' && <Hs01TongHopTab />}
+                    {hoSoTab === '09_xuattoan' && (
+                      <Hs09DieuChinhTab
+                        items={hs09Items}
+                        onItemsChange={setHs09Items}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* 3. HỒ SƠ CHỨNG TỪ & GIẤY TỜ ĐIỆN TỬ (TT 25 & BHXH 2025) */}
+                {activeTab === 'chung-tu' && (
+                  <ChungTuPage isActive={activeTab === 'chung-tu'} />
+                )}
+              </main>
+            </div>
           </div>
-        </div>
         </SignModalProvider>
       </SmartCaProvider>
     </ToastProvider>

@@ -113,6 +113,7 @@ export interface SendHs09GatewayResult {
   thoiGianTiepNhan: string;
   totalRecords: number;
   loaiHs: string;
+  kyQT?: string;
 }
 
 /**

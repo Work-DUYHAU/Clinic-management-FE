@@ -21,19 +21,6 @@ export interface DocTypeDefinition {
   headerKeywords: string[];
 }
 
-export interface DocSignOptionItem {
-  id: DocSignOptionType;
-  code: string;
-  badge: string;
-  title: string;
-  desc: string;
-}
-
-export interface DocSignOptionGroup {
-  group: string;
-  items: DocSignOptionItem[];
-}
-
 export interface DocDetectionRule {
   type: DocSignOptionType;
   sheetKeywords: string[];
@@ -186,19 +173,6 @@ export const TT25_DOC_DEFINITIONS: DocTypeDefinition[] = [
   },
 ];
 
-/**
- * 1. Tự động sinh bảng ánh xạ tiền tố tệp XML (thay thế khai báo rời rạc)
- */
-export const DOC_FILE_PREFIX_MAP: Record<
-  Exclude<DocSignOptionType, "CURRENT">,
-  string
-> = TT25_DOC_DEFINITIONS.reduce(
-  (acc, cur) => {
-    acc[cur.id] = cur.filePrefix;
-    return acc;
-  },
-  {} as Record<Exclude<DocSignOptionType, "CURRENT">, string>,
-);
 
 /**
  * 2. Tự động sinh bảng quy tắc nhận diện Sheet / Header Excel (thay thế khai báo rời rạc)
@@ -212,77 +186,7 @@ export const DOC_DETECTION_RULES: DocDetectionRule[] = TT25_DOC_DEFINITIONS.map(
 );
 
 /**
- * 3. Tự động sinh nhóm tùy chọn hiển thị trên UI SmartCA (thay thế khai báo rời rạc)
- */
-export const STATIC_DOC_OPTION_GROUPS: DocSignOptionGroup[] = [
-  {
-    group: "HỒ SƠ CHỨNG TỪ (THÔNG TƯ 25/2025/TT-BYT)",
-    items: TT25_DOC_DEFINITIONS.filter(
-      (d) => d.group === "HỒ SƠ CHỨNG TỪ (THÔNG TƯ 25/2025/TT-BYT)",
-    ).map((d) => ({
-      id: d.id,
-      code: d.code,
-      badge: d.badge,
-      title: d.title,
-      desc: d.desc,
-    })),
-  },
-  {
-    group: "GIẤY TỜ ĐIỆN TỬ (QUY CHUẨN BHXH 2025)",
-    items: TT25_DOC_DEFINITIONS.filter(
-      (d) => d.group === "GIẤY TỜ ĐIỆN TỬ (QUY CHUẨN BHXH 2025)",
-    ).map((d) => ({
-      id: d.id,
-      code: d.code,
-      badge: d.badge,
-      title: d.title,
-      desc: d.desc,
-    })),
-  },
-];
-
-/**
- * Helper sinh danh sách hoàn chỉnh bao gồm tài liệu hiện hành
- */
-export function getDocOptionsList(
-  fileName?: string,
-  itemsCount: number = 0,
-  itemLabel: string = "chứng từ",
-  sourceFileName?: string,
-): DocSignOptionGroup[] {
-  const currentTitle =
-    fileName && fileName.trim().length > 0
-      ? `[Tài liệu hiện hành] ${fileName}`
-      : `[Tài liệu hiện hành]`;
-
-  const countText = `${itemsCount} ${itemLabel}`;
-  const currentDesc =
-    fileName && fileName.trim().length > 0
-      ? sourceFileName
-        ? `Dữ liệu đang thao tác từ tệp "${sourceFileName}" (${countText})`
-        : `Dữ liệu đang thao tác (${countText})`
-      : "Chưa có tệp dữ liệu (vui lòng nạp tệp Excel / XML)";
-
-  const currentGroup: DocSignOptionGroup[] = [
-    {
-      group: "TÀI LIỆU HIỆN HÀNH",
-      items: [
-        {
-          id: "CURRENT",
-          code: "HIỆN TẠI",
-          badge: "Tài liệu mở",
-          title: currentTitle,
-          desc: currentDesc,
-        },
-      ],
-    },
-  ];
-
-  return [...currentGroup, ...STATIC_DOC_OPTION_GROUPS];
-}
-
-/**
- * 4. Tự động nhận diện loại chứng từ từ nội dung chuỗi XML
+ * 3. Tự động nhận diện loại chứng từ từ nội dung chuỗi XML
  */
 export function detectXmlDocType(xmlText: string): DocSignOptionType | null {
   const upper = xmlText.toUpperCase();

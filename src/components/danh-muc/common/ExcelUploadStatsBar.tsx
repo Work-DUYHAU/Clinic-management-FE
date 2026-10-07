@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileSpreadsheet, Check } from 'lucide-react';
+import { FileSpreadsheet, Check, Trash2 } from 'lucide-react';
 
 export type ThemeColor = 'cyan' | 'indigo' | 'emerald' | 'blue' | 'purple' | 'amber';
 
@@ -17,6 +17,7 @@ export interface ExcelUploadStatsBarProps {
   onOpenSchemaModal?: () => void;
   onSwitchSheet?: (sheetName: string) => void;
   extraBadge?: React.ReactNode;
+  onClearFile?: () => void;
 }
 
 const themeStyles: Record<
@@ -99,6 +100,7 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
   onOpenSchemaModal,
   onSwitchSheet,
   extraBadge,
+  onClearFile,
 }) => {
   const currentTheme = themeStyles[themeColor] || themeStyles.cyan;
 
@@ -143,9 +145,23 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
         {fileName && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500">File nguồn:</span>
-            <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
+            <span
+              className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs truncate max-w-[220px]"
+              title={fileName}
+            >
               {fileName}
             </span>
+            {onClearFile && (
+              <button
+                type="button"
+                onClick={onClearFile}
+                className="flex items-center gap-1 px-2.5 py-0.5 text-xs text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-md font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
+                title="Xóa tệp và dữ liệu đã nạp"
+              >
+                <Trash2 size={12} />
+                <span>Xóa file</span>
+              </button>
+            )}
           </div>
         )}
       </div>

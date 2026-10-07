@@ -211,18 +211,18 @@ export function useSmartCaSignQ1({
   /**
    * Polling tự động mỗi 2 giây
    */
-  const startPollingTransaction = (tran: SmartCaQ1InitiateResponse) => {
+  const startPollingTransaction = useCallback((tran: SmartCaQ1InitiateResponse) => {
     if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
 
     pollingTimerRef.current = setInterval(async () => {
       await checkTransactionStatus(tran, false);
     }, 2000);
-  };
+  }, [checkTransactionStatus]);
 
   /**
    * Khởi tạo yêu cầu ký số Q1
    */
-  const handleInitiateQ1Sign = async () => {
+  const handleInitiateQ1Sign = useCallback(async () => {
     if (!effectiveXmlToSign) {
       toast.warning("Nội dung XML trống - không thể ký số!", "Thiếu Dữ Liệu");
       return;
@@ -241,17 +241,6 @@ export function useSmartCaSignQ1({
     if (!identityCheck.isValid) {
       toast.warning(identityCheck.error || "Định danh không hợp lệ!", "Sai Định Dạng");
       return;
-    }
-
-    if (idType !== "mst") {
-      if (!signerName.trim()) {
-        toast.warning("Vui lòng nhập Họ và Tên người ký (Bác sĩ)", "Thiếu Thông Tin");
-        return;
-      }
-      if (!signerEmail.trim()) {
-        toast.warning("Vui lòng nhập Email người ký", "Thiếu Thông Tin");
-        return;
-      }
     }
 
     const trimmedEmail = signerEmail.trim();
@@ -359,7 +348,21 @@ export function useSmartCaSignQ1({
       toast.error(errorMsg, "Lỗi Ký Số Q1");
       setIsInitiating(false);
     }
-  };
+  }, [
+    effectiveXmlToSign,
+    identityValue,
+    idType,
+    signerName,
+    signerEmail,
+    config.env,
+    config.clientId,
+    password,
+    digestInfo,
+    effectiveFileName,
+    handleCancelWaiting,
+    startPollingTransaction,
+    toast,
+  ]);
 
   const handleCheckNow = async () => {
     if (!waitingTransaction) return;

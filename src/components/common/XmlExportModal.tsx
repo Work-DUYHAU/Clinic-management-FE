@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   FileCode,
   Copy,
@@ -8,16 +14,19 @@ import {
   AlertTriangle,
   Loader2,
   Send,
+  Eye,
 } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import {
   DEFAULT_MA_CSKCB,
   xmlToBase64,
   downloadXmlFile,
+  isBhxhGatewaySuccess,
 } from "../../utils/shared/excelXmlShared";
 import { useClipboard } from "../../hooks/useClipboard";
 import { useModalBehavior } from "../../hooks/useModalBehavior";
 import { SmartCaSignPanel, type SmartCaSignAction } from "./SmartCaSignPanel";
+import { XmlPreviewModal } from "./smartca/XmlPreviewModal";
 import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
 import { extractXmlSignature } from "../../utils/xmlDsigEngine";
 
@@ -82,6 +91,9 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     handleStopPropagation,
   } = useModalBehavior(isOpen, onClose);
 
+  // State mở popup xem trước mã XML
+  const [showXmlPreview, setShowXmlPreview] = useState(false);
+
   // Trạng thái phản hồi Cổng BHXH cục bộ (tự động xóa khi nạp tệp mới)
   const [localApiResponse, setLocalApiResponse] = useState<any>(apiResponse);
 
@@ -99,6 +111,25 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   const [signResponse, setSignResponse] = useState<SmartCaSignResponse | null>(
     null,
   );
+
+  // Tự động reset trạng thái ký số khi mở phiên mới hoặc khi đổi tệp dữ liệu khác
+  const prevIsOpenRef = useRef(false);
+  const prevCustomFileNameRef = useRef(customFileName);
+
+  useEffect(() => {
+    const isOpening = !prevIsOpenRef.current && isOpen;
+    const isFileChanged =
+      isOpen && prevCustomFileNameRef.current !== customFileName;
+
+    if (isOpening || isFileChanged) {
+      setSignedXml(null);
+      setSignResponse(null);
+    }
+
+    prevIsOpenRef.current = isOpen;
+    prevCustomFileNameRef.current = customFileName;
+  }, [isOpen, customFileName]);
+
   const [footerSignAction, setFooterSignAction] =
     useState<SmartCaSignAction | null>(null);
   const toast = useToast();
@@ -149,7 +180,9 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     return extractXmlSignature(effectiveXml);
   }, [effectiveXml]);
 
-  const isSigned = signatureInfo.hasSignature;
+  const isSigned =
+    signatureInfo.hasSignature ||
+    Boolean(localApiResponse && isBhxhGatewaySuccess(localApiResponse));
 
   // Xử lý khi ký số thành công
   const handleSignedSuccess = (
@@ -198,13 +231,13 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   const handleDownloadEffectiveXml = () => {
     if (signedXml) {
       downloadXmlFile(signedXml, effectiveFileName);
+      toast.success(
+        "Đã tải tệp XML chuẩn hóa 1 dòng (W3C C14N - Bảo toàn chữ ký Cổng BHXH)",
+        "Tải Tệp XML Thành Công",
+      );
     } else {
       onExportXml();
     }
-    toast.success(
-      "Đã tải tệp XML chuẩn hóa 1 dòng (W3C C14N - Bảo toàn chữ ký Cổng BHXH)",
-      "Tải Tệp XML Thành Công",
-    );
   };
 
   const handleCloseModal = (e?: React.MouseEvent) => {
@@ -248,7 +281,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
         onClick={handleStopPropagation}
       >
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0 select-none">
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0 select-none">
           <div className="flex items-center gap-3">
             <div
               className={`p-2.5 rounded-xl ${
@@ -305,89 +338,102 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Selector & Nút Tải Lên XML Đã Ký (Luôn hiển thị trên 1 hàng duy nhất) */}
-        <div className="px-6 py-2.5 border-b border-slate-200 bg-slate-50/50 flex items-center gap-3 overflow-x-auto no-scrollbar shrink-0 select-none">
-          {/* TAB KÝ SỐ & GỬI CỔNG BHXH (Primary 1-Click Flow) */}
-          {enableSmartCa && (
+        {/* Tab Selector & Cụm Điều Khiển */}
+        <div className="px-4 py-2 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between gap-2 shrink-0 select-none text-[11px]">
+          {/* Nhóm Tabs bên trái */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {enableSmartCa && (
+              <button
+                type="button"
+                onClick={handleSelectTabSmartCa}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                  effectiveTab === "smartca"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : isSigned
+                      ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300"
+                      : "bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200"
+                }`}
+              >
+                <Fingerprint size={13} />
+                <span>Ký SmartCA</span>
+                {isSigned && (
+                  <ShieldCheck size={13} className="text-emerald-500" />
+                )}
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={handleSelectTabSmartCa}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                effectiveTab === "smartca"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                  : isSigned
-                    ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300"
-                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+              onClick={handleSelectTabBase64}
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                effectiveTab === "base64"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              <Fingerprint size={14} />
-              <span>Ký Số & Gửi Cổng BHXH</span>
-              {isSigned && (
-                <ShieldCheck size={14} className="text-emerald-500" />
-              )}
+              <FileCode size={13} />
+              <span>Base64</span>
             </button>
-          )}
+          </div>
 
-          <button
-            type="button"
-            onClick={handleSelectTabBase64}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-              effectiveTab === "base64"
-                ? "bg-blue-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-            }`}
-          >
-            <FileCode size={14} />
-            <span>Chuỗi Base64 {isSigned ? "Đã Ký Số" : ""}</span>
-          </button>
+          {/* Nhóm Điều khiển bên phải: Radio Q1/Q2, Checkbox Tự gửi, Con mắt Xem XML */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {effectiveTab === "smartca" && !isSigned && (
+              <>
+                {/* Radio chọn Ký tự động Q2 / Xác nhận qua App Q1 */}
+                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                  <label className="flex items-center gap-1 cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-colors">
+                    <input
+                      type="radio"
+                      name="modal_smartca_sign_mode"
+                      value="Q2"
+                      checked={signMode === "Q2"}
+                      onChange={() => setSignMode("Q2")}
+                      className="w-3 h-3 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                    />
+                    <span>Q2 (Tự động)</span>
+                  </label>
 
-          {/* CỤM ĐIỀU KHIỂN GỌN GÀNG TRÊN CÙNG 1 HÀNG: RADIO CHẾ ĐỘ KÝ & CHECKBOX GỬI CỔNG */}
-          {effectiveTab === "smartca" && !isSigned && (
-            <div className="flex items-center gap-3 shrink-0 text-xs">
-              <div className="h-4 w-px bg-slate-300 hidden sm:block" />
+                  <label className="flex items-center gap-1 cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-colors">
+                    <input
+                      type="radio"
+                      name="modal_smartca_sign_mode"
+                      value="Q1"
+                      checked={signMode === "Q1"}
+                      onChange={() => setSignMode("Q1")}
+                      className="w-3 h-3 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                    />
+                    <span>Q1 (App)</span>
+                  </label>
+                </div>
 
-              {/* Radio chọn Ký tự động Q2 / Xác nhận qua App Q1 */}
-              <div className="flex items-center gap-3 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-                <label className="flex items-center gap-1.5 cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-colors">
+                {/* Checkbox: Tự động gửi Cổng BHXH */}
+                <label
+                  className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg cursor-pointer text-slate-700 hover:text-emerald-700 font-semibold transition-colors shadow-2xs"
+                  title="Tự động gửi hồ sơ lên Cổng BHXH ngay khi ký số thành công"
+                >
                   <input
-                    type="radio"
-                    name="modal_smartca_sign_mode"
-                    value="Q2"
-                    checked={signMode === "Q2"}
-                    onChange={() => setSignMode("Q2")}
-                    className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                    type="checkbox"
+                    checked={autoSendOnSign}
+                    onChange={(e) => handleToggleAutoSend(e.target.checked)}
+                    className="w-3 h-3 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600 rounded"
                   />
-                  <span>Tự động (Q2)</span>
+                  <span>Tự gửi BHXH</span>
                 </label>
+              </>
+            )}
 
-                <label className="flex items-center gap-1.5 cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-colors">
-                  <input
-                    type="radio"
-                    name="modal_smartca_sign_mode"
-                    value="Q1"
-                    checked={signMode === "Q1"}
-                    onChange={() => setSignMode("Q1")}
-                    className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                  />
-                  <span>Xác nhận App (Q1)</span>
-                </label>
-              </div>
-
-              {/* Checkbox: Tự động gửi Cổng BHXH */}
-              <label
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-slate-700 hover:text-emerald-700 font-semibold transition-colors shadow-2xs select-none"
-                title="Tự động gửi hồ sơ lên Cổng BHXH ngay khi ký số thành công"
-              >
-                <input
-                  type="checkbox"
-                  checked={autoSendOnSign}
-                  onChange={(e) => handleToggleAutoSend(e.target.checked)}
-                  className="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600 rounded"
-                />
-                <span>Tự động gửi BHXH</span>
-              </label>
-            </div>
-          )}
+            {/* Nút Xem Trước Mã XML (Con mắt - Luôn hiển thị cả khi chưa ký lẫn đã ký, kể cả file tổng hợp) */}
+            <button
+              type="button"
+              onClick={() => setShowXmlPreview(true)}
+              className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-400 rounded-lg cursor-pointer text-slate-700 hover:text-blue-600 font-semibold transition-all shadow-2xs"
+              title="Xem trước cấu trúc mã XML (hỗ trợ giải mã từng chứng từ tệp tổng hợp)"
+            >
+              <Eye size={13} className="text-blue-600" />
+              <span>Xem XML{isSigned ? " Đã Ký" : ""}</span>
+            </button>
+          </div>
         </div>
 
         {/* Modal Body Container */}
@@ -425,7 +471,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
             <>
               {/* Tab Content: KÝ SỐ SMARTCA & GỬI CỔNG BHXH (SHOPEEFOOD FLOW) */}
               {effectiveTab === "smartca" && (
-                <div className="flex-1 min-h-0 overflow-y-auto p-6">
+                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 py-3">
                   <SmartCaSignPanel
                     xmlContent={xmlContent}
                     signedXml={signedXml || undefined}
@@ -433,7 +479,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                     itemsCount={itemsCount}
                     itemLabel={itemLabel}
                     signatureInfo={signatureInfo}
-                    sourceFileInfo={sourceFileInfo}
+                    hasCustomUploadedFile={Boolean(sourceFileInfo)}
                     onSignedSuccess={handleSignedSuccess}
                     onResetSignature={handleResetSignature}
                     onDownloadSignedXml={handleDownloadEffectiveXml}
@@ -489,7 +535,7 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
         </div>
 
         {/* Modal Footer (Cố định ở dưới, nút Đóng luôn phản hồi) */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 select-none">
+        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 select-none">
           <div className="text-xs text-slate-500">
             <span>
               Tổng số: <b>{itemsCount}</b> {itemLabel}
@@ -541,6 +587,17 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Popup Xem Trước Mã XML (Tự động nhận diện & giải mã từng chứng từ nếu là tệp tổng hợp) */}
+      <XmlPreviewModal
+        isOpen={showXmlPreview}
+        onClose={() => setShowXmlPreview(false)}
+        fileName={effectiveFileName}
+        xmlContent={signedXml || effectiveXml}
+        copiedKey={null}
+        onCopy={handleCopy}
+        isSigned={Boolean(signedXml)}
+      />
     </div>
   );
 };

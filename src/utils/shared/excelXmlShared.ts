@@ -866,3 +866,30 @@ export async function sendDanhMucToBhxhGateway(
     };
   }
 }
+
+/**
+ * Kiểm tra xem kết quả phản hồi từ Cổng BHXH có thành công hay không (dùng chung toàn hệ thống)
+ */
+export function isBhxhGatewaySuccess(apiResponse: any): boolean {
+  if (!apiResponse) return false;
+  const rawMaKetQua =
+    apiResponse.maKetQua != null
+      ? String(apiResponse.maKetQua)
+      : apiResponse.code != null
+        ? String(apiResponse.code)
+        : null;
+
+  if (rawMaKetQua === "200") return true;
+  if (rawMaKetQua === "400" || rawMaKetQua === "401" || rawMaKetQua === "500") {
+    return false;
+  }
+  if (apiResponse.isError === true) return false;
+  if (apiResponse.isOk === true) return true;
+
+  return Boolean(
+    apiResponse.maGiaoDich ||
+    apiResponse.MaGD ||
+    apiResponse.MaGiaoDich ||
+    apiResponse.data?.maGiaoDich
+  );
+}

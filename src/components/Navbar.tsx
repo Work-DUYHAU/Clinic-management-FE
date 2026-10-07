@@ -4,26 +4,77 @@ import {
   Bell,
   ShieldAlert,
   FileText,
-  Database,
-  ShieldCheck,
+  FileSignature,
+  Building2,
+  Users,
+  Pill,
+  Cpu,
+  Stethoscope,
+  Wrench,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
-import { useSignModal } from "../context/SignModalContext";
 import type { MainTabType, HoSoTabType } from "./Sidebar";
+import type { CatalogTab } from "../pages/DanhMucPage";
+
+const CATALOG_CONFIG: Record<
+  CatalogTab,
+  {
+    title: string;
+    sub: string;
+    badge: string;
+    icon: React.ElementType;
+  }
+> = {
+  "01_bpcm": {
+    title: "01/DM: Bộ Phận Chuyên Môn",
+    sub: "Khoa phòng, bàn khám & giường bệnh (Loại 70)",
+    badge: "Loại 70",
+    icon: Building2,
+  },
+  "02_nhanluc": {
+    title: "02/DM: Nhân Lực KCB BHYT",
+    sub: "Bác sỹ, CCHN, thời gian ĐK (Loại 71)",
+    badge: "Loại 71",
+    icon: Users,
+  },
+  "03_thuoc": {
+    title: "03/DM: Thuốc & Sinh Phẩm",
+    sub: "Danh mục thuốc, hoạt chất & đơn giá BHYT",
+    badge: "Loại 10",
+    icon: Pill,
+  },
+  "04_thietbi": {
+    title: "04/DM: Thiết Bị Y Tế",
+    sub: "Trang thiết bị y tế thanh toán BHYT (Loại 11)",
+    badge: "Loại 11",
+    icon: Cpu,
+  },
+  "05_dichvu": {
+    title: "05/DM: Dịch Vụ Kỹ Thuật",
+    sub: "DVKT, giá BHYT & viện phí phê duyệt (Loại 12)",
+    badge: "Loại 12",
+    icon: Stethoscope,
+  },
+  "06_tbdvkt": {
+    title: "06/DM: TBYT Thực Hiện DVKT",
+    sub: "TBYT thực hiện DVKT theo QĐ 3176 & NĐ 07 (Loại 05)",
+    badge: "Loại 05",
+    icon: Wrench,
+  },
+};
 
 interface NavbarProps {
   activeTab?: MainTabType;
   hoSoTab?: HoSoTabType;
-  onOpenSignModal?: () => void;
+  catalogTab?: CatalogTab;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab = "ho-so",
   hoSoTab = "01_tonghop",
-  onOpenSignModal,
+  catalogTab = "01_bpcm",
 }) => {
   const toast = useToast();
-  const { openSignModal } = useSignModal();
 
   const today = new Date().toLocaleDateString("vi-VN", {
     weekday: "long",
@@ -32,37 +83,36 @@ export const Navbar: React.FC<NavbarProps> = ({
     day: "numeric",
   });
 
-  const handleOpenSign = () => {
-    if (onOpenSignModal) {
-      onOpenSignModal();
-    } else {
-      openSignModal();
-    }
-  };
-
   return (
     <header className="h-16 bg-white border-b border-slate-200/90 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Module Title & Breadcrumbs */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {activeTab === "danh-muc" ? (
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-blue-50 text-[#1677ff] border border-blue-100 flex-shrink-0">
-              <Database size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-800">
-                  1. Quản Lý Danh Mục KCB BHYT
-                </span>
-                <span className="text-[10px] font-bold bg-blue-50 text-[#1677ff] border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                  6 Biểu Mẫu DM
-                </span>
+          (() => {
+            const currentCatalog =
+              CATALOG_CONFIG[catalogTab] || CATALOG_CONFIG["01_bpcm"];
+            const CatalogIcon = currentCatalog.icon;
+            return (
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-50 text-[#1677ff] border border-blue-100 flex-shrink-0">
+                  <CatalogIcon size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <span className="text-sm font-bold text-slate-800">
+                      {currentCatalog.title}
+                    </span>
+                    <span className="text-[10px] font-bold bg-blue-50 text-[#1677ff] border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                      {currentCatalog.badge}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 whitespace-nowrap block">
+                    {currentCatalog.sub}
+                  </span>
+                </div>
               </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block">
-                Chuẩn hóa dữ liệu dùng chung Bộ Y tế & Cổng Giám định BHYT
-              </span>
-            </div>
-          </div>
+            );
+          })()
         ) : hoSoTab === "01_tonghop" ? (
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-blue-50 text-[#1677ff] border border-blue-100 flex-shrink-0">
@@ -80,6 +130,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-[11px] text-slate-500 whitespace-nowrap block">
                 Giám sát tổng hợp chi phí KCB BHYT, kiểm tra thẻ và kết xuất XML
                 130
+              </span>
+            </div>
+          </div>
+        ) : activeTab === "chung-tu" ? (
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex-shrink-0">
+              <FileSignature size={18} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <span className="text-sm font-bold text-slate-800">
+                  3. Hồ Sơ Chứng Từ Điện Tử
+                </span>
+                <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                  TT 25 & BHXH 2025
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 whitespace-nowrap block">
+                Nộp hồ sơ CT01, CT07, Giấy báo tử, Giấy chứng sinh chuẩn liên thông Cổng BHXH
               </span>
             </div>
           </div>
@@ -113,17 +182,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Calendar size={14} className="text-emerald-600" />
           <span>{today}</span>
         </div>
-
-        {/* Nút Mở Ký Số SmartCA Nhanh */}
-        <button
-          type="button"
-          onClick={handleOpenSign}
-          className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-50/80 hover:bg-blue-100/80 text-[#1677ff] border border-blue-200 hover:border-blue-400 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-          title="Mở Bảng Ký Số SmartCA & Liên Thông BHXH"
-        >
-          <ShieldCheck size={16} className="text-[#1677ff]" />
-          <span>Ký Số</span>
-        </button>
 
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-semibold text-emerald-700">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

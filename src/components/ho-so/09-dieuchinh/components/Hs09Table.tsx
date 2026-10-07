@@ -77,36 +77,36 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
       {/* Search & Filter Toolbar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/50">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
           {/* Search Box */}
-          <div className="relative w-full sm:w-72">
+          <div className="relative w-full sm:w-56 md:w-64 shrink-0">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
             />
             <input
               type="text"
-              placeholder="Tìm mã LK, họ tên, mã thẻ, mã BN, khoa..."
+              placeholder="Tìm mã LK, họ tên, mã thẻ, BN..."
               value={searchTerm}
               onChange={(e) => {
                 onSearchChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium"
             />
           </div>
 
           {/* Filter Bảng XML */}
-          <div className="flex items-center gap-1.5">
-            <Layers size={14} className="text-slate-400" />
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+            <Layers size={13} className="text-slate-400 shrink-0" />
             <select
               value={filterSoBangXml}
               onChange={(e) => {
                 onFilterSoBangXmlChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-medium outline-none focus:border-indigo-500 transition-all"
+              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[130px] truncate"
             >
               <option value="all">Tất cả bảng XML</option>
               <option value="xml1">XML1 (Hành chính)</option>
@@ -118,15 +118,15 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           </div>
 
           {/* Filter Nhóm Lỗi Xuất Toán */}
-          <div className="flex items-center gap-1.5">
-            <Filter size={14} className="text-slate-400" />
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+            <Filter size={13} className="text-slate-400 shrink-0" />
             <select
               value={filterNhomLoi}
               onChange={(e) => {
                 onFilterNhomLoiChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-medium outline-none focus:border-indigo-500 transition-all"
+              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[145px] truncate"
             >
               <option value="all">Tất cả nhóm lỗi</option>
               {Object.entries(NHOM_LOI_XUAT_TOAN_MAP).map(([code, label]) => (
@@ -138,28 +138,48 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           </div>
 
           {/* Filter Trạng thái */}
-          <select
-            value={filterTrangThai}
-            onChange={(e) => {
-              onFilterTrangThaiChange(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-medium outline-none focus:border-indigo-500 transition-all"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="cho_xu_ly">Chờ xử lý</option>
-            <option value="da_lap_bieu">Đã lập biểu mẫu 09</option>
-            <option value="da_gui_cong">Đã gửi cổng BHXH</option>
-            <option value="chap_nhan">Chấp nhận lại</option>
-            <option value="tu_choi">Từ chối</option>
-          </select>
+          <div className="flex items-center bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500 transition-all">
+            <select
+              value={filterTrangThai}
+              onChange={(e) => {
+                onFilterTrangThaiChange(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[130px] truncate"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="cho_xu_ly">Chờ xử lý</option>
+              <option value="da_lap_bieu">Đã lập biểu mẫu 09</option>
+              <option value="da_gui_cong">Đã gửi cổng BHXH</option>
+              <option value="chap_nhan">Chấp nhận lại</option>
+              <option value="tu_choi">Từ chối</option>
+            </select>
+          </div>
+
+          {/* Nút xóa lọc nhanh */}
+          {(searchTerm || filterSoBangXml !== "all" || filterNhomLoi !== "all" || filterTrangThai !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                onSearchChange("");
+                onFilterSoBangXmlChange("all");
+                onFilterNhomLoiChange("all");
+                onFilterTrangThaiChange("all");
+                setCurrentPage(1);
+              }}
+              className="text-xs text-slate-400 hover:text-rose-600 font-bold px-2 py-1 cursor-pointer transition-colors whitespace-nowrap"
+            >
+              Xóa lọc
+            </button>
+          )}
         </div>
 
         {/* Action Button: Thêm mới */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
+            type="button"
             onClick={onAddNew}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs shadow-indigo-600/20 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-semibold shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
           >
             <Plus size={15} />
             <span>Thêm Hồ Sơ 09</span>
