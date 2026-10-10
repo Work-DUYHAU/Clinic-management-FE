@@ -78,11 +78,11 @@ export const HS09_SCHEMA_FIELDS: SharedSchemaField[] = [
   },
   {
     key: 'TRANGTHAI_HS',
-    label: 'Trạng Thái Hồ Sơ (1: Điều chỉnh, 2: Hủy)',
+    label: 'Loại Yêu Cầu (1: Thu hồi, 2: Điều chỉnh, 4: Xin ý kiến)',
     type: 'number',
     required: true,
-    desc: '1: Đề nghị điều chỉnh, 2: Đề nghị hủy hồ sơ',
-    aliases: ['TRANGTHAI_HS', 'TRANGTHAI', 'TRANG_THAI', 'LOAI_DE_NGHI']
+    desc: '1: Thu hồi ĐNTT, 2: Điều chỉnh dữ liệu gốc, 4: Xin ý kiến cấp có thẩm quyền (Phụ lục I TT 12/2026/TT-BTC)',
+    aliases: ['TRANGTHAI_HS', 'TRANGTHAI', 'TRANG_THAI', 'LOAI_DE_NGHI', 'LOAI_YEU_CAU', 'YEU_CAU', 'LOAI_HOSO']
   },
   {
     key: 'SOBANG_XML',

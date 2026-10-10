@@ -75,14 +75,14 @@ export function canonicalizeForDigest(
   if (opts.preserveOtherSignatures) {
     if (opts.excludeSignatureId) {
       const targetSigRegex = new RegExp(
-        `<Signature\\s+[^>]*Id="${opts.excludeSignatureId}"[\\s\\S]*?<\\/Signature>`,
+        `<(?:[a-zA-Z0-9_-]+:)?Signature\\s+[^>]*Id="${opts.excludeSignatureId}"[\\s\\S]*?<\\/(?:[a-zA-Z0-9_-]+:)?Signature>`,
         "gi",
       );
       res = res.replace(targetSigRegex, "");
     }
   } else {
     // Loại bỏ toàn bộ khối chữ ký <Signature>...</Signature> nếu đã có bên trong <CHUKYDONVI>
-    res = res.replace(/<Signature[\s\S]*?<\/Signature>/gi, "");
+    res = res.replace(/<(?:[a-zA-Z0-9_-]+:)?Signature[\s\S]*?<\/(?:[a-zA-Z0-9_-]+:)?Signature>/gi, "");
   }
 
   // Chuẩn hóa toàn bộ thẻ tự đóng thành thẻ cặp mở/đóng theo chuẩn W3C C14N (ví dụ: <NGAY_VAO_NOI_TRU/> -> <NGAY_VAO_NOI_TRU></NGAY_VAO_NOI_TRU>, <CHUKYDONVI /> -> <CHUKYDONVI></CHUKYDONVI>)
@@ -344,7 +344,7 @@ ${indent}  </Signature>`;
     : "";
 
   if (isMinified) {
-    return `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#" Id="${standardSigId}"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>${params.digestValue.trim()}</DigestValue></Reference></SignedInfo><SignatureValue>${params.signatureValue.trim()}</SignatureValue><KeyInfo>${keyValueBlock}<X509Data><X509SubjectName>${normalizedSubject}</X509SubjectName><X509Certificate>${cleanCert}</X509Certificate></X509Data></KeyInfo></Signature>`;
+    return `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#" Id="${standardSigId}"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod><DigestValue>${params.digestValue.trim()}</DigestValue></Reference></SignedInfo><SignatureValue>${params.signatureValue.trim()}</SignatureValue><KeyInfo>${keyValueBlock}<X509Data><X509SubjectName>${normalizedSubject}</X509SubjectName><X509Certificate>${cleanCert}</X509Certificate></X509Data></KeyInfo></Signature>`;
   }
 
   return `${indent}  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#" Id="${standardSigId}">
@@ -379,12 +379,11 @@ export function injectSignatureToXml(
   signatureBlockOrParams: string | XmlDSigParams,
   options?: InjectSignatureOptions,
 ): string {
-  const isDocMinified = !rawXml.includes("\n");
+  // Tài liệu chuẩn Cổng BHXH luôn là XML minified 1 dòng không có xuống dòng giữa các thẻ
+  const isDocMinified = !rawXml.includes(">\n") && !rawXml.includes(">\r\n");
   const signatureXml =
     typeof signatureBlockOrParams === "string"
-      ? isDocMinified
-        ? minifyXml(signatureBlockOrParams)
-        : signatureBlockOrParams
+      ? signatureBlockOrParams
       : buildXmlDSigBlock(signatureBlockOrParams, isDocMinified ? "" : "  ");
 
   const cleanSig = isDocMinified
@@ -499,25 +498,30 @@ export function removeSignatureFromXml(
 export function extractXmlSignatures(xml: string): ExtractedSignatureInfo[] {
   if (!xml) return [];
 
-  const sigRegex = /<Signature[\s\S]*?<\/Signature>/gi;
+  const sigRegex =
+    /<(?:[a-zA-Z0-9_-]+:)?Signature[\s\S]*?<\/(?:[a-zA-Z0-9_-]+:)?Signature>/gi;
   const matches = xml.match(sigRegex);
   if (!matches || matches.length === 0) return [];
 
   return matches.map((sigContent) => {
-    const sigIdMatch = sigContent.match(/<Signature\s+[^>]*Id="([^"]+)"/i);
+    const sigIdMatch = sigContent.match(
+      /<(?:[a-zA-Z0-9_-]+:)?Signature\s+[^>]*Id="([^"]+)"/i,
+    );
     const digestMatch = sigContent.match(
-      /<DigestValue>([^<]+)<\/DigestValue>/i,
+      /<(?:[a-zA-Z0-9_-]+:)?DigestValue[^>]*>([^<]+)<\/(?:[a-zA-Z0-9_-]+:)?DigestValue>/i,
     );
     const sigValMatch = sigContent.match(
-      /<SignatureValue>([^<]+)<\/SignatureValue>/i,
+      /<(?:[a-zA-Z0-9_-]+:)?SignatureValue[^>]*>([^<]+)<\/(?:[a-zA-Z0-9_-]+:)?SignatureValue>/i,
     );
     const subjectMatch = sigContent.match(
-      /<X509SubjectName>([^<]+)<\/X509SubjectName>/i,
+      /<(?:[a-zA-Z0-9_-]+:)?X509SubjectName[^>]*>([^<]+)<\/(?:[a-zA-Z0-9_-]+:)?X509SubjectName>/i,
     );
     const signingTimeMatch = sigContent.match(
-      /<SigningTime>([^<]+)<\/SigningTime>/i,
+      /<(?:[a-zA-Z0-9_-]+:)?SigningTime[^>]*>([^<]+)<\/(?:[a-zA-Z0-9_-]+:)?SigningTime>/i,
     );
-    const refMatch = sigContent.match(/<Reference\s+URI="#?([^"]*)"/i);
+    const refMatch = sigContent.match(
+      /<(?:[a-zA-Z0-9_-]+:)?Reference\s+[^>]*URI="#?([^"]*)"/i,
+    );
 
     let serialNumber: string | undefined;
     if (subjectMatch?.[1]) {

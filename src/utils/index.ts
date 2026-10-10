@@ -13,3 +13,4 @@ export * from "./dichVuXmlEngine";
 export * from "./tbyttHdvXmlEngine";
 export * from "./hs01TongHopXmlEngine";
 export * from "./hs09DieuChinhXmlEngine";
+export * from "./hs09RequestTypeResolver";

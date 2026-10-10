@@ -8,6 +8,7 @@ const Modal: FC<AppModalProps> = ({
   onHide,
   onCancel,
   onConfirm,
+  footer,
   onOk,
   confirmText,
   okText,
@@ -24,6 +25,7 @@ const Modal: FC<AppModalProps> = ({
       okText={okText ?? confirmText}
       confirmLoading={confirmLoading}
       centered={centered}
+      footer={footer !== undefined ? footer : null}
       {...rest}
     >
       {children}

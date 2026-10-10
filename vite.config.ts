@@ -12,15 +12,11 @@ export default defineConfig(({ mode }) => {
       ? "https://egw.baohiemxahoi.gov.vn"
       : "https://gdbhyt.baohiemxahoi.gov.vn");
 
-  // Agent xử lý riêng cho bắt tay TLS của Cổng BHXH để tránh ECONNRESET / 502 do socket nhàn rỗi
+  // Agent xử lý riêng cho bắt tay TLS của Cổng BHXH để tránh ECONNRESET / 502
   const bhxhAgent = new https.Agent({
     rejectUnauthorized: false,
-    // Cho phép hạ mức bảo mật TLS phù hợp với chuẩn WAF Cổng BHXH
-    ciphers: "DEFAULT@SECLEVEL=0",
-    // Giữ SNI chuẩn domain đích thay vì bỏ trống
-    servername: new URL(targetUrl).hostname,
     keepAlive: false,
-    timeout: 60000,
+    timeout: 30000,
   });
 
   return {
@@ -45,7 +41,7 @@ export default defineConfig(({ mode }) => {
                 res.end(
                   JSON.stringify({
                     maKetQua: "502",
-                    thongDiep: "Cổng BHXH phản hồi 502 hoặc kết nối mạng bị gián đoạn",
+                    thongDiep: `Không thể kết nối đến Cổng BHXH (${err.message}). Cổng BHXH có thể đang quá tải hoặc gián đoạn mạng.`,
                   }),
                 );
               }

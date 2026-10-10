@@ -20,6 +20,7 @@ import {
   DEFAULT_MA_CSKCB,
   isBhxhGatewaySuccess,
 } from "../../utils/shared/excelXmlShared";
+import { extractXmlSignature } from "../../utils/xmlDsigEngine";
 import { BhxhChungTuService } from "../../services/bhxh/bhxhChungTuService";
 
 interface ChungTuPageProps {
@@ -40,6 +41,7 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
     code: string;
     fileName: string;
     xmlContent: string;
+    preSignedXml?: string | null;
     itemsCount: number;
   }>({
     title: "Gói Hồ Sơ Chứng Từ TT25",
@@ -47,6 +49,7 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
     code: "39",
     fileName: `HSCHUNGTU_${DEFAULT_MA_CSKCB}.xml`,
     xmlContent: "",
+    preSignedXml: null,
     itemsCount: 0,
   });
 
@@ -91,6 +94,9 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         const loaiFromXml = matchLoai ? matchLoai[1].trim() : null;
         const resolvedCode = loaiFromXml || (docDef ? docDef.code : "39");
 
+        const sigInfo = extractXmlSignature(text);
+        const hasSignature = sigInfo.hasSignature;
+
         setModalConfig({
           title: isMultiPackage
             ? `Gói Hồ Sơ Tổng Hợp (${fileHoSoCount} chứng từ)`
@@ -99,10 +105,18 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
           code: resolvedCode,
           fileName: file.name,
           xmlContent: text,
+          preSignedXml: hasSignature ? text : null,
           itemsCount: fileHoSoCount || 1,
         });
 
-        toast.success(`Đã nạp tệp XML: ${file.name}`, "Nạp Tệp Thành Công");
+        if (hasSignature) {
+          toast.success(
+            `Đã nạp tệp XML (${sigInfo.signatureCount || 1} chữ ký điện tử hợp lệ): ${file.name}`,
+            "Tệp Đã Có Chữ Ký Số",
+          );
+        } else {
+          toast.success(`Đã nạp tệp XML: ${file.name}`, "Nạp Tệp Thành Công");
+        }
         setIsSignModalOpen(true);
       } else if (fileNameLower.endsWith(".xlsx") || fileNameLower.endsWith(".xls")) {
         // Phân tích tệp Excel (hỗ trợ đọc cả file nhiều sheet hoặc file 1 sheet)
@@ -373,6 +387,7 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         itemLabel="chứng từ"
         customFileName={modalConfig.fileName}
         xmlContent={modalConfig.xmlContent}
+        initialSignedXml={modalConfig.preSignedXml}
         base64Content={effectiveBase64}
         tab={modalTab}
         onTabChange={setModalTab}

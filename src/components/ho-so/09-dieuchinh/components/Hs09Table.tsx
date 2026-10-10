@@ -1,35 +1,31 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search,
-  Filter,
   Plus,
   Eye,
   Edit2,
   Trash2,
-  User,
-  ChevronDown,
-  ChevronRight,
   AlertCircle,
   FileCheck2,
-  Layers,
   Lock,
-  CheckSquare2,
-  FileSignature,
   RotateCcw,
-  XSquare,
-  ArrowRight,
+  Send,
+  Paperclip,
+  Printer,
+  Building,
+  FileSpreadsheet,
+  X,
 } from "lucide-react";
-import type {
-  HoSoDieuChinh09Item,
-  ChiPhiDieuChinhItem,
-  TtXml1DieuChinhItem,
-} from "../../../../types/hs09DieuChinhTypes";
+import type { HoSoDieuChinh09Item } from "../../../../types/hs09DieuChinhTypes";
 import {
-  SO_BANG_XML_MAP,
-  NHOM_LOI_XUAT_TOAN_MAP,
-} from "../../../../utils/constants/hs09DieuChinhConstants";
-import { formatCurrencyVnd } from "../../../../utils/shared/excelXmlShared";
+  formatYmdHmDisplay,
+  DEFAULT_MA_CSKCB,
+} from "../../../../utils/shared/excelXmlShared";
+import { getEffectiveHs09TrangThai } from "../../../../utils/hs09RequestTypeResolver";
 import { Pagination } from "../../../common";
+import { Select, DatePicker } from "../../../../shared/components";
+import dayjs from "dayjs";
+import { useToast } from "../../../../context/ToastContext";
 
 const MAX_KY_SO = 10;
 
@@ -37,36 +33,58 @@ interface Hs09TableProps {
   items: HoSoDieuChinh09Item[];
   searchTerm: string;
   onSearchChange: (val: string) => void;
-  filterNhomLoi: string;
-  onFilterNhomLoiChange: (val: string) => void;
-  filterSoBangXml: string;
-  onFilterSoBangXmlChange: (val: string) => void;
-  filterTrangThai: string;
-  onFilterTrangThaiChange: (val: string) => void;
+  filterNhomLoi?: string;
+  onFilterNhomLoiChange?: (val: string) => void;
+  filterSoBangXml?: string;
+  onFilterSoBangXmlChange?: (val: string) => void;
+  filterTrangThai?: string;
+  onFilterTrangThaiChange?: (val: string) => void;
+
+  // Extra standard filters (Mục 2.1)
+  filterTinhTrangGui?: string;
+  onFilterTinhTrangGuiChange?: (val: string) => void;
+  filterLoaiThaoTac?: string;
+  onFilterLoaiThaoTacChange?: (val: string) => void;
+  filterKyQt?: string;
+  onFilterKyQtChange?: (val: string) => void;
+  filterTuNgay?: string;
+  onFilterTuNgayChange?: (val: string) => void;
+  filterDenNgay?: string;
+  onFilterDenNgayChange?: (val: string) => void;
+
   onAddNew: () => void;
   onEdit: (item: HoSoDieuChinh09Item) => void;
   onDelete: (item: HoSoDieuChinh09Item) => void;
   onViewDetail: (item: HoSoDieuChinh09Item) => void;
-  /** Callback khi selection thay đổi — trả về mảng các item được chọn */
   onSelectionChange?: (selectedItems: HoSoDieuChinh09Item[]) => void;
-  /** Callback mở ký số cho các bản ghi đã chọn (tối đa 10 HS) */
   onBulkSign?: (selectedItems: HoSoDieuChinh09Item[]) => void;
-  /** Callback hủy ký số cho các bản ghi đã ký nhưng chưa gửi cổng */
   onUnsign?: (itemsToUnsign: HoSoDieuChinh09Item[]) => void;
-  /** Callback hủy phiên làm việc / bỏ chọn */
   onClearSelection?: () => void;
+
+  // New features according to Phụ lục I Thông tư 12/2026/TT-BTC
+  onOpenHanhChinh?: (item: HoSoDieuChinh09Item) => void;
+  onOpenChiPhi?: (item: HoSoDieuChinh09Item) => void;
+  onOpenAttachment?: (item: HoSoDieuChinh09Item) => void;
+  onPrintPdf?: (item: HoSoDieuChinh09Item) => void;
+  onSendGiamDinh?: (selectedItems: HoSoDieuChinh09Item[]) => void;
+  onExportExcel?: (itemsToExport?: HoSoDieuChinh09Item[]) => void;
+  onHuyPhien?: (selectedItems: HoSoDieuChinh09Item[]) => void;
 }
 
 export const Hs09Table: React.FC<Hs09TableProps> = ({
   items,
   searchTerm,
   onSearchChange,
-  filterNhomLoi,
-  onFilterNhomLoiChange,
-  filterSoBangXml,
-  onFilterSoBangXmlChange,
-  filterTrangThai,
-  onFilterTrangThaiChange,
+  filterTinhTrangGui = "all",
+  onFilterTinhTrangGuiChange,
+  filterLoaiThaoTac = "all",
+  onFilterLoaiThaoTacChange,
+  filterKyQt = "all",
+  onFilterKyQtChange,
+  filterTuNgay = "",
+  onFilterTuNgayChange,
+  filterDenNgay = "",
+  onFilterDenNgayChange,
   onAddNew,
   onEdit,
   onDelete,
@@ -75,49 +93,259 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
   onBulkSign,
   onUnsign,
   onClearSelection,
+  onOpenHanhChinh,
+  onOpenChiPhi,
+  onOpenAttachment,
+  onPrintPdf,
+  onSendGiamDinh,
+  onExportExcel,
+  onHuyPhien,
 }) => {
+  const toast = useToast();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [expandedRowIds, setExpandedRowIds] = useState<Record<string, boolean>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const toggleRowExpand = (id: string) => {
-    setExpandedRowIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Scroll and Drag-to-scroll logic
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === "INPUT" ||
+      target.tagName === "BUTTON" ||
+      target.tagName === "SELECT" ||
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("a")
+    ) {
+      return;
+    }
+    if (!tableContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - tableContainerRef.current.offsetLeft);
+    setScrollLeftPos(tableContainerRef.current.scrollLeft);
   };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !tableContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tableContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    tableContainerRef.current.scrollLeft = scrollLeftPos - walk;
+  };
+
+  // Gridview Column Quick Filter Textboxes (Mục 2.1)
+  const [colXml1Id, setColXml1Id] = useState("");
+  const [colMaThe, setColMaThe] = useState("");
+  const [colMaBn, setColMaBn] = useState("");
+  const [colHoTen, setColHoTen] = useState("");
+  const [colMaLk, setColMaLk] = useState("");
+  const [colNgayVao, setColNgayVao] = useState("");
+  const [colNgayRa, setColNgayRa] = useState("");
+  const [colTrangThai, setColTrangThai] = useState("all");
+  const [colKySo, setColKySo] = useState("all");
+  const [colGdDuyet, setColGdDuyet] = useState("all");
+
+  useEffect(() => {
+    const visibleIds = new Set(items.map((item) => item.id));
+    setSelectedIds((previous) => {
+      const next = new Set(
+        Array.from(previous).filter((id) => visibleIds.has(id)),
+      );
+      if (next.size !== previous.size) {
+        onSelectionChange?.(items.filter((i) => next.has(i.id)));
+      }
+      return next.size === previous.size ? previous : next;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [items, pageSize]);
 
   const toggleSelect = (item: HoSoDieuChinh09Item) => {
-    // Chỉ cho chọn các item chưa gửi cổng
     if (item.tinhTrangGui === 2) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(item.id)) {
-        next.delete(item.id);
-      } else {
-        next.add(item.id);
-      }
-      onSelectionChange?.(items.filter((i) => next.has(i.id)));
-      return next;
-    });
+    // Tính tập chọn mới bên ngoài updater để tránh side-effect chạy kép trong StrictMode
+    const next = new Set(selectedIds);
+    if (next.has(item.id)) {
+      next.delete(item.id);
+    } else {
+      next.add(item.id);
+    }
+    setSelectedIds(next);
+    onSelectionChange?.(items.filter((i) => next.has(i.id)));
   };
 
+  const getItemDateString = (item: HoSoDieuChinh09Item): string => {
+    if (item.ngayThongBaoLoi) {
+      if (item.ngayThongBaoLoi.includes("/")) {
+        const parts = item.ngayThongBaoLoi.split("/");
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+        }
+      }
+      if (item.ngayThongBaoLoi.includes("-")) return item.ngayThongBaoLoi;
+    }
+    if (item.ttXml1.ngayVao && item.ttXml1.ngayVao.length >= 8) {
+      const y = item.ttXml1.ngayVao.slice(0, 4);
+      const m = item.ttXml1.ngayVao.slice(4, 6);
+      const d = item.ttXml1.ngayVao.slice(6, 8);
+      return `${y}-${m}-${d}`;
+    }
+    return "";
+  };
+
+  const availableKyQtOptions = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.ttXml1.kyQt) set.add(item.ttXml1.kyQt);
+    });
+    return Array.from(set).sort().reverse();
+  }, [items]);
+
+  // Filter items based on both global filters and column filters
+  const filteredGridItems = useMemo(() => {
+    return items.filter((item) => {
+      // 1. Column filters
+      if (
+        colXml1Id &&
+        !String(item.ttXml1.xml1Id || "")
+          .toLowerCase()
+          .includes(colXml1Id.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colMaThe &&
+        !item.ttXml1.maThe.toLowerCase().includes(colMaThe.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colMaBn &&
+        !item.ttXml1.maBn.toLowerCase().includes(colMaBn.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colHoTen &&
+        !item.ttXml1.hoTen.toLowerCase().includes(colHoTen.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colMaLk &&
+        !item.ttXml1.maLk.toLowerCase().includes(colMaLk.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colNgayVao &&
+        !item.ttXml1.ngayVao.toLowerCase().includes(colNgayVao.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        colNgayRa &&
+        !item.ttXml1.ngayRa.toLowerCase().includes(colNgayRa.toLowerCase())
+      ) {
+        return false;
+      }
+      if (colTrangThai !== "all") {
+        const effTt = getEffectiveHs09TrangThai(item);
+        if (String(effTt) !== colTrangThai) return false;
+      }
+      if (colKySo !== "all") {
+        if (String(item.ttKySo) !== colKySo) return false;
+      }
+      if (colGdDuyet !== "all") {
+        const itemGd = item.gdDuyet ?? 0;
+        if (String(itemGd) !== colGdDuyet) return false;
+      }
+
+      // 2. Extra section 2.1 filters
+      if (filterTinhTrangGui !== "all") {
+        if (String(item.tinhTrangGui) !== filterTinhTrangGui) return false;
+      }
+      if (filterLoaiThaoTac !== "all") {
+        const itemLoai = item.loaiThaoTac || "dang_thao_tac";
+        if (itemLoai !== filterLoaiThaoTac) return false;
+      }
+      if (filterKyQt !== "all" && item.ttXml1.kyQt !== filterKyQt) {
+        return false;
+      }
+      if (filterTuNgay) {
+        const itemDate = getItemDateString(item);
+        if (itemDate && itemDate < filterTuNgay) return false;
+      }
+      if (filterDenNgay) {
+        const itemDate = getItemDateString(item);
+        if (itemDate && itemDate > filterDenNgay) return false;
+      }
+
+      return true;
+    });
+  }, [
+    items,
+    colXml1Id,
+    colMaThe,
+    colMaBn,
+    colHoTen,
+    colMaLk,
+    colNgayVao,
+    colNgayRa,
+    colTrangThai,
+    colKySo,
+    colGdDuyet,
+    filterTinhTrangGui,
+    filterLoaiThaoTac,
+    filterKyQt,
+    filterTuNgay,
+    filterDenNgay,
+  ]);
+
   const selectableItems = useMemo(
-    () => items.filter((i) => i.tinhTrangGui !== 2),
-    [items],
+    () => filteredGridItems.filter((i) => i.tinhTrangGui !== 2),
+    [filteredGridItems],
   );
 
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+
   const isAllSelectableChecked = useMemo(() => {
+    if (selectableItems.length === 0) return false;
+    const effectiveTargetCount = Math.min(selectableItems.length, MAX_KY_SO);
+    const selectedSelectableCount = selectableItems.filter((i) =>
+      selectedIds.has(i.id),
+    ).length;
     return (
-      selectableItems.length > 0 &&
-      selectableItems.every((i) => selectedIds.has(i.id))
+      selectedSelectableCount > 0 &&
+      selectedSelectableCount >= effectiveTargetCount
     );
   }, [selectableItems, selectedIds]);
 
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate =
+        selectedIds.size > 0 && !isAllSelectableChecked;
+    }
+  }, [selectedIds.size, isAllSelectableChecked]);
+
   const toggleSelectAll = () => {
-    if (isAllSelectableChecked) {
+    if (selectedIds.size > 0) {
+      // Đang có hồ sơ được chọn -> HỦY CHỌN TẤT CẢ
       setSelectedIds(new Set());
       onSelectionChange?.([]);
+      onClearSelection?.();
     } else {
-      // Chỉ chọn tối đa 10 hồ sơ đầu tiên hoặc toàn bộ nếu <= 10
+      // Chưa chọn gì -> Chọn tối đa 10 hồ sơ
       const toSelect = selectableItems.slice(0, MAX_KY_SO);
       const newSet = new Set(toSelect.map((i) => i.id));
       setSelectedIds(newSet);
@@ -132,7 +360,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     [items, selectedIds],
   );
   const selectedSignedList = useMemo(
-    () => selectedItemsList.filter((i) => i.ttKySo === 2 && i.tinhTrangGui === 0),
+    () =>
+      selectedItemsList.filter((i) => i.ttKySo === 2 && i.tinhTrangGui === 0),
     [selectedItemsList],
   );
 
@@ -143,180 +372,137 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
   };
 
   const paginatedItems = useMemo(() => {
-    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filteredGridItems.length / pageSize),
+    );
     const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
     const start = (validCurrentPage - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, currentPage, pageSize]);
+    return filteredGridItems.slice(start, start + pageSize);
+  }, [filteredGridItems, currentPage, pageSize]);
+
+  // Handle Bulk Sign according to Mục 4.2 TT 12/2026/TT-BTC
+  const handleTriggerBulkSign = () => {
+    if (selectedCount === 0 || overLimit) return;
+    const alreadySigned = selectedItemsList.filter((i) => i.ttKySo === 2);
+    if (alreadySigned.length > 0) {
+      toast.warning(
+        "Chỉ được ký số cho các hồ sơ chưa ký (TT_KYSO = 0)! Vui lòng bỏ chọn các hồ sơ đã ký.",
+        "Thông báo",
+      );
+      return;
+    }
+    onBulkSign?.(selectedItemsList);
+  };
+
+  // Handle Send Giam Dinh according to Mục 6 TT 12/2026/TT-BTC
+  const handleTriggerSendGiamDinh = () => {
+    if (selectedCount === 0) {
+      toast.warning("Chưa chọn bản ghi nào!", "Thông báo");
+      return;
+    }
+
+    const hasUnsignedOrSent = selectedItemsList.some(
+      (item) => item.ttKySo !== 2 || item.tinhTrangGui === 2,
+    );
+    if (hasUnsignedOrSent) {
+      toast.error(
+        "Có hồ sơ chưa ký số hoặc hồ sơ đã gửi giám định!",
+        "Không thể gửi",
+      );
+      return;
+    }
+
+    onSendGiamDinh?.(selectedItemsList);
+  };
+
+  // Handle Cancel Session (Hủy phiên làm việc) according to Mục 7 TT 12/2026/TT-BTC
+  const handleTriggerHuyPhien = () => {
+    if (selectedCount === 0) {
+      toast.warning("Chưa chọn bản ghi nào!", "Thông báo");
+      return;
+    }
+
+    // Điều kiện: Tất cả hồ sơ được chọn bắt buộc phải có TT_KYSO = 0
+    const hasSigned = selectedItemsList.some((item) => item.ttKySo === 2);
+    if (hasSigned) {
+      toast.error(
+        "Tất cả hồ sơ được chọn bắt buộc phải có TT_KYSO = 0 (Chưa ký số)! Vui lòng bỏ chọn các hồ sơ đã ký.",
+        "Lỗi hủy phiên",
+      );
+      return;
+    }
+
+    onHuyPhien?.(selectedItemsList);
+  };
+
+  const clearColumnFilters = () => {
+    setColXml1Id("");
+    setColMaThe("");
+    setColMaBn("");
+    setColHoTen("");
+    setColMaLk("");
+    setColNgayVao("");
+    setColNgayRa("");
+    setColTrangThai("all");
+    setColKySo("all");
+    setColGdDuyet("all");
+  };
+
+  const hasAnyColumnFilter =
+    colXml1Id ||
+    colMaThe ||
+    colMaBn ||
+    colHoTen ||
+    colMaLk ||
+    colNgayVao ||
+    colNgayRa ||
+    colTrangThai !== "all" ||
+    colKySo !== "all" ||
+    colGdDuyet !== "all";
 
   return (
-    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col space-y-0">
       {/* Cảnh báo chọn quá giới hạn */}
       {overLimit && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-semibold">
           <AlertCircle size={14} className="text-amber-600 shrink-0" />
-          Chỉ được phép chọn tối đa <b>{MAX_KY_SO} hồ sơ</b> cho mỗi lần ký
-          — hiện đang chọn <b>{selectedCount}</b>. Nút “Ký số” sẽ bị khóa đến khi giảm xuống ≤ {MAX_KY_SO}.
+          Chỉ được phép chọn tối đa <b>{MAX_KY_SO} hồ sơ</b> cho mỗi lần ký —
+          hiện đang chọn <b>{selectedCount}</b>. Nút &quot;Ký số&quot; sẽ bị
+          khóa đến khi giảm xuống &le; {MAX_KY_SO}.
         </div>
       )}
-      {selectedCount > 0 && !overLimit && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-200 text-blue-800 text-xs font-semibold">
-          <CheckSquare2 size={14} className="text-blue-600 shrink-0" />
-          Đã chọn <b>{selectedCount}</b> hồ sơ — sẵn sàng ký số.
+      {/* HEADER ROW 1: CSKCB + QUICK SEARCH + THÊM HỒ SƠ 09 */}
+      <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-white">
+        {/* Left: Badge Cơ sở KCB */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50/80 border border-blue-200/60 rounded-full text-xs font-semibold text-blue-700">
+          <Building size={13} className="text-blue-600" />
+          <span>Cơ sở KCB: {DEFAULT_MA_CSKCB} – PKĐK</span>
         </div>
-      )}
-      {/* Search & Filter Toolbar */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/70">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-          {/* Search Box */}
-          <div className="relative w-full sm:w-56 md:w-64 shrink-0">
+
+        {/* Right: Quick Search + Thêm Hồ Sơ 09 */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-72 sm:w-80">
             <Search
-              size={14}
+              size={13}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
             />
             <input
               type="text"
-              placeholder="Tìm mã LK, họ tên, mã thẻ, BN..."
+              placeholder="Tìm nhanh theo mã thẻ, họ tên, mã BN, mã LK..."
               value={searchTerm}
               onChange={(e) => {
                 onSearchChange(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-sm text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-medium"
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 shadow-xs"
             />
           </div>
-
-          {/* Filter Bảng XML */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
-            <Layers size={13} className="text-slate-400 shrink-0" />
-            <select
-              value={filterSoBangXml}
-              onChange={(e) => {
-                onFilterSoBangXmlChange(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[130px] truncate"
-            >
-              <option value="all">Tất cả bảng XML</option>
-              <option value="xml1">XML1 (Hành chính)</option>
-              <option value="2">XML2 (Thuốc / Hóa chất)</option>
-              <option value="3">XML3 (DVKT / VTYT)</option>
-              <option value="4">XML4 (Kết quả CLS)</option>
-              <option value="5">XML5 (Diễn biến LS)</option>
-            </select>
-          </div>
-
-          {/* Filter Nhóm Lỗi Xuất Toán */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
-            <Filter size={13} className="text-slate-400 shrink-0" />
-            <select
-              value={filterNhomLoi}
-              onChange={(e) => {
-                onFilterNhomLoiChange(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[145px] truncate"
-            >
-              <option value="all">Tất cả nhóm lỗi</option>
-              {Object.entries(NHOM_LOI_XUAT_TOAN_MAP).map(([code, label]) => (
-                <option key={code} value={code}>
-                  {code} - {String(label)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Filter Trạng thái */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-sm px-2.5 py-1.5 focus-within:border-amber-500 transition-all">
-            <select
-              value={filterTrangThai}
-              onChange={(e) => {
-                onFilterTrangThaiChange(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer max-w-[130px] truncate"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="cho_xu_ly">Chờ xử lý</option>
-              <option value="da_lap_bieu">Đã lập biểu mẫu 09</option>
-              <option value="da_gui_cong">Đã gửi cổng BHXH</option>
-              <option value="chap_nhan">Chấp nhận lại</option>
-              <option value="tu_choi">Từ chối</option>
-            </select>
-          </div>
-
-          {/* Nút xóa lọc nhanh */}
-          {(searchTerm || filterSoBangXml !== "all" || filterNhomLoi !== "all" || filterTrangThai !== "all") && (
-            <button
-              type="button"
-              onClick={() => {
-                onSearchChange("");
-                onFilterSoBangXmlChange("all");
-                onFilterNhomLoiChange("all");
-                onFilterTrangThaiChange("all");
-                setCurrentPage(1);
-              }}
-              className="text-xs text-slate-400 hover:text-rose-600 font-bold px-2 py-1 cursor-pointer transition-colors whitespace-nowrap"
-            >
-              Xóa lọc
-            </button>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {selectedCount > 0 && (
-            <>
-              {/* Nút Ký Số SmartCA */}
-              <button
-                type="button"
-                onClick={() => !overLimit && onBulkSign?.(selectedItemsList)}
-                disabled={overLimit}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold shadow-xs transition-all ${
-                  overLimit
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white cursor-pointer"
-                }`}
-                title={
-                  overLimit
-                    ? "Chỉ được phép chọn tối đa 10 hồ sơ cho mỗi lần ký"
-                    : `Ký số SmartCA ${selectedCount} hồ sơ đã chọn`
-                }
-              >
-                <FileSignature size={14} />
-                <span>Ký Số ({selectedCount})</span>
-              </button>
-
-              {/* Nút Hủy Ký Số (chỉ hiện khi có hồ sơ đã ký chưa gửi) */}
-              {selectedSignedList.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onUnsign?.(selectedSignedList)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border border-amber-300 rounded-sm text-xs font-semibold shadow-xs transition-all cursor-pointer"
-                  title={`Hủy ký số ${selectedSignedList.length} hồ sơ chưa gửi cổng`}
-                >
-                  <RotateCcw size={13} />
-                  <span>Hủy Ký ({selectedSignedList.length})</span>
-                </button>
-              )}
-
-              {/* Nút Bỏ chọn */}
-              <button
-                type="button"
-                onClick={handleClearSelected}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-sm text-xs font-semibold transition-all cursor-pointer"
-                title="Bỏ chọn toàn bộ hồ sơ đang chọn"
-              >
-                <XSquare size={13} />
-                <span>Bỏ Chọn</span>
-              </button>
-            </>
-          )}
 
           <button
             type="button"
             onClick={onAddNew}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-sm text-xs font-semibold shadow-xs transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
             <Plus size={14} />
             <span>Thêm Hồ Sơ 09</span>
@@ -324,44 +510,429 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+      {/* FILTER ROW 2: BỘ LỌC CHUẨN THÔNG TƯ SỐ 12/2026/TT-BTC */}
+      <div className="px-4 py-3 border-b border-slate-100 bg-white">
+        <div className="flex flex-wrap items-end gap-3.5">
+          {/* Thời gian QT */}
+          <div className="w-full sm:w-44">
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Thời gian QT
+            </label>
+            <Select
+              height={31.6}
+              value={filterKyQt}
+              onChange={(val) => onFilterKyQtChange?.(val as string)}
+              containerClassName="mb-0"
+              className="!text-xs"
+              options={[
+                { value: "all", label: "Tất cả kỳ" },
+                ...availableKyQtOptions.map((k) => ({
+                  value: k,
+                  label: `Tháng ${k.slice(4)}/${k.slice(0, 4)}`,
+                })),
+              ]}
+            />
+          </div>
+
+          {/* Tình trạng gửi */}
+          <div className="w-full sm:w-40">
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Tình trạng gửi
+            </label>
+            <Select
+              height={31.6}
+              value={filterTinhTrangGui}
+              onChange={(val) => onFilterTinhTrangGuiChange?.(val as string)}
+              containerClassName="mb-0"
+              className="!text-xs"
+              options={[
+                { value: "all", label: "Tất cả" },
+                { value: "0", label: "Chưa gửi (0)" },
+                { value: "2", label: "Đã gửi (2)" },
+              ]}
+            />
+          </div>
+
+          {/* Khoảng ngày (Từ ngày – Đến ngày) */}
+          <div className="flex-1 min-w-[270px]">
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Khoảng ngày (Từ ngày – Đến ngày)
+            </label>
+            <DatePicker.RangePicker
+              value={
+                filterTuNgay || filterDenNgay
+                  ? [
+                      filterTuNgay ? dayjs(filterTuNgay) : null,
+                      filterDenNgay ? dayjs(filterDenNgay) : null,
+                    ]
+                  : null
+              }
+              onChange={(dates) => {
+                if (!dates || !dates[0] || !dates[1]) {
+                  onFilterTuNgayChange?.("");
+                  onFilterDenNgayChange?.("");
+                } else {
+                  onFilterTuNgayChange?.(dates[0].format("YYYY-MM-DD"));
+                  onFilterDenNgayChange?.(dates[1].format("YYYY-MM-DD"));
+                }
+              }}
+              format="DD/MM/YYYY"
+              placeholder={["Từ ngày", "Đến ngày"]}
+              containerClassName="!mb-0"
+              className="!text-xs w-full"
+            />
+          </div>
+
+          {/* Loại thao tác */}
+          <div className="w-full sm:w-44">
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Loại thao tác
+            </label>
+            <Select
+              height={31.6}
+              value={filterLoaiThaoTac}
+              onChange={(val) => onFilterLoaiThaoTacChange?.(val as string)}
+              containerClassName="mb-0"
+              className="!text-xs"
+              options={[
+                { value: "all", label: "Tất cả" },
+                { value: "dang_thao_tac", label: "Đang thao tác" },
+                { value: "tong_hop_moi", label: "Tổng hợp mới" },
+              ]}
+            />
+          </div>
+
+          {/* Xóa bộ lọc */}
+          <div className="pb-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                onFilterKyQtChange?.("all");
+                onFilterTinhTrangGuiChange?.("all");
+                onFilterTuNgayChange?.("");
+                onFilterDenNgayChange?.("");
+                onFilterLoaiThaoTacChange?.("all");
+              }}
+              className="text-xs text-blue-600 hover:text-blue-700 hover:underline font-semibold cursor-pointer whitespace-nowrap"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ACTION ROW 3: TOOLBAR CÁC NÚT THAO TÁC */}
+      <div className="px-4 py-2.5 bg-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-200">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Nút Gửi giám định */}
+          <button
+            type="button"
+            onClick={handleTriggerSendGiamDinh}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#047857] hover:bg-[#065f46] active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+            title="Gửi hồ sơ đã ký số sang Hệ thống Giám định BHYT"
+          >
+            <Send size={13} />
+            <span>Gửi giám định</span>
+          </button>
+
+          {/* Nút Ký số */}
+          <button
+            type="button"
+            onClick={handleTriggerBulkSign}
+            disabled={selectedCount === 0 || overLimit}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              selectedCount > 0 && !overLimit
+                ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 cursor-pointer"
+                : "bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed"
+            }`}
+            title="Ký số cho các hồ sơ đã chọn (tối đa 10 hồ sơ/lần)"
+          >
+            <Edit2 size={13} />
+            <span>Ký số</span>
+            <span className="ml-0.5 px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full text-[10px] font-bold leading-none">
+              {selectedCount}
+            </span>
+          </button>
+
+          {/* Nút Bỏ chọn nhanh nếu có dòng đang chọn */}
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={handleClearSelected}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition-all cursor-pointer active:scale-95"
+              title="Bỏ chọn toàn bộ hồ sơ đang được tích"
+            >
+              <X size={13} className="text-slate-500" />
+              <span>Bỏ chọn</span>
+            </button>
+          )}
+
+          {/* Nút Hủy ký số (nếu có hồ sơ đã ký) */}
+          {selectedSignedList.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onUnsign?.(selectedSignedList)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+              title="Hủy chữ ký số để chỉnh sửa lại hồ sơ"
+            >
+              <RotateCcw size={13} />
+              <span>Hủy ký số ({selectedSignedList.length})</span>
+            </button>
+          )}
+
+          {/* Nút Xuất Excel */}
+          <button
+            type="button"
+            onClick={() => onExportExcel?.(filteredGridItems)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
+            title="Xuất danh sách hồ sơ điều chỉnh ra file Excel"
+          >
+            <FileSpreadsheet size={13} />
+            <span>Xuất Excel</span>
+          </button>
+
+          {/* Nút Đính kèm file */}
+          <button
+            type="button"
+            onClick={() => {
+              const target = selectedItemsList[0] || items[0];
+              if (target) onOpenAttachment?.(target);
+              else toast.warning("Chưa có hồ sơ nào để đính kèm!");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
+            title="Mở popup đính kèm tài liệu chứng minh theo mã lý do"
+          >
+            <Paperclip size={13} />
+            <span>Đính kèm file</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasAnyColumnFilter && (
+            <button
+              type="button"
+              onClick={clearColumnFilters}
+              className="text-xs text-rose-600 hover:underline font-bold cursor-pointer"
+            >
+              Xóa bộ lọc cột
+            </button>
+          )}
+
+          {/* Nút Hủy phiên làm việc */}
+          <button
+            type="button"
+            onClick={handleTriggerHuyPhien}
+            disabled={selectedCount === 0}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+              selectedCount > 0
+                ? "bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer"
+                : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
+            }`}
+            title="Hủy phiên nhập liệu hiện tại, mở khóa giám định tự động (chỉ cho HS chưa ký)"
+          >
+            <Trash2 size={13} />
+            <span>Hủy phiên làm việc</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2.2 GRIDVIEW CHÍNH CÓ TEXTBOX & COMBOBOX LỌC TRÊN CỘT */}
+      <div
+        ref={tableContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeaveOrUp}
+        onMouseUp={handleMouseLeaveOrUp}
+        onMouseMove={handleMouseMove}
+        className={`overflow-x-auto w-full border-t border-slate-200 table-scrollbar ${
+          isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+        }`}
+        title="Nhấn giữ chuột để kéo ngang bảng hoặc dùng thanh cuộn màu xám bên dưới"
+      >
+        <table className="w-full text-left border-collapse text-xs min-w-[1750px]">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-              <th className="py-3 px-3 w-8 text-center">
+            {/* Header Titles */}
+            <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+              <th className="py-2.5 px-2.5 w-11 min-w-[44px] text-center border-r border-slate-200">
                 <input
+                  ref={headerCheckboxRef}
                   type="checkbox"
                   checked={isAllSelectableChecked}
                   onChange={toggleSelectAll}
                   className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
                   title={
-                    isAllSelectableChecked
-                      ? "Bỏ chọn tất cả"
-                      : "Chọn tối đa 10 hồ sơ"
+                    selectedCount > 0
+                      ? `Nhấp để bỏ chọn tất cả (${selectedCount} hồ sơ)`
+                      : "Chọn tất cả (tối đa 10 hồ sơ)"
                   }
                 />
               </th>
-              <th className="py-3 px-3 w-10 text-center">#</th>
-              <th className="py-3 px-3">Mã LK / Kỳ QT</th>
-              <th className="py-3 px-4">Bệnh Nhân &amp; Thẻ BHYT</th>
-              <th className="py-3 px-4">Khoa &amp; Nhóm Lỗi</th>
-              <th className="py-3 px-4">Mục Điều Chỉnh</th>
-              <th className="py-3 px-4 text-right">Xuất Toán / Đề Nghị</th>
-              <th className="py-3 px-3 text-center">Trạng Thái</th>
-              <th className="py-3 px-4 text-center">Thao Tác</th>
+              <th className="py-2.5 px-2 w-11 min-w-[44px] text-center border-r border-slate-200">
+                STT
+              </th>
+              <th className="py-2.5 px-3 min-w-[105px] border-r border-slate-200">
+                XML1_ID
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[135px] border-r border-slate-200">
+                Loại Yêu Cầu
+              </th>
+              <th className="py-2.5 px-3 min-w-[150px] border-r border-slate-200">
+                Mã Thẻ
+              </th>
+              <th className="py-2.5 px-3 min-w-[125px] border-r border-slate-200">
+                Mã Bệnh Nhân
+              </th>
+              <th className="py-2.5 px-3 min-w-[165px] border-r border-slate-200">
+                Họ Tên
+              </th>
+              <th className="py-2.5 px-3 min-w-[120px] border-r border-slate-200">
+                Mã LK
+              </th>
+              <th className="py-2.5 px-3 min-w-[160px] border-r border-slate-200">
+                Ngày Vào / Ngày Ra
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[125px] border-r border-slate-200">
+                Ký Số
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[130px] border-r border-slate-200">
+                GĐ Duyệt
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[120px] border-r border-slate-200">
+                Loại Thao Tác
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[140px] border-r border-slate-200">
+                Ngày Lỗi / Còn Lại
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[95px] border-r border-slate-200">
+                Tài Liệu
+              </th>
+              <th className="py-2.5 px-2 text-center min-w-[75px] border-r border-slate-200">
+                In PDF
+              </th>
+              <th className="py-2.5 px-3 text-center min-w-[105px]">
+                Thao Tác
+              </th>
+            </tr>
+
+            {/* Quick Search on Columns Row (Mục 2.1) */}
+            <tr className="bg-slate-50 border-b border-slate-300 text-slate-600 text-[10px]">
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc ID..."
+                  value={colXml1Id}
+                  onChange={(e) => setColXml1Id(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5  border-r border-slate-200 ">
+                <Select
+                  height={24}
+                  value={colTrangThai}
+                  onChange={(val) => setColTrangThai(val as string)}
+                  containerClassName="mb-0"
+                  className="!text-[11px]"
+                  options={[
+                    { value: "all", label: "Tất cả" },
+                    { value: "1", label: "1 - Thu hồi" },
+                    { value: "2", label: "2 - Điều chỉnh" },
+                    { value: "4", label: "4 - Xin ý kiến" },
+                  ]}
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc thẻ..."
+                  value={colMaThe}
+                  onChange={(e) => setColMaThe(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc BN..."
+                  value={colMaBn}
+                  onChange={(e) => setColMaBn(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc họ tên..."
+                  value={colHoTen}
+                  onChange={(e) => setColHoTen(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc LK..."
+                  value={colMaLk}
+                  onChange={(e) => setColMaLk(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Lọc ngày..."
+                  value={colNgayVao}
+                  onChange={(e) => setColNgayVao(e.target.value)}
+                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <Select
+                  height={24}
+                  value={colKySo}
+                  onChange={(val) => setColKySo(val as string)}
+                  containerClassName="mb-0"
+                  className="!text-[11px]"
+                  options={[
+                    { value: "all", label: "Tất cả" },
+                    { value: "0", label: "Chưa ký (0)" },
+                    { value: "2", label: "Đã ký (2)" },
+                  ]}
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200">
+                <Select
+                  height={24}
+                  value={colGdDuyet}
+                  onChange={(val) => setColGdDuyet(val as string)}
+                  containerClassName="mb-0"
+                  className="!text-[11px]"
+                  options={[
+                    { value: "all", label: "Tất cả" },
+                    { value: "0", label: "Chưa xử lý (0)" },
+                    { value: "1", label: "Đang xử lý (1)" },
+                    { value: "2", label: "Đã xử lý (2)" },
+                  ]}
+                />
+              </th>
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5 border-r border-slate-200"></th>
+              <th className="p-1.5"></th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-slate-100 font-medium">
             {paginatedItems.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-12 text-center text-slate-400">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <FileCheck2 size={36} className="text-slate-300" />
-                    <span className="font-semibold text-sm text-slate-500">
+                <td colSpan={16} className="py-5 text-center text-slate-400">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <FileCheck2 size={30} className="text-slate-300" />
+                    <span className="font-semibold text-xs text-slate-500">
                       Không tìm thấy hồ sơ điều chỉnh nào
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-[11px] text-slate-400">
                       Hãy nạp file Excel Mẫu 09/BH hoặc bấm nút &quot;Thêm Hồ Sơ
                       09&quot;
                     </span>
@@ -369,388 +940,274 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 </td>
               </tr>
             ) : (
-              paginatedItems.map((item) => {
-                const isExpanded = !!expandedRowIds[item.id];
-                const totalCpCount = item.dsChiPhiDieuChinh.length;
-                const totalXml1Count = item.dsXml1DieuChinh?.length || 0;
+              paginatedItems.map((item, idx) => {
+                const isSigned = item.ttKySo === 2;
+                const isSent = item.tinhTrangGui === 2;
+                const filesCount = item.taiLieuDinhKem?.length || 0;
+
+                const kySoBadge = isSigned ? (
+                  <span className="inline-block px-2 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800">
+                    Đã ký (2)
+                  </span>
+                ) : (
+                  <span className="inline-block px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-600">
+                    Chưa ký (0)
+                  </span>
+                );
+
+                const gdDuyetVal = item.gdDuyet ?? 0;
+                const gdDuyetBadge =
+                  gdDuyetVal === 1 ? (
+                    <span className="inline-block px-2 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800">
+                      Đang xử lý (1)
+                    </span>
+                  ) : gdDuyetVal === 2 ? (
+                    <span className="inline-block px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800">
+                      Đã xử lý (2)
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-600">
+                      Chưa xử lý (0)
+                    </span>
+                  );
+
+                const loaiThaoTacText =
+                  item.loaiThaoTac === "tong_hop_moi" ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                      Tổng hợp mới
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">
+                      Đang thao tác
+                    </span>
+                  );
 
                 return (
                   <React.Fragment key={item.id}>
-                    <tr className={`hover:bg-indigo-50/30 transition-colors ${
-                        item.ttKySo === 2 ? 'bg-amber-50/40' : ''
-                      }`}>
-                      {/* Checkbox chọn ký */}
-                      <td className="py-3 px-3 text-center">
-                        {item.tinhTrangGui !== 2 ? (
+                    <tr
+                      className={`hover:bg-blue-50/30 transition-colors ${
+                        isSigned ? "bg-amber-50/20" : ""
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="py-1.5 px-2.5 text-center border-r border-slate-100">
+                        {!isSent ? (
                           <input
                             type="checkbox"
                             checked={selectedIds.has(item.id)}
                             onChange={() => toggleSelect(item)}
                             className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
-                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số' : 'Chọn để ký số'}
                           />
                         ) : (
-                          <span title="Đã gửi cổng">
-                            <Lock size={12} className="text-slate-300 mx-auto" />
+                          <span title="Đã gửi giám định (khóa)">
+                            <Lock
+                              size={12}
+                              className="text-slate-300 mx-auto"
+                            />
                           </span>
                         )}
                       </td>
-                      {/* Expand / Index */}
-                      <td className="py-3 px-3 text-center">
-                        <button
-                          onClick={() => toggleRowExpand(item.id)}
-                          className="p-1 hover:bg-slate-200/60 rounded text-slate-500 transition-colors"
-                          title="Xem chi tiết các dòng điều chỉnh"
+
+                      {/* STT */}
+                      <td className="py-1.5 px-2 text-center text-slate-500 font-mono border-r border-slate-100">
+                        {item.stt || idx + 1}
+                      </td>
+
+                      {/* XML1_ID với Tooltip lý do từ chối tự động */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-mono">
+                        <span
+                          className="font-bold text-slate-800 cursor-help underline decoration-dotted"
+                          title={`Lý do từ chối tự động: ${
+                            item.ttXml1.lyDoTuChoi ||
+                            item.nhomLoi ||
+                            "Không có vi phạm tự động"
+                          }`}
                         >
-                          {isExpanded ? (
-                            <ChevronDown
-                              size={14}
-                              className="text-indigo-600"
-                            />
+                          {String(item.ttXml1.xml1Id || "—")}
+                        </span>
+                      </td>
+
+                      {/* Loại yêu cầu (Trạng thái Mục 1) */}
+                      <td className="py-1.5 px-2 text-center border-r border-slate-100">
+                        {(() => {
+                          const effTt = getEffectiveHs09TrangThai(item);
+                          if (effTt === 1) {
+                            return (
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                1 - Thu hồi
+                              </span>
+                            );
+                          }
+                          if (effTt === 4) {
+                            return (
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
+                                4 - Xin ý kiến
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                              2 - Điều chỉnh
+                            </span>
+                          );
+                        })()}
+                      </td>
+
+                      {/* Mã thẻ (Hyperlink mở popup hành chính Mục 3.1) */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-mono">
+                        <button
+                          type="button"
+                          onClick={() => onOpenHanhChinh?.(item)}
+                          className="text-blue-600 hover:text-blue-800 font-bold hover:underline cursor-pointer text-left"
+                          title="Nhấn để mở popup điều chỉnh thông tin hành chính (XML1)"
+                        >
+                          {item.ttXml1.maThe}
+                        </button>
+                      </td>
+
+                      {/* Mã bệnh nhân (Hyperlink mở popup chi phí Mục 3.2) */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-mono">
+                        <button
+                          type="button"
+                          onClick={() => onOpenChiPhi?.(item)}
+                          className="text-indigo-600 hover:text-indigo-800 font-bold hover:underline cursor-pointer text-left"
+                          title="Nhấn để mở popup điều chỉnh thông tin chi phí (XML2/XML3)"
+                        >
+                          {item.ttXml1.maBn || "—"}
+                        </button>
+                      </td>
+
+                      {/* Họ tên */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-bold text-slate-900">
+                        {item.ttXml1.hoTen}
+                      </td>
+
+                      {/* Mã liên kết */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-mono font-bold text-slate-800">
+                        {item.ttXml1.maLk}
+                      </td>
+
+                      {/* Ngày vào / Ngày ra */}
+                      <td className="py-1.5 px-3 border-r border-slate-100 font-mono text-[11px] text-slate-600">
+                        <div>
+                          Vào: {formatYmdHmDisplay(item.ttXml1.ngayVao)}
+                        </div>
+                        <div>Ra: {formatYmdHmDisplay(item.ttXml1.ngayRa)}</div>
+                      </td>
+
+                      {/* Trạng thái ký số */}
+                      <td className="py-1.5 px-2.5 text-center border-r border-slate-100">
+                        {kySoBadge}
+                      </td>
+
+                      {/* GD duyệt */}
+                      <td className="py-1.5 px-2.5 text-center border-r border-slate-100">
+                        {gdDuyetBadge}
+                      </td>
+
+                      {/* Loại thao tác */}
+                      <td className="py-1.5 px-2.5 text-center border-r border-slate-100">
+                        {loaiThaoTacText}
+                      </td>
+
+                      {/* Ngày lỗi / Thời gian còn lại */}
+                      <td className="py-1.5 px-2.5 text-center border-r border-slate-100 text-[11px]">
+                        <span className="text-slate-600 block">
+                          {item.ngayThongBaoLoi || "—"}
+                        </span>
+                        <span className="text-emerald-700 font-bold text-[10px] block mt-0.5">
+                          {item.thoiGianConLai || ""}
+                        </span>
+                      </td>
+
+                      {/* Tài liệu chứng minh (Hyperlink tải file Mục 8) */}
+                      <td className="py-1.5 px-2 text-center border-r border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => onOpenAttachment?.(item)}
+                          className="p-1 hover:bg-teal-50 text-teal-700 rounded transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-semibold"
+                          title="Đính kèm hoặc tải tài liệu chứng minh"
+                        >
+                          <Paperclip size={13} />
+                          {filesCount > 0 ? (
+                            <span className="font-bold underline">
+                              Tải ({filesCount})
+                            </span>
                           ) : (
-                            <ChevronRight size={14} />
+                            <span className="text-slate-400">Đính kèm</span>
                           )}
                         </button>
                       </td>
 
-                      {/* Mã LK & Kỳ QT */}
-                      <td className="py-3 px-3">
-                        <div className="font-mono font-bold text-slate-900 text-[13px]">
-                          {item.ttXml1.maLk}
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                          <span>Mã BN: {item.ttXml1.maBn}</span>
-                          <span>•</span>
-                          <span className="text-indigo-600 font-semibold">
-                            Kỳ: {item.ttXml1.kyQt}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Bệnh Nhân & Thẻ BHYT */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs flex-shrink-0">
-                            <User size={13} />
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900 text-xs">
-                              {item.ttXml1.hoTen}
-                            </div>
-                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
-                              {item.ttXml1.maThe}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Khoa & Nhóm Lỗi */}
-                      <td className="py-3 px-4">
-                        <div className="text-xs font-semibold text-slate-800">
-                          {item.khoaDieuTri || "—"}
-                        </div>
-                        {item.nhomLoi && (
-                          <div className="mt-0.5">
-                            <span className="inline-block font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">
-                              {item.nhomLoi}
-                            </span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Nội Dung Điều Chỉnh Tóm Tắt */}
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1.5 items-center">
-                          {totalXml1Count > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-[10px] font-bold">
-                              XML1: {totalXml1Count} mục HC
-                            </span>
-                          )}
-                          {totalCpCount > 0 ? (
-                            item.dsChiPhiDieuChinh
-                              .slice(0, 2)
-                              .map((cp: ChiPhiDieuChinhItem, cIdx: number) => (
-                                <span
-                                  key={cIdx}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 rounded-md text-[10px] font-medium"
-                                >
-                                  <span className="font-bold">
-                                    {SO_BANG_XML_MAP[cp.soBangXml] ||
-                                      `XML${cp.soBangXml}`}
-                                    :
-                                  </span>
-                                  <span
-                                    className="max-w-[120px] truncate"
-                                    title={
-                                      cp.truongTtDieuChinh || String(cp.idCp)
-                                    }
-                                  >
-                                    {cp.truongTtDieuChinh || `ID:${cp.idCp}`}
-                                  </span>
-                                </span>
-                              ))
-                          ) : (
-                            <span className="text-slate-400 text-[11px]">
-                              Không có CP
-                            </span>
-                          )}
-                          {totalCpCount > 2 && (
-                            <span className="text-[10px] text-slate-500 font-semibold">
-                              +{totalCpCount - 2} mục
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Tiền Xuất Toán / Đề Nghị */}
-                      <td className="py-3 px-4 text-right">
-                        <div className="font-bold text-rose-700 text-xs">
-                          - {formatCurrencyVnd(item.tienXuatToan || 0)}
-                        </div>
-                        <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
-                          + Đề nghị:{" "}
-                          {formatCurrencyVnd(item.tienDeNghiThanhToanLai || 0)}
-                        </div>
-                      </td>
-
-                      {/* Trạng thái */}
-                      <td className="py-3 px-3 text-center">
-                        {item.tinhTrangGui === 2 || item.trangThai === "da_gui_cong" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full font-bold text-[10px]">
-                            <FileCheck2 size={11} /> Đã gửi cổng
-                          </span>
-                        ) : item.trangThai === "chap_nhan" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full font-bold text-[10px]">
-                            Chấp nhận
-                          </span>
-                        ) : item.trangThai === "tu_choi" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full font-bold text-[10px]">
-                            <AlertCircle size={11} /> Từ chối
-                          </span>
-                        ) : item.ttKySo === 2 || item.trangThai === "da_ky_so" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full font-bold text-[10px]">
-                            <Lock size={10} /> Đã ký số
-                          </span>
-                        ) : item.trangThai === "da_lap_bieu" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-full font-bold text-[10px]">
-                            Đã lập biểu
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded-full font-bold text-[10px]">
-                            Chờ xử lý
-                          </span>
-                        )}
+                      {/* In PDF (Mục 4.2) */}
+                      <td className="py-1.5 px-2 text-center border-r border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => onPrintPdf?.(item)}
+                          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                          title="In Mẫu 09/BH dưới dạng PDF"
+                        >
+                          <Printer size={14} />
+                        </button>
                       </td>
 
                       {/* Thao tác */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-1.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {/* Xem XML gốc */}
                           <button
+                            type="button"
                             onClick={() => onViewDetail(item)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xem chi tiết hồ sơ điều chỉnh"
+                            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+                            title="Xem chi tiết hồ sơ XML gốc"
                           >
-                            <Eye size={15} />
+                            <Eye size={14} />
                           </button>
-                          {/* Nút Hủy ký số đơn lẻ khi đã ký nhưng chưa gửi cổng */}
-                          {item.ttKySo === 2 && item.tinhTrangGui === 0 && onUnsign && (
-                            <button
-                              onClick={() => onUnsign([item])}
-                              className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                              title="Hủy chữ ký số hồ sơ này để chỉnh sửa lại"
-                            >
-                              <RotateCcw size={14} />
-                            </button>
-                          )}
+
+                          {/* Sửa */}
                           <button
-                            onClick={() => item.ttKySo !== 2 && onEdit(item)}
-                            disabled={item.ttKySo === 2}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              item.ttKySo === 2
-                                ? 'text-slate-300 cursor-not-allowed'
-                                : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer'
+                            type="button"
+                            onClick={() => !isSigned && onEdit(item)}
+                            disabled={isSigned}
+                            className={`p-1 rounded transition-colors ${
+                              isSigned
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
                             }`}
-                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số — không thể sửa (Hãy bấm Hủy Ký nếu cần sửa)' : 'Chỉnh sửa hồ sơ'}
+                            title={
+                              isSigned
+                                ? "Hồ sơ đã ký số — không thể sửa"
+                                : "Chỉnh sửa hồ sơ"
+                            }
                           >
-                            {item.ttKySo === 2 ? <Lock size={14} /> : <Edit2 size={15} />}
+                            {isSigned ? (
+                              <Lock size={12} />
+                            ) : (
+                              <Edit2 size={13} />
+                            )}
                           </button>
+
+                          {/* Xóa */}
                           <button
-                            onClick={() => item.ttKySo !== 2 && onDelete(item)}
-                            disabled={item.ttKySo === 2}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              item.ttKySo === 2
-                                ? 'text-slate-300 cursor-not-allowed'
-                                : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer'
+                            type="button"
+                            onClick={() => !isSigned && onDelete(item)}
+                            disabled={isSigned}
+                            className={`p-1 rounded transition-colors ${
+                              isSigned
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
                             }`}
-                            title={item.ttKySo === 2 ? 'Hồ sơ đã ký số — không thể xóa' : 'Xóa hồ sơ'}
+                            title={
+                              isSigned
+                                ? "Hồ sơ đã ký số — không thể xóa"
+                                : "Xóa hồ sơ"
+                            }
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
                     </tr>
-
-                    {/* Sub-row: Chi tiết mở rộng khi bấm Chevron */}
-                    {isExpanded && (
-                      <tr className="bg-slate-50/70">
-                        <td
-                          colSpan={9}
-                          className="p-4 border-y border-slate-200"
-                        >
-                          <div className="space-y-4 pl-6 pr-2">
-                            {/* 1. Danh sách thay đổi hành chính XML1 */}
-                            {item.dsXml1DieuChinh &&
-                              item.dsXml1DieuChinh.length > 0 && (
-                                <div className="bg-white rounded-xl border border-blue-200 p-3 shadow-2xs">
-                                  <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                    <span>
-                                      Điều chỉnh thông tin hành chính
-                                      (DS_XML1_DIEUCHINH):
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {item.dsXml1DieuChinh.map(
-                                      (
-                                        x1: TtXml1DieuChinhItem,
-                                        xIdx: number,
-                                      ) => (
-                                        <div
-                                          key={xIdx}
-                                          className="p-2 bg-blue-50/50 rounded-lg border border-blue-100 text-xs flex items-center justify-between"
-                                        >
-                                          <div>
-                                            <span className="font-bold text-blue-900">
-                                              {x1.truongTtDieuChinh ||
-                                                x1.truongTtGoc}
-                                              :
-                                            </span>{" "}
-                                            <span className="line-through text-rose-600 font-mono">
-                                              {x1.ttGoc}
-                                            </span>{" "}
-                                            <ArrowRight
-                                              size={12}
-                                              className="inline text-slate-400 mx-1"
-                                            />
-                                            <span className="font-bold text-emerald-700 font-mono">
-                                              {x1.ttDieuChinh}
-                                            </span>
-                                          </div>
-                                          {x1.lyDoDieuChinh && (
-                                            <span className="text-[10px] text-slate-500 italic">
-                                              Lý do: {x1.lyDoDieuChinh}
-                                            </span>
-                                          )}
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                            {/* 2. Danh sách chi phí điều chỉnh */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-2xs">
-                              <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2 flex items-center justify-between">
-                                <span>
-                                  Danh sách chi phí điều chỉnh (DSCP_DIEUCHINH):
-                                </span>
-                                <span className="text-emerald-700 font-black">
-                                  Đề nghị thanh toán:{" "}
-                                  {formatCurrencyVnd(
-                                    item.tienDeNghiThanhToanLai || 0,
-                                  )}
-                                </span>
-                              </div>
-                              {item.dsChiPhiDieuChinh.length === 0 ? (
-                                <div className="text-slate-400 italic text-center py-2">
-                                  Không có khoản mục chi phí nào được điều chỉnh
-                                </div>
-                              ) : (
-                                <div className="overflow-x-auto">
-                                  <table className="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
-                                    <thead className="bg-slate-100 text-slate-600 font-bold text-[10px] uppercase">
-                                      <tr>
-                                        <th className="py-2 px-2.5">
-                                          Bảng XML
-                                        </th>
-                                        <th className="py-2 px-2.5">
-                                          ID Chi Phí
-                                        </th>
-                                        <th className="py-2 px-3">
-                                          Trường Sai Gốc
-                                        </th>
-                                        <th className="py-2 px-2 text-right">
-                                          Giá Trị Cũ
-                                        </th>
-                                        <th className="py-2 px-2.5">
-                                          Trường Điều Chỉnh
-                                        </th>
-                                        <th className="py-2 px-2.5">
-                                          Giá Trị Mới
-                                        </th>
-                                        <th className="py-2 px-3">
-                                          Lý Do Điều Chỉnh
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 font-medium">
-                                      {item.dsChiPhiDieuChinh.map(
-                                        (
-                                          cp: ChiPhiDieuChinhItem,
-                                          cIdx: number,
-                                        ) => (
-                                          <tr
-                                            key={cIdx}
-                                            className="hover:bg-slate-50"
-                                          >
-                                            <td className="py-1.5 px-2.5">
-                                              <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px]">
-                                                {SO_BANG_XML_MAP[
-                                                  cp.soBangXml
-                                                ] || `XML${cp.soBangXml}`}
-                                              </span>
-                                            </td>
-                                            <td className="py-1.5 px-2.5 font-mono text-slate-700 font-semibold">
-                                              {cp.idCp}
-                                            </td>
-                                            <td className="py-1.5 px-3 font-mono text-rose-700 font-medium">
-                                              {cp.truongTtGoc || "—"}
-                                            </td>
-                                            <td className="py-1.5 px-2 text-right font-mono line-through text-rose-600">
-                                              {cp.ttGoc || "—"}
-                                            </td>
-                                            <td className="py-1.5 px-2.5 font-mono text-emerald-700 font-bold">
-                                              {cp.truongTtDieuChinh || "—"}
-                                            </td>
-                                            <td className="py-1.5 px-2.5 font-mono text-emerald-700 font-bold">
-                                              {cp.ttDieuChinh || "—"}
-                                            </td>
-                                            <td className="py-1.5 px-3">
-                                              <div className="flex items-center gap-1.5">
-                                                {cp.tuChoi && (
-                                                  <span className="font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 text-[10px]">
-                                                    {cp.tuChoi}
-                                                  </span>
-                                                )}
-                                                <span
-                                                  className="text-slate-600 text-[11px] truncate max-w-[180px]"
-                                                  title={cp.lyDoDieuChinh}
-                                                >
-                                                  {cp.lyDoDieuChinh || "—"}
-                                                </span>
-                                              </div>
-                                            </td>
-                                          </tr>
-                                        ),
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </React.Fragment>
                 );
               })
@@ -759,16 +1216,23 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
         </table>
       </div>
 
-      {/* Common Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalItems={items.length}
-        pageSize={pageSize}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-        itemLabel="hồ sơ điều chỉnh"
-        themeColor="indigo"
-      />
+      {/* Pagination Footer */}
+      <div className="px-3 py-1.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div className="text-xs text-slate-500">
+          Hiển thị <b>{paginatedItems.length}</b> /{" "}
+          <b>{filteredGridItems.length}</b> hồ sơ điều chỉnh
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredGridItems.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
     </div>
   );
 };

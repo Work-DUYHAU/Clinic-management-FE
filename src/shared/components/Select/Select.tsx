@@ -10,19 +10,53 @@ const Select: FC<AppSelectProps> = ({
   containerClassName,
   labelClassName,
   className,
+  style,
+  height,
+  width,
   ...rest
 }) => {
+  const hValue = typeof height === "number" ? `${height}px` : height;
+  const wValue = typeof width === "number" ? `${width}px` : width;
+
+  const dynamicStyle =
+    hValue || wValue || style
+      ? ({
+          ...style,
+          ...(wValue ? { width: wValue } : {}),
+          ...(hValue
+            ? {
+                height: hValue,
+                ["--select-h" as string]: hValue,
+              }
+            : {}),
+        } as React.CSSProperties)
+      : undefined;
+
   return (
-    <div className={clsx("mb-3", containerClassName)}>
+    <div
+      className={containerClassName}
+      style={wValue ? { width: wValue } : undefined}
+    >
       {label && (
-        <label className={clsx("mb-1 block text-sm font-medium text-slate-700", labelClassName)}>
+        <label
+          className={clsx(
+            "mb-1 block text-sm font-medium text-slate-700",
+            labelClassName,
+          )}
+        >
           {label}
         </label>
       )}
 
       <AntSelect
         status={error ? "error" : status}
-        className={clsx("w-full", className)}
+        style={dynamicStyle}
+        className={clsx(
+          !wValue && "w-full",
+          hValue &&
+            "!h-[var(--select-h)] [&_.ant-select-selector]:!h-[var(--select-h)] [&_.ant-select-selector]:!min-h-[var(--select-h)] [&_.ant-select-selection-item]:!leading-[calc(var(--select-h)-2px)]",
+          className,
+        )}
         {...rest}
       />
 

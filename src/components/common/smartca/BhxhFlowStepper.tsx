@@ -24,6 +24,8 @@ export interface BhxhFlowStepperProps {
   isSigning: boolean;
   /** Đang gửi gói tin lên Cổng BHXH */
   isSendingApi: boolean;
+  /** Tiến trình gửi từng hồ sơ (khi gửi batch) */
+  sendProgress?: { current: number; total: number; label?: string } | null;
   /** Kết quả phản hồi thực tế từ Cổng BHXH */
   apiResponse: any;
   /** Số lượng bản ghi thực tế */
@@ -92,6 +94,7 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
   isSigned,
   isSigning,
   isSendingApi,
+  sendProgress,
   apiResponse,
   itemsCount = 0,
   itemLabel = "bản ghi",
@@ -384,19 +387,39 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
       </div>
 
       {isSendingApi && !hasApiResponse && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center gap-3.5 animate-fadeIn">
-          <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <Loader2 size={20} className="animate-spin" />
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md flex flex-col gap-2.5 animate-fadeIn">
+          <div className="flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Loader2 size={20} className="animate-spin" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h5 className="text-xs sm:text-sm font-extrabold text-blue-950">
+                {sendProgress
+                  ? `Đang gửi hồ sơ ${sendProgress.current}/${sendProgress.total}${sendProgress.label ? ` (Mã LK: ${sendProgress.label})` : ""}...`
+                  : "Đang Chuyển Phát Hồ Sơ Lên Cổng Tiếp Nhận BHXH..."}
+              </h5>
+              <p className="text-[11px] text-blue-700 mt-0.5">
+                {sendProgress && sendProgress.total > 1
+                  ? "Đang gửi tuần tự từng hồ sơ điều chỉnh Mẫu 09/BH (Loại HS 73) tuân thủ chuẩn XSD Cổng BHXH."
+                  : "Hồ sơ đã được ký số hợp lệ và đang được gửi qua API Cổng Giám Định BHYT. Vui lòng giữ cửa sổ!"}
+              </p>
+            </div>
+            {sendProgress && sendProgress.total > 1 && (
+              <span className="text-xs font-black text-blue-700 font-mono shrink-0">
+                {Math.round((sendProgress.current / sendProgress.total) * 100)}%
+              </span>
+            )}
           </div>
-          <div>
-            <h5 className="text-xs sm:text-sm font-extrabold text-blue-950">
-              Đang Chuyển Phát Hồ Sơ Lên Cổng Tiếp Nhận BHXH...
-            </h5>
-            <p className="text-[11px] text-blue-700 mt-0.5">
-              Hồ sơ đã được ký số hợp lệ và đang được gửi qua API Cổng Giám Định
-              BHYT. Vui lòng giữ cửa sổ!
-            </p>
-          </div>
+          {sendProgress && sendProgress.total > 1 && (
+            <div className="w-full bg-blue-200/60 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.round((sendProgress.current / sendProgress.total) * 100)}%`,
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -543,6 +566,90 @@ export const BhxhFlowStepper: React.FC<BhxhFlowStepperProps> = ({
               ))}
             </div>
           )}
+
+          {/* Bảng tổng kết kết quả từng hồ sơ điều chỉnh khi gửi batch */}
+          {Array.isArray(apiResponse?.batchResults) &&
+            apiResponse.batchResults.length > 1 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">
+                    Kết quả gửi từng hồ sơ điều chỉnh (
+                    {apiResponse.successCount ??
+                      apiResponse.batchResults.filter(
+                        (r: any) => String(r.maKetQua) === "200",
+                      ).length}
+                    /{apiResponse.batchResults.length} thành công):
+                  </span>
+                </div>
+                <div className="border border-slate-200 rounded-md overflow-hidden bg-white max-h-56 overflow-y-auto">
+                  <table className="w-full text-[11px] text-left">
+                    <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 sticky top-0">
+                      <tr>
+                        <th className="px-2.5 py-1.5 w-10 text-center">STT</th>
+                        <th className="px-2.5 py-1.5 w-28">Mã LK</th>
+                        <th className="px-2.5 py-1.5">Bệnh nhân</th>
+                        <th className="px-2.5 py-1.5 w-24 text-center">
+                          Kết quả
+                        </th>
+                        <th className="px-2.5 py-1.5">
+                          Mã giao dịch / Thông điệp
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {apiResponse.batchResults.map(
+                        (item: any, idx: number) => {
+                          const isItemSuccess =
+                            String(item.maKetQua) === "200";
+                          return (
+                            <tr
+                              key={item.id || idx}
+                              className={`hover:bg-slate-50/80 ${
+                                isItemSuccess ? "" : "bg-rose-50/40"
+                              }`}
+                            >
+                              <td className="px-2.5 py-1.5 text-center text-slate-500 font-mono">
+                                {idx + 1}
+                              </td>
+                              <td className="px-2.5 py-1.5 font-mono font-semibold text-slate-800">
+                                {item.maLk}
+                              </td>
+                              <td className="px-2.5 py-1.5 text-slate-700">
+                                {item.hoTen || "—"}
+                              </td>
+                              <td className="px-2.5 py-1.5 text-center">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded-xs text-[10px] font-bold ${
+                                    isItemSuccess
+                                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                      : "bg-rose-100 text-rose-800 border border-rose-200"
+                                  }`}
+                                >
+                                  {isItemSuccess
+                                    ? "200 OK"
+                                    : `Mã ${item.maKetQua}`}
+                                </span>
+                              </td>
+                              <td className="px-2.5 py-1.5 font-mono text-[10px]">
+                                {item.maGiaoDich ? (
+                                  <span className="text-emerald-700 font-semibold select-all">
+                                    {item.maGiaoDich}
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-600 font-sans">
+                                    {item.thongDiep || "Bị từ chối"}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        },
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
           {/* Chi tiết JSON phản hồi THỰC TẾ từ Cổng BHXH (Để đối soát kỹ thuật) */}
           <details className="text-[11px] text-slate-600">
