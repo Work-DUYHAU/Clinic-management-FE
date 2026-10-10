@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Check, Copy, XCircle, FileCode, Layers, User } from "lucide-react";
 
 export interface XmlPreviewModalProps {
@@ -41,8 +41,44 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
   onCopy,
   isSigned = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<"package" | "rawChild">("rawChild");
+  const [activeTab, setActiveTab] = useState<"package" | "rawChild">(
+    "rawChild",
+  );
   const [selectedChildIndex, setSelectedChildIndex] = useState<number>(-1); // -1 = tất cả
+
+  // Kéo ngang bằng chuột (Drag-to-scroll với con trỏ bàn tay)
+  const xmlContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("select") ||
+      target.closest("input") ||
+      target.closest("a")
+    ) {
+      return;
+    }
+    if (!xmlContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - xmlContainerRef.current.offsetLeft);
+    setScrollLeftPos(xmlContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !xmlContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - xmlContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    xmlContainerRef.current.scrollLeft = scrollLeftPos - walk;
+  };
 
   // Trích xuất và giải mã toàn bộ các FILEHOSO (trước khi băm Base64)
   const decodedFiles = useMemo<DecodedHoSoItem[]>(() => {
@@ -71,8 +107,8 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
         loaiHoSo === "60"
           ? "60 - Giấy Báo Tử"
           : loaiHoSo === "61"
-          ? "61 - Giấy Chứng Sinh"
-          : loaiHoSo;
+            ? "61 - Giấy Chứng Sinh"
+            : loaiHoSo;
 
       items.push({
         index: idx++,
@@ -217,10 +253,14 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
                 </span>
                 <select
                   value={selectedChildIndex}
-                  onChange={(e) => setSelectedChildIndex(Number(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedChildIndex(Number(e.target.value))
+                  }
                   className="px-2.5 py-1 bg-slate-950 border border-slate-700 rounded-sm text-xs font-mono text-emerald-300 focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-[260px] truncate"
                 >
-                  <option value={-1}>Toàn bộ {decodedFiles.length} hồ sơ</option>
+                  <option value={-1}>
+                    Toàn bộ {decodedFiles.length} hồ sơ
+                  </option>
                   {decodedFiles.map((f, i) => (
                     <option key={i} value={i}>
                       #{f.index}: [{f.loaiHoSo}] {f.hoTen ? f.hoTen : ""}{" "}
@@ -233,22 +273,41 @@ export const XmlPreviewModal: React.FC<XmlPreviewModalProps> = ({
           </div>
         )}
 
-        {/* Code XML Body */}
-        <div className="p-4 overflow-y-auto overflow-x-auto flex-1 bg-slate-950 max-h-[62vh]">
-          <pre className="text-xs font-mono text-emerald-400 leading-relaxed select-all whitespace-pre">
+        {/* Code XML Body (Kéo ngang con trỏ bàn tay + Scrollbar rõ nét) */}
+        <div
+          ref={xmlContainerRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeaveOrUp}
+          onMouseUp={handleMouseLeaveOrUp}
+          onMouseMove={handleMouseMove}
+          className={`p-4 overflow-y-auto overflow-x-auto flex-1 bg-slate-950 max-h-[62vh] dark-code-scrollbar ${
+            isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+          }`}
+          title="Nhấn giữ chuột để kéo ngang xem XML hoặc kéo thanh cuộn bên dưới"
+        >
+          <pre
+            className={`text-xs font-mono text-emerald-400 leading-relaxed whitespace-pre inline-block min-w-full ${
+              isDragging ? "pointer-events-none select-none" : "select-all"
+            }`}
+          >
             {currentDisplayXml}
           </pre>
         </div>
 
         {/* Footer Modal Xem Trước XML */}
         <div className="px-5 py-3 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
-          <span className="text-xs text-slate-400">
-            {hasBase64Files && activeTab === "rawChild"
-              ? "Hiển thị nội dung XML thuần (đã giải mã thẻ <NOIDUNGFILE>) để rà soát chi tiết dữ liệu lâm sàng"
-              : isSigned
-              ? "Tài liệu XML đã được đóng gói chữ ký số W3C XMLDSig (<Signature>)"
-              : "Cấu trúc XML chuẩn Thông tư 25/2025/TT-BYT & QĐ 130"}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-400">
+              {hasBase64Files && activeTab === "rawChild"
+                ? "Hiển thị nội dung XML thuần (đã giải mã thẻ <NOIDUNGFILE>) để rà soát chi tiết dữ liệu lâm sàng"
+                : isSigned
+                  ? "Tài liệu XML đã được đóng gói chữ ký số W3C XMLDSig (<Signature>)"
+                  : "Cấu trúc XML chuẩn Thông tư 25/2025/TT-BYT & QĐ 130"}
+            </span>
+            <span className="text-[11px] text-slate-500 hidden sm:inline">
+              (🖐 Kéo chuột ngang hoặc dùng thanh cuộn)
+            </span>
+          </div>
           <button
             type="button"
             onClick={onClose}

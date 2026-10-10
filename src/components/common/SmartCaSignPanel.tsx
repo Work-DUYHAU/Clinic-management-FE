@@ -43,6 +43,7 @@ export interface SmartCaSignPanelProps {
   onToggleAutoSend?: (val: boolean) => void;
   onDirectSendBhxh?: () => void;
   isSendingApi?: boolean;
+  sendProgress?: { current: number; total: number; label?: string } | null;
   apiResponse?: any;
   onRegisterSignAction?: (action: SmartCaSignAction | null) => void;
   hideSubmitButton?: boolean;
@@ -50,6 +51,7 @@ export interface SmartCaSignPanelProps {
   onSignModeChange?: (mode: "Q1" | "Q2") => void;
   hideSignModeSwitcher?: boolean;
   hideAutoSendCheckbox?: boolean;
+  signedAt?: string;
 }
 
 export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
@@ -67,6 +69,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
   onToggleAutoSend,
   onDirectSendBhxh,
   isSendingApi,
+  sendProgress,
   apiResponse,
   onRegisterSignAction,
   hideSubmitButton = false,
@@ -74,7 +77,14 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
   onSignModeChange,
   hideSignModeSwitcher = false,
   hideAutoSendCheckbox = false,
+  signedAt,
 }) => {
+  const [lastSignedAt, setLastSignedAt] = useState<string>(signedAt || "");
+
+  useEffect(() => {
+    setLastSignedAt(signedAt || "");
+  }, [signedAt]);
+
   // Chế độ ký số SmartCA: Mặc định Q2 (Smart OTP nhanh) | Q1 (Phê duyệt qua App)
   const [internalSignMode, setInternalSignMode] = useState<"Q1" | "Q2">("Q2");
   const signMode = propSignMode ?? internalSignMode;
@@ -127,6 +137,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
   const handleHookSignedSuccess = useCallback(
     (newSignedXml: string, res: SmartCaSignResponse) => {
       setIsCountersigning(false);
+      setLastSignedAt(res?.signedAt || "");
       onSignedSuccessRef.current(newSignedXml, res);
     },
     [],
@@ -134,6 +145,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
 
   const handleHookResetSignature = useCallback(() => {
     setIsCountersigning(false);
+    setLastSignedAt("");
     onResetSignatureRef.current?.();
   }, []);
 
@@ -265,6 +277,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
             : q1.isInitiating || q1.waitingTransaction,
         )}
         isSendingApi={Boolean(isSendingApi)}
+        sendProgress={sendProgress}
         apiResponse={apiResponse}
         itemsCount={itemsCount}
         itemLabel={itemLabel}
@@ -333,6 +346,7 @@ export const SmartCaSignPanel: React.FC<SmartCaSignPanelProps> = ({
       {isSigned ? (
         <SignedResultView
           signatureInfo={signatureInfo}
+          signingTime={lastSignedAt || signedAt || signatureInfo.signingTime}
           credential={q1.credential}
           signerName={signerForm.signerName}
           identityValue={signerForm.identityValue}

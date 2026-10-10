@@ -6,6 +6,12 @@ import { isBhxhGatewaySuccess } from "../utils/shared/excelXmlShared";
 
 export type XmlExportTabType = "base64" | "smartca";
 
+export interface SendProgressInfo {
+  current: number;
+  total: number;
+  label?: string;
+}
+
 export interface UseXmlExportModalOptions<T, R = any> {
   isOpen: boolean;
   items: T[];
@@ -17,11 +23,13 @@ export interface UseXmlExportModalOptions<T, R = any> {
     items: T[],
     signature?: any,
     fileBase64?: string,
+    onProgress?: any,
   ) => Promise<R>;
   downloadSuccessMessage?: string;
   emptyItemsMessage?: string;
   getSendSuccessMessage?: (result: R) => string;
   onSendSuccess?: (result: R) => void;
+  onSignSuccess?: (items: T[], signedXml?: string, signResponse?: any) => void;
 }
 
 export function useXmlExportModal<T, R = any>({
@@ -36,6 +44,7 @@ export function useXmlExportModal<T, R = any>({
   emptyItemsMessage = "Không có dữ liệu để gửi!",
   getSendSuccessMessage,
   onSendSuccess,
+  onSignSuccess,
 }: UseXmlExportModalOptions<T, R>) {
   const toast = useToast();
   const [tab, setTab] = useState<XmlExportTabType>(
@@ -43,17 +52,38 @@ export function useXmlExportModal<T, R = any>({
   );
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<R | null>(null);
+  const [sendProgress, setSendProgress] = useState<SendProgressInfo | null>(
+    null,
+  );
 
   useEffect(() => {
     if (isOpen) {
       setTab(defaultTab === "base64" ? "base64" : "smartca");
+      setSendProgress(null);
       // Chủ động tiền kết nối & lấy sẵn Token Cổng BHXH ngay khi mở modal
       BhxhChungTuService.takeToken().catch(() => {});
     } else {
       // Khi đóng modal thì xóa kết quả gửi để sẵn sàng cho phiên mới
       setSendResult(null);
+      setSendProgress(null);
     }
   }, [isOpen, defaultTab]);
+
+  const prevItemIdsRef = useRef<string>("");
+  useEffect(() => {
+    const currentItemIds = items.map((i: any) => i.id || "").join(",");
+    // Chỉ reset kết quả gửi khi danh sách bản ghi thực sự thay đổi (chọn hồ sơ khác hoặc nạp file khác)
+    // KHÔNG reset khi cùng danh sách đó được cập nhật trạng thái (ttKySo, tinhTrangGui...) sau khi gửi thành công
+    if (
+      !isSending &&
+      prevItemIdsRef.current &&
+      prevItemIdsRef.current !== currentItemIds
+    ) {
+      setSendResult(null);
+      setSendProgress(null);
+    }
+    prevItemIdsRef.current = currentItemIds;
+  }, [items, isSending]);
 
   const handleResetSendResult = () => {
     setSendResult(null);
@@ -110,8 +140,24 @@ export function useXmlExportModal<T, R = any>({
     if (!sendGateway) return;
 
     setIsSending(true);
+    setSendProgress(null);
     try {
-      const res = await sendGateway(items, signatureResult, fileBase64);
+      const onProgress = (current: number, total: number, currentItem: T) => {
+        const itemAny = currentItem as any;
+        const label =
+          itemAny?.ttXml1?.maLk ||
+          itemAny?.maLk ||
+          itemAny?.id ||
+          `Hồ sơ ${current}`;
+        setSendProgress({ current, total, label });
+      };
+
+      const res = await sendGateway(
+        items,
+        signatureResult,
+        fileBase64,
+        onProgress,
+      );
       setSendResult(res);
       const isSuccess = isBhxhGatewaySuccess(res);
 
@@ -141,6 +187,13 @@ export function useXmlExportModal<T, R = any>({
       toast.error(msg, "Lỗi Gửi Cổng");
     } finally {
       setIsSending(false);
+      setSendProgress(null);
+    }
+  };
+
+  const handleSignSuccess = (signedXml: string, signResponse?: any) => {
+    if (onSignSuccess) {
+      onSignSuccess(items, signedXml, signResponse);
     }
   };
 
@@ -148,11 +201,13 @@ export function useXmlExportModal<T, R = any>({
     tab,
     setTab,
     isSending,
+    sendProgress,
     sendResult,
     xmlContent,
     base64Content,
     handleDownloadXml,
     handleSendGateway,
     handleResetSendResult,
+    handleSignSuccess,
   };
 }

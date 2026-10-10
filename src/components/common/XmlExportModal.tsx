@@ -52,7 +52,11 @@ export interface XmlExportModalProps {
   onCopy?: (text: string, message?: string, key?: string) => void;
   onExportXml: () => void;
   onSendApi: (signatureResult?: any) => void;
+  onSignSuccess?: (signedXml: string, signResponse: SmartCaSignResponse) => void;
+  initialSignedXml?: string | null;
+  initialSignedAt?: string | null;
   isSendingApi: boolean;
+  sendProgress?: { current: number; total: number; label?: string } | null;
   apiResponse: any;
   onResetApiResponse?: () => void;
   customFileName?: string;
@@ -76,7 +80,11 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   onCopy: externalOnCopy,
   onExportXml,
   onSendApi,
+  onSignSuccess,
+  initialSignedXml,
+  initialSignedAt,
   isSendingApi,
+  sendProgress,
   apiResponse,
   onResetApiResponse,
   customFileName,
@@ -94,6 +102,12 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   // State mở popup xem trước mã XML
   const [showXmlPreview, setShowXmlPreview] = useState(false);
 
+  // Tên file hiển thị chuẩn
+  const effectiveFileName = useMemo(() => {
+    if (customFileName) return customFileName;
+    return `HS_BHYT_LOAI${loaiHsCode}_${DEFAULT_MA_CSKCB}.xml`;
+  }, [customFileName, loaiHsCode]);
+
   // Trạng thái phản hồi Cổng BHXH cục bộ (tự động xóa khi nạp tệp mới)
   const [localApiResponse, setLocalApiResponse] = useState<any>(apiResponse);
 
@@ -107,12 +121,22 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   }, [onResetApiResponse]);
 
   // Trạng thái nội bộ cho tệp XML đã ký số
-  const [signedXml, setSignedXml] = useState<string | null>(null);
+  const [signedXml, setSignedXml] = useState<string | null>(initialSignedXml || null);
   const [signResponse, setSignResponse] = useState<SmartCaSignResponse | null>(
     null,
   );
+  const [signedAt, setSignedAt] = useState<string | null>(initialSignedAt || null);
 
-  // Tự động reset trạng thái ký số khi mở phiên mới hoặc khi đổi tệp dữ liệu khác
+  // Tự động đồng bộ ngay khi props thay đổi
+  useEffect(() => {
+    setSignedXml(initialSignedXml || null);
+  }, [initialSignedXml]);
+
+  useEffect(() => {
+    setSignedAt(initialSignedAt || null);
+  }, [initialSignedAt]);
+
+  // Tự động khôi phục hoặc xóa trạng thái ký số khi mở lại modal hoặc đổi tệp dữ liệu khác
   const prevIsOpenRef = useRef(false);
   const prevCustomFileNameRef = useRef(customFileName);
 
@@ -122,13 +146,36 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
       isOpen && prevCustomFileNameRef.current !== customFileName;
 
     if (isOpening || isFileChanged) {
-      setSignedXml(null);
-      setSignResponse(null);
+      const detectedPreSigned =
+        initialSignedXml ||
+        (xmlContent && extractXmlSignature(xmlContent).hasSignature
+          ? xmlContent
+          : null);
+
+      if (detectedPreSigned) {
+        setSignedXml(detectedPreSigned);
+        let restored = initialSignedAt || null;
+        if (!restored && effectiveFileName) {
+          try {
+            restored =
+              localStorage.getItem(`smartca_signed_at_${effectiveFileName}`) ||
+              null;
+          } catch {
+            // ignore
+          }
+        }
+        setSignedAt(restored);
+      } else {
+        // Tệp mới hoặc mở modal mới chưa có chữ ký -> RESET toàn bộ trạng thái ký cũ!
+        setSignedXml(null);
+        setSignedAt(null);
+        setSignResponse(null);
+      }
     }
 
     prevIsOpenRef.current = isOpen;
     prevCustomFileNameRef.current = customFileName;
-  }, [isOpen, customFileName]);
+  }, [isOpen, customFileName, initialSignedXml, initialSignedAt, effectiveFileName]);
 
   const [footerSignAction, setFooterSignAction] =
     useState<SmartCaSignAction | null>(null);
@@ -159,12 +206,6 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   const isKeyCopied = externalIsKeyCopied || internalIsKeyCopied;
   const handleCopy = externalOnCopy || internalCopy;
 
-  // Tên file hiển thị chuẩn
-  const effectiveFileName = useMemo(() => {
-    if (customFileName) return customFileName;
-    return `HS_BHYT_LOAI${loaiHsCode}_${DEFAULT_MA_CSKCB}.xml`;
-  }, [customFileName, loaiHsCode]);
-
   // Nội dung XML hiệu lực (Ưu tiên bản đã ký số nếu có)
   const effectiveXml = signedXml || xmlContent;
 
@@ -189,9 +230,20 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     newSignedXml: string,
     res: SmartCaSignResponse,
   ) => {
+    const timeStr = res?.signedAt || new Date().toISOString();
     setSignedXml(newSignedXml);
     setSignResponse(res);
+    setSignedAt(timeStr);
+    try {
+      localStorage.setItem(`smartca_signed_at_${effectiveFileName}`, timeStr);
+      localStorage.setItem("smartca_signed_at_latest", timeStr);
+    } catch {
+      // ignore
+    }
     clearApiResponse();
+
+    // Thông báo cho component cha biết đã ký số thành công ngay lập tức
+    onSignSuccess?.(newSignedXml, res);
 
     // Gộp quy trình: Tự động gửi luôn lên Cổng BHXH nếu bật tùy chọn và không phải là tệp tĩnh tải lên
     if (autoSendOnSign && res?.tranId !== "UPLOADED_SIGNED_XML") {
@@ -224,6 +276,13 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
   const handleResetSignature = () => {
     setSignedXml(null);
     setSignResponse(null);
+    setSignedAt(null);
+    try {
+      localStorage.removeItem(`smartca_signed_at_${effectiveFileName}`);
+      localStorage.removeItem("smartca_signed_at_latest");
+    } catch {
+      // ignore
+    }
     clearApiResponse();
   };
 
@@ -483,12 +542,19 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
                     onToggleAutoSend={handleToggleAutoSend}
                     onDirectSendBhxh={handleDirectSendBhxh}
                     isSendingApi={isSendingApi}
+                    sendProgress={sendProgress}
                     apiResponse={localApiResponse}
                     onRegisterSignAction={setFooterSignAction}
                     signMode={signMode}
                     onSignModeChange={setSignMode}
                     hideSignModeSwitcher={true}
                     hideAutoSendCheckbox={true}
+                    signedAt={
+                      signedAt ||
+                      signResponse?.signedAt ||
+                      initialSignedAt ||
+                      undefined
+                    }
                   />
                 </div>
               )}

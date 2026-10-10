@@ -63,3 +63,52 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Custom scrollbar cho các bảng dữ liệu để người dùng dễ nhìn thấy và kéo ngang */
+.table-scrollbar {
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
+  overflow-x: auto !important;
+}
+
+.table-scrollbar::-webkit-scrollbar {
+  display: block !important;
+  height: 10px !important;
+  width: 10px !important;
+}
+
+.table-scrollbar::-webkit-scrollbar-track {
+  background: #e2e8f0 !important;
+  border-radius: 6px !important;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background: #94a3b8 !important;
+  border-radius: 6px !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569 !important;
+}
+
+/* In Mẫu 09/BH: chỉ in vùng .print-area trong modal, ẩn toàn bộ phần còn lại của app */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}
+

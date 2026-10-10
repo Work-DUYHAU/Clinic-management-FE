@@ -20,7 +20,13 @@ export const App: React.FC = () => {
     navigate,
     setCatalogTab,
   } = useAppRouter();
-  const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>([]);
+  const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>(() => {
+    // Xóa sạch cache cũ để reload trang tự động reset
+    try {
+      sessionStorage.removeItem('clinic_hs09_items_cache');
+    } catch {}
+    return [];
+  });
 
   const pendingXuattoanCount = hs09Items.filter(
     (x) => x.trangThai === 'cho_xu_ly'
@@ -51,7 +57,7 @@ export const App: React.FC = () => {
                 catalogTab={catalogTab}
               />
 
-              <main className="flex-1 p-6 md:p-8 max-w-[1600px] w-full mx-auto overflow-y-auto no-scrollbar">
+              <main className="flex-1 p-3 md:p-4 max-w-[1600px] w-full mx-auto overflow-y-auto no-scrollbar">
                 {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
                 <div className={activeTab === 'danh-muc' ? 'block' : 'hidden'}>
                   <DanhMucPage
@@ -63,7 +69,7 @@ export const App: React.FC = () => {
 
                 {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
                 {activeTab === 'ho-so' && (
-                  <div className="space-y-6 pb-12">
+                  <div className="space-y-3 pb-4">
                     {hoSoTab === '01_tonghop' && <Hs01TongHopTab />}
                     {hoSoTab === '09_xuattoan' && (
                       <Hs09DieuChinhTab

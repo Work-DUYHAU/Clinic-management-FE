@@ -12,8 +12,30 @@ import {
 import type { ExtractedSignatureInfo } from "../../../utils/xmlDsigEngine";
 import type { SmartCaCredential } from "../../../types/smartcaTypes";
 
+const formatSigningTime = (val?: string): string => {
+  if (!val) return "";
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    }
+  } catch {
+    // fallback
+  }
+  return val;
+};
+
 export interface SignedResultViewProps {
   signatureInfo: ExtractedSignatureInfo;
+  signingTime?: string;
   credential?: SmartCaCredential | null;
   signerName: string;
   identityValue: string;
@@ -30,6 +52,7 @@ export interface SignedResultViewProps {
 
 export const SignedResultView: React.FC<SignedResultViewProps> = ({
   signatureInfo,
+  signingTime,
   credential,
   signerName,
   identityValue,
@@ -43,6 +66,9 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
   isSendingApi,
   hasApiResponse,
 }) => {
+  const effectiveSigningTime = formatSigningTime(
+    signingTime || signatureInfo.signingTime,
+  );
   const isMultiSigned = Boolean(
     signatureInfo.signatures && signatureInfo.signatures.length > 1,
   );
@@ -79,7 +105,10 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
         <div className="text-right text-[11px] text-slate-600 hidden sm:block">
           <span className="text-slate-500">Chủ thể: </span>
           <b className="font-semibold text-slate-800">
-            {signatureInfo.subjectDN || credential?.cert?.subjectDN || signerName || "—"}
+            {signatureInfo.subjectDN ||
+              credential?.cert?.subjectDN ||
+              signerName ||
+              "—"}
           </b>
         </div>
       </div>
@@ -134,7 +163,10 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
           >
             <span className="text-slate-500">Chủ thể: </span>
             <b className="text-slate-900 font-semibold">
-              {signatureInfo.subjectDN || credential?.cert?.subjectDN || signerName || "—"}
+              {signatureInfo.subjectDN ||
+                credential?.cert?.subjectDN ||
+                signerName ||
+                "—"}
             </b>
             {signerEmail && (
               <span className="text-[10px] text-slate-500 ml-1 font-normal">
@@ -150,13 +182,17 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
           >
             <span className="text-slate-500">Serial: </span>
             <span className="font-mono text-slate-800">
-              {signatureInfo.serialNumber || credential?.cert?.serialNumber || "—"}
+              {signatureInfo.serialNumber ||
+                credential?.cert?.serialNumber ||
+                "—"}
             </span>
           </div>
-          <div title={identityValue ? `Tài khoản: ${identityValue}` : undefined}>
+          <div
+            title={identityValue ? `Tài khoản: ${identityValue}` : undefined}
+          >
             <span className="text-slate-500">Thời gian ký: </span>
             <span className="font-mono text-slate-800">
-              {signatureInfo.signingTime || "—"}
+              {effectiveSigningTime || "—"}
             </span>
           </div>
         </div>
@@ -177,7 +213,9 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
             title="Gửi ngay hồ sơ XML đã ký này lên Cổng Tiếp Nhận BHXH"
           >
             <Send size={13} className={isSendingApi ? "animate-pulse" : ""} />
-            <span>{isSendingApi ? "Đang Gửi Cổng..." : "Gửi Lên Cổng BHXH"}</span>
+            <span>
+              {isSendingApi ? "Đang Gửi Cổng..." : "Gửi Lên Cổng BHXH"}
+            </span>
           </button>
         )}
 
@@ -231,4 +269,3 @@ export const SignedResultView: React.FC<SignedResultViewProps> = ({
     </div>
   );
 };
-

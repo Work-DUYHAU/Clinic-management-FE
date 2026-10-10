@@ -1,13 +1,21 @@
 import * as XLSX from "xlsx";
-import { BhxhChungTuService, BHXH_CONFIG } from "../../services/bhxh/bhxhChungTuService";
+import {
+  BhxhChungTuService,
+  BHXH_CONFIG,
+} from "../../services/bhxh/bhxhChungTuService";
 // 1. CHUẨN HÓA & SO KHỚP TÊN CỘT EXCEL
-export function normalizeKey(str: string): string {
+/** Bỏ dấu tiếng Việt, giữ nguyên khoảng trắng, dấu gạch dưới, số và chữ */
+export function removeDiacritics(str: string): string {
   if (!str) return "";
   return String(str)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
-    .replace(/Đ/g, "d")
+    .replace(/Đ/g, "D");
+}
+
+export function normalizeKey(str: string): string {
+  return removeDiacritics(str)
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 }
@@ -15,6 +23,11 @@ export function normalizeKey(str: string): string {
 /** Chuẩn hóa tên cột in hoa [A-Z0-9] (tương thích ngược) */
 export function normalizeHeaderKey(str: string): string {
   return normalizeKey(str).toUpperCase();
+}
+
+/** Chuyển chuỗi tiếng Việt thành in hoa không dấu (giữ nguyên khoảng trắng, dấu gạch dưới...) */
+export function toUnaccentedUpper(str: string): string {
+  return removeDiacritics(str).toUpperCase();
 }
 
 /** @deprecated dùng normalizeKey */
@@ -333,12 +346,6 @@ function parseDateTimeParts(val: unknown): DateTimeParts | null {
   return { ymd, h: "00", mi: "00", s: "00", hasTime: false };
 }
 
-/**
- * Ngày giờ 12 ký tự YYYYMMDDHHmm: NGAY_VAO, NGAY_RA, NGAYGIO_VV, NGAY_TV,
- * NGAY_DINH_CHI_THAINGHEN...
- * Nguồn chỉ có ngày: nếu truyền defaultHourMinute (vd "0000") thì ghép vào,
- * không thì trả 8 ký tự.
- */
 export function parseYmdHmDate(
   val: unknown,
   defaultHourMinute?: string,
@@ -448,9 +455,11 @@ export function readExcelFile(file: File): Promise<XLSX.WorkBook> {
   });
 }
 
-export const DEFAULT_MA_CSKCB = (import.meta.env.VITE_MA_CSKCB as string) || "49939";
+export const DEFAULT_MA_CSKCB =
+  (import.meta.env.VITE_MA_CSKCB as string) || "49939";
 export const DEFAULT_MA_TINH = (import.meta.env.VITE_MA_TINH as string) || "48";
-export const DEFAULT_CLINIC_NAME = (import.meta.env.VITE_CLINIC_NAME as string) || "Cơ sở Khám chữa bệnh";
+export const DEFAULT_CLINIC_NAME =
+  (import.meta.env.VITE_CLINIC_NAME as string) || "Cơ sở Khám chữa bệnh";
 
 export function pickBestSheetName(
   workbook: XLSX.WorkBook,
@@ -621,11 +630,6 @@ export function formatXmlSigningTime(date: Date = new Date()): string {
 /** @deprecated dùng formatXmlSigningTime */
 export const getSigningTimeIso = formatXmlSigningTime;
 
-/**
- * Sinh block chữ ký CHUKYDONVI (W3C XMLDSig) chuẩn BHYT / Quyết định 130.
- * Nếu có innerSignatureXml (<Signature>...</Signature>) thì bọc vào bên trong,
- * nếu chưa ký thì để placeholder tự đóng <CHUKYDONVI /> đồng nhất.
- */
 export function buildSignatureBlock(
   innerSignatureXml?: string,
   _indent = "",
@@ -763,7 +767,10 @@ export async function sendDanhMucToBhxhGateway(
     return {
       maKetQua: String(tokenRes.maKetQua || "401"),
       maGiaoDich: "",
-      thongDiep: tokenRes.thongDiep || tokenRes.message || "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
+      thongDiep:
+        tokenRes.thongDiep ||
+        tokenRes.message ||
+        "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
       thoiGianTiepNhan: getTimestampYmdHms(),
       totalRecords: recordCount,
       loaiHs,
@@ -772,23 +779,23 @@ export async function sendDanhMucToBhxhGateway(
 
   try {
     const LOAI_HS_NORMALIZED: Record<string, string> = {
-      "DANHMUC01": "70",
-      "DM01": "70",
+      DANHMUC01: "70",
+      DM01: "70",
       "70": "70",
-      "DANHMUC02": "71",
-      "DM02": "71",
+      DANHMUC02: "71",
+      DM02: "71",
       "71": "71",
-      "DANHMUC03": "10",
-      "DM03": "10",
+      DANHMUC03: "10",
+      DM03: "10",
       "10": "10",
-      "DANHMUC04": "11",
-      "DM04": "11",
+      DANHMUC04: "11",
+      DM04: "11",
       "11": "11",
-      "DANHMUC05": "12",
-      "DM05": "12",
+      DANHMUC05: "12",
+      DM05: "12",
       "12": "12",
-      "DANHMUC06": "72",
-      "DM06": "72",
+      DANHMUC06: "72",
+      DM06: "72",
       "72": "72",
     };
     const officialLoaiHs = LOAI_HS_NORMALIZED[loaiHs] || loaiHs;
@@ -801,7 +808,7 @@ export async function sendDanhMucToBhxhGateway(
       "12": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_05_DVKT,
       "72": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_06_DMTBYT,
     };
-    const endpoint = endpointMap[officialLoaiHs] || '/api/DanhMucGW';
+    const endpoint = endpointMap[officialLoaiHs] || "/api/DanhMucGW";
 
     const params = new URLSearchParams();
     params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
@@ -816,17 +823,20 @@ export async function sendDanhMucToBhxhGateway(
 
     const headers: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
-      "accessToken": token,
-      "tokenId": tokenRes.idToken || tokenRes.APIKey?.id_token || "",
-      "passwordHash": tokenRes.passwordHash || "",
+      accessToken: token,
+      tokenId: tokenRes.idToken || tokenRes.APIKey?.id_token || "",
+      passwordHash: tokenRes.passwordHash || "",
     };
 
     const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await BhxhChungTuService.fetchGateway(`${baseUrl}${endpoint}`, {
-      method: "POST",
-      headers,
-      body: params.toString(),
-    });
+    const response = await BhxhChungTuService.fetchGateway(
+      `${baseUrl}${endpoint}`,
+      {
+        method: "POST",
+        headers,
+        body: params.toString(),
+      },
+    );
 
     let data: any = {};
     const text = await response.text();
@@ -836,14 +846,20 @@ export async function sendDanhMucToBhxhGateway(
       data = {
         maKetQua: String(response.status),
         thongDiep:
-          text.slice(0, 150) || `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
+          text.slice(0, 150) ||
+          `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
       };
     }
 
-    const isOk = String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
+    const isOk =
+      String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
     return {
       maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
-      maGiaoDich: data.maGiaoDich || (isOk ? `${loaiHs}_T${maTinh}_${maCskcb}_${Date.now().toString().slice(-6)}` : ""),
+      maGiaoDich:
+        data.maGiaoDich ||
+        (isOk
+          ? `${loaiHs}_T${maTinh}_${maCskcb}_${Date.now().toString().slice(-6)}`
+          : ""),
       thongDiep:
         data.thongDiep ||
         data.ghiChu ||
@@ -855,7 +871,8 @@ export async function sendDanhMucToBhxhGateway(
       loaiHs,
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
+    const errorMsg =
+      err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
     return {
       maKetQua: "500",
       maGiaoDich: "",
@@ -890,6 +907,6 @@ export function isBhxhGatewaySuccess(apiResponse: any): boolean {
     apiResponse.maGiaoDich ||
     apiResponse.MaGD ||
     apiResponse.MaGiaoDich ||
-    apiResponse.data?.maGiaoDich
+    apiResponse.data?.maGiaoDich,
   );
 }

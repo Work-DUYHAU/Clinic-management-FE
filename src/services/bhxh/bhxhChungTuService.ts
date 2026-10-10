@@ -70,10 +70,6 @@ export class BhxhChungTuService {
       : "https://egw.baohiemxahoi.gov.vn";
   }
 
-  /**
-   * Gọi HTTP đến Cổng BHXH tích hợp cơ chế Tự động Thử lại (Auto-Retry)
-   * Tự động gửi lại nếu gặp lỗi 502 Bad Gateway, 503, 504 hoặc đứt kết nối socket
-   */
   static async fetchGateway(
     url: string,
     options: RequestInit,
