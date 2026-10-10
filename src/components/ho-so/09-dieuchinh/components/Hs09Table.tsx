@@ -23,7 +23,13 @@ import {
 } from "../../../../utils/shared/excelXmlShared";
 import { getEffectiveHs09TrangThai } from "../../../../utils/hs09RequestTypeResolver";
 import { Pagination } from "../../../common";
-import { Select, DatePicker } from "../../../../shared/components";
+import {
+  Select,
+  DatePicker,
+  Button,
+  IconButton,
+  Checkbox,
+} from "../../../../shared/components";
 import dayjs from "dayjs";
 import { useToast } from "../../../../context/ToastContext";
 
@@ -143,17 +149,40 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     tableContainerRef.current.scrollLeft = scrollLeftPos - walk;
   };
 
-  // Gridview Column Quick Filter Textboxes (Mục 2.1)
-  const [colXml1Id, setColXml1Id] = useState("");
-  const [colMaThe, setColMaThe] = useState("");
-  const [colMaBn, setColMaBn] = useState("");
-  const [colHoTen, setColHoTen] = useState("");
-  const [colMaLk, setColMaLk] = useState("");
-  const [colNgayVao, setColNgayVao] = useState("");
-  const [colNgayRa, setColNgayRa] = useState("");
-  const [colTrangThai, setColTrangThai] = useState("all");
-  const [colKySo, setColKySo] = useState("all");
-  const [colGdDuyet, setColGdDuyet] = useState("all");
+  // Gridview Column Quick Filters (Mục 2.1)
+  const [colFilters, setColFilters] = useState({
+    xml1Id: "",
+    maThe: "",
+    maBn: "",
+    hoTen: "",
+    maLk: "",
+    ngayVao: "",
+    trangThai: "all",
+    kySo: "all",
+    gdDuyet: "all",
+  });
+
+  const handleColFilter = (field: string) => (e: unknown) => {
+    const val =
+      typeof e === "object" && e && "target" in e
+        ? (e as React.ChangeEvent<HTMLInputElement>).target.value
+        : String(e ?? "");
+    setColFilters((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const clearColumnFilters = () => {
+    setColFilters({
+      xml1Id: "",
+      maThe: "",
+      maBn: "",
+      hoTen: "",
+      maLk: "",
+      ngayVao: "",
+      trangThai: "all",
+      kySo: "all",
+      gdDuyet: "all",
+    });
+  };
 
   useEffect(() => {
     const visibleIds = new Set(items.map((item) => item.id));
@@ -173,7 +202,6 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
   const toggleSelect = (item: HoSoDieuChinh09Item) => {
     if (item.tinhTrangGui === 2) return;
-    // Tính tập chọn mới bên ngoài updater để tránh side-effect chạy kép trong StrictMode
     const next = new Set(selectedIds);
     if (next.has(item.id)) {
       next.delete(item.id);
@@ -213,98 +241,47 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
   // Filter items based on both global filters and column filters
   const filteredGridItems = useMemo(() => {
+    // 1. Chỉ lấy các trường tìm kiếm text đang có giá trị (toLowerCase sẵn 1 lần)
+    const textFilters = (
+      ["xml1Id", "maThe", "maBn", "hoTen", "maLk", "ngayVao"] as const
+    )
+      .filter((k) => !!colFilters[k])
+      .map((k) => ({
+        key: k,
+        val: colFilters[k].trim().toLowerCase(),
+      }));
+
+    // 2. Chỉ lấy các dropdown lọc đang chọn khác 'all'
+    type ExactRule = [string, (it: HoSoDieuChinh09Item) => string];
+    const rawExactRules: ExactRule[] = [
+      [colFilters.trangThai, (it) => String(getEffectiveHs09TrangThai(it))],
+      [colFilters.kySo, (it) => String(it.ttKySo)],
+      [colFilters.gdDuyet, (it) => String(it.gdDuyet ?? 0)],
+      [filterTinhTrangGui, (it) => String(it.tinhTrangGui)],
+      [filterLoaiThaoTac, (it) => it.loaiThaoTac || "dang_thao_tac"],
+      [filterKyQt, (it) => it.ttXml1.kyQt || ""],
+    ];
+    const exactFilters = rawExactRules.filter(([val]) => Boolean(val && val !== "all"));
+
+    // 3. Lọc dữ liệu qua các điều kiện đã kích hoạt
     return items.filter((item) => {
-      // 1. Column filters
-      if (
-        colXml1Id &&
-        !String(item.ttXml1.xml1Id || "")
-          .toLowerCase()
-          .includes(colXml1Id.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colMaThe &&
-        !item.ttXml1.maThe.toLowerCase().includes(colMaThe.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colMaBn &&
-        !item.ttXml1.maBn.toLowerCase().includes(colMaBn.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colHoTen &&
-        !item.ttXml1.hoTen.toLowerCase().includes(colHoTen.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colMaLk &&
-        !item.ttXml1.maLk.toLowerCase().includes(colMaLk.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colNgayVao &&
-        !item.ttXml1.ngayVao.toLowerCase().includes(colNgayVao.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        colNgayRa &&
-        !item.ttXml1.ngayRa.toLowerCase().includes(colNgayRa.toLowerCase())
-      ) {
-        return false;
-      }
-      if (colTrangThai !== "all") {
-        const effTt = getEffectiveHs09TrangThai(item);
-        if (String(effTt) !== colTrangThai) return false;
-      }
-      if (colKySo !== "all") {
-        if (String(item.ttKySo) !== colKySo) return false;
-      }
-      if (colGdDuyet !== "all") {
-        const itemGd = item.gdDuyet ?? 0;
-        if (String(itemGd) !== colGdDuyet) return false;
-      }
+      const matchText = textFilters.every(({ key, val }) =>
+        String(item.ttXml1[key] || "").toLowerCase().includes(val)
+      );
+      if (!matchText) return false;
 
-      // 2. Extra section 2.1 filters
-      if (filterTinhTrangGui !== "all") {
-        if (String(item.tinhTrangGui) !== filterTinhTrangGui) return false;
-      }
-      if (filterLoaiThaoTac !== "all") {
-        const itemLoai = item.loaiThaoTac || "dang_thao_tac";
-        if (itemLoai !== filterLoaiThaoTac) return false;
-      }
-      if (filterKyQt !== "all" && item.ttXml1.kyQt !== filterKyQt) {
-        return false;
-      }
-      if (filterTuNgay) {
-        const itemDate = getItemDateString(item);
-        if (itemDate && itemDate < filterTuNgay) return false;
-      }
-      if (filterDenNgay) {
-        const itemDate = getItemDateString(item);
-        if (itemDate && itemDate > filterDenNgay) return false;
-      }
+      const matchExact = exactFilters.every(([val, getValue]) => getValue(item) === val);
+      if (!matchExact) return false;
 
-      return true;
+      const itemDate = getItemDateString(item);
+      return (
+        (!filterTuNgay || !itemDate || itemDate >= filterTuNgay) &&
+        (!filterDenNgay || !itemDate || itemDate <= filterDenNgay)
+      );
     });
   }, [
     items,
-    colXml1Id,
-    colMaThe,
-    colMaBn,
-    colHoTen,
-    colMaLk,
-    colNgayVao,
-    colNgayRa,
-    colTrangThai,
-    colKySo,
-    colGdDuyet,
+    colFilters,
     filterTinhTrangGui,
     filterLoaiThaoTac,
     filterKyQt,
@@ -317,8 +294,6 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     [filteredGridItems],
   );
 
-  const headerCheckboxRef = useRef<HTMLInputElement>(null);
-
   const isAllSelectableChecked = useMemo(() => {
     if (selectableItems.length === 0) return false;
     const effectiveTargetCount = Math.min(selectableItems.length, MAX_KY_SO);
@@ -330,13 +305,6 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
       selectedSelectableCount >= effectiveTargetCount
     );
   }, [selectableItems, selectedIds]);
-
-  useEffect(() => {
-    if (headerCheckboxRef.current) {
-      headerCheckboxRef.current.indeterminate =
-        selectedIds.size > 0 && !isAllSelectableChecked;
-    }
-  }, [selectedIds.size, isAllSelectableChecked]);
 
   const toggleSelectAll = () => {
     if (selectedIds.size > 0) {
@@ -436,33 +404,61 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     onHuyPhien?.(selectedItemsList);
   };
 
-  const clearColumnFilters = () => {
-    setColXml1Id("");
-    setColMaThe("");
-    setColMaBn("");
-    setColHoTen("");
-    setColMaLk("");
-    setColNgayVao("");
-    setColNgayRa("");
-    setColTrangThai("all");
-    setColKySo("all");
-    setColGdDuyet("all");
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSearchChange(e.target.value);
+    setCurrentPage(1);
   };
 
-  const hasAnyColumnFilter =
-    colXml1Id ||
-    colMaThe ||
-    colMaBn ||
-    colHoTen ||
-    colMaLk ||
-    colNgayVao ||
-    colNgayRa ||
-    colTrangThai !== "all" ||
-    colKySo !== "all" ||
-    colGdDuyet !== "all";
+  const handleKyQtFilterChange = (val: unknown) => {
+    onFilterKyQtChange?.(val as string);
+  };
+
+  const handleTinhTrangGuiFilterChange = (val: unknown) => {
+    onFilterTinhTrangGuiChange?.(val as string);
+  };
+
+  const handleDateRangeFilterChange = (dates: any) => {
+    if (!dates || !dates[0] || !dates[1]) {
+      onFilterTuNgayChange?.("");
+      onFilterDenNgayChange?.("");
+    } else {
+      onFilterTuNgayChange?.(dates[0].format("YYYY-MM-DD"));
+      onFilterDenNgayChange?.(dates[1].format("YYYY-MM-DD"));
+    }
+  };
+
+  const handleLoaiThaoTacFilterChange = (val: unknown) => {
+    onFilterLoaiThaoTacChange?.(val as string);
+  };
+
+  const handleResetMainFilters = () => {
+    onFilterKyQtChange?.("all");
+    onFilterTinhTrangGuiChange?.("all");
+    onFilterTuNgayChange?.("");
+    onFilterDenNgayChange?.("");
+    onFilterLoaiThaoTacChange?.("all");
+  };
+
+  const handleAttachmentClick = () => {
+    const target = selectedItemsList[0] || items[0];
+    if (target) onOpenAttachment?.(target);
+    else toast.warning("Chưa có hồ sơ nào để đính kèm!");
+  };
+
+  const handleUnsignClick = () => {
+    onUnsign?.(selectedSignedList);
+  };
+
+  const handleExportExcelClick = () => {
+    onExportExcel?.(filteredGridItems);
+  };
+
+  const hasAnyColumnFilter = Object.entries(colFilters).some(([k, v]) =>
+    k === "trangThai" || k === "kySo" || k === "gdDuyet" ? v !== "all" : Boolean(v)
+  );
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col space-y-0">
+    <div className="bg-white rounded-lg border border-slate-200/90 shadow-sm overflow-hidden flex flex-col space-y-0">
       {/* Cảnh báo chọn quá giới hạn */}
       {overLimit && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-semibold">
@@ -491,22 +487,18 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
               type="text"
               placeholder="Tìm nhanh theo mã thẻ, họ tên, mã BN, mã LK..."
               value={searchTerm}
-              onChange={(e) => {
-                onSearchChange(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 shadow-xs"
+              onChange={handleSearchInputChange}
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 shadow-xs"
             />
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            icon={<Plus size={14} />}
             onClick={onAddNew}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <Plus size={14} />
-            <span>Thêm Hồ Sơ 09</span>
-          </button>
+            Thêm Hồ Sơ 09
+          </Button>
         </div>
       </div>
 
@@ -521,7 +513,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
             <Select
               height={31.6}
               value={filterKyQt}
-              onChange={(val) => onFilterKyQtChange?.(val as string)}
+              onChange={handleKyQtFilterChange}
               containerClassName="mb-0"
               className="!text-xs"
               options={[
@@ -542,7 +534,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
             <Select
               height={31.6}
               value={filterTinhTrangGui}
-              onChange={(val) => onFilterTinhTrangGuiChange?.(val as string)}
+              onChange={handleTinhTrangGuiFilterChange}
               containerClassName="mb-0"
               className="!text-xs"
               options={[
@@ -567,15 +559,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                     ]
                   : null
               }
-              onChange={(dates) => {
-                if (!dates || !dates[0] || !dates[1]) {
-                  onFilterTuNgayChange?.("");
-                  onFilterDenNgayChange?.("");
-                } else {
-                  onFilterTuNgayChange?.(dates[0].format("YYYY-MM-DD"));
-                  onFilterDenNgayChange?.(dates[1].format("YYYY-MM-DD"));
-                }
-              }}
+              onChange={handleDateRangeFilterChange}
               format="DD/MM/YYYY"
               placeholder={["Từ ngày", "Đến ngày"]}
               containerClassName="!mb-0"
@@ -591,7 +575,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
             <Select
               height={31.6}
               value={filterLoaiThaoTac}
-              onChange={(val) => onFilterLoaiThaoTacChange?.(val as string)}
+              onChange={handleLoaiThaoTacFilterChange}
               containerClassName="mb-0"
               className="!text-xs"
               options={[
@@ -606,13 +590,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           <div className="pb-1.5">
             <button
               type="button"
-              onClick={() => {
-                onFilterKyQtChange?.("all");
-                onFilterTinhTrangGuiChange?.("all");
-                onFilterTuNgayChange?.("");
-                onFilterDenNgayChange?.("");
-                onFilterLoaiThaoTacChange?.("all");
-              }}
+              onClick={handleResetMainFilters}
               className="text-xs text-blue-600 hover:text-blue-700 hover:underline font-semibold cursor-pointer whitespace-nowrap"
             >
               Xóa bộ lọc
@@ -625,86 +603,74 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
       <div className="px-4 py-2.5 bg-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-200">
         <div className="flex flex-wrap items-center gap-2">
           {/* Nút Gửi giám định */}
-          <button
-            type="button"
+          <Button
+            variant="success"
+            icon={<Send size={13} />}
             onClick={handleTriggerSendGiamDinh}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#047857] hover:bg-[#065f46] active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
             title="Gửi hồ sơ đã ký số sang Hệ thống Giám định BHYT"
           >
-            <Send size={13} />
-            <span>Gửi giám định</span>
-          </button>
+            Gửi giám định
+          </Button>
 
           {/* Nút Ký số */}
-          <button
-            type="button"
+          <Button
+            variant="indigo"
+            icon={<Edit2 size={13} />}
             onClick={handleTriggerBulkSign}
             disabled={selectedCount === 0 || overLimit}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              selectedCount > 0 && !overLimit
-                ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 cursor-pointer"
-                : "bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed"
-            }`}
             title="Ký số cho các hồ sơ đã chọn (tối đa 10 hồ sơ/lần)"
           >
-            <Edit2 size={13} />
             <span>Ký số</span>
-            <span className="ml-0.5 px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full text-[10px] font-bold leading-none">
-              {selectedCount}
-            </span>
-          </button>
+            {selectedCount > 0 && (
+              <span className="ml-0.5 px-1.5 py-0.5 bg-white/20 text-white rounded-full text-[10px] font-bold leading-none">
+                {selectedCount}
+              </span>
+            )}
+          </Button>
 
           {/* Nút Bỏ chọn nhanh nếu có dòng đang chọn */}
           {selectedCount > 0 && (
-            <button
-              type="button"
+            <Button
+              variant="neutral"
+              icon={<X size={13} className="text-slate-500" />}
               onClick={handleClearSelected}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition-all cursor-pointer active:scale-95"
               title="Bỏ chọn toàn bộ hồ sơ đang được tích"
             >
-              <X size={13} className="text-slate-500" />
-              <span>Bỏ chọn</span>
-            </button>
+              Bỏ chọn
+            </Button>
           )}
 
           {/* Nút Hủy ký số (nếu có hồ sơ đã ký) */}
           {selectedSignedList.length > 0 && (
-            <button
-              type="button"
-              onClick={() => onUnsign?.(selectedSignedList)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+            <Button
+              variant="warning"
+              icon={<RotateCcw size={13} />}
+              onClick={handleUnsignClick}
               title="Hủy chữ ký số để chỉnh sửa lại hồ sơ"
             >
-              <RotateCcw size={13} />
-              <span>Hủy ký số ({selectedSignedList.length})</span>
-            </button>
+              Hủy ký số ({selectedSignedList.length})
+            </Button>
           )}
 
           {/* Nút Xuất Excel */}
-          <button
-            type="button"
-            onClick={() => onExportExcel?.(filteredGridItems)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
+          <Button
+            variant="excel"
+            icon={<FileSpreadsheet size={13} />}
+            onClick={handleExportExcelClick}
             title="Xuất danh sách hồ sơ điều chỉnh ra file Excel"
           >
-            <FileSpreadsheet size={13} />
-            <span>Xuất Excel</span>
-          </button>
+            Xuất Excel
+          </Button>
 
           {/* Nút Đính kèm file */}
-          <button
-            type="button"
-            onClick={() => {
-              const target = selectedItemsList[0] || items[0];
-              if (target) onOpenAttachment?.(target);
-              else toast.warning("Chưa có hồ sơ nào để đính kèm!");
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
+          <Button
+            variant="sky"
+            icon={<Paperclip size={13} />}
+            onClick={handleAttachmentClick}
             title="Mở popup đính kèm tài liệu chứng minh theo mã lý do"
           >
-            <Paperclip size={13} />
-            <span>Đính kèm file</span>
-          </button>
+            Đính kèm file
+          </Button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -719,20 +685,15 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           )}
 
           {/* Nút Hủy phiên làm việc */}
-          <button
-            type="button"
+          <Button
+            variant="danger"
+            icon={<Trash2 size={13} />}
             onClick={handleTriggerHuyPhien}
             disabled={selectedCount === 0}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-              selectedCount > 0
-                ? "bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer"
-                : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
-            }`}
             title="Hủy phiên nhập liệu hiện tại, mở khóa giám định tự động (chỉ cho HS chưa ký)"
           >
-            <Trash2 size={13} />
-            <span>Hủy phiên làm việc</span>
-          </button>
+            Hủy phiên làm việc
+          </Button>
         </div>
       </div>
 
@@ -753,12 +714,10 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
             {/* Header Titles */}
             <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
               <th className="py-2.5 px-2.5 w-11 min-w-[44px] text-center border-r border-slate-200">
-                <input
-                  ref={headerCheckboxRef}
-                  type="checkbox"
+                <Checkbox
                   checked={isAllSelectableChecked}
+                  indeterminate={selectedIds.size > 0 && !isAllSelectableChecked}
                   onChange={toggleSelectAll}
-                  className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
                   title={
                     selectedCount > 0
                       ? `Nhấp để bỏ chọn tất cả (${selectedCount} hồ sơ)`
@@ -821,16 +780,16 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc ID..."
-                  value={colXml1Id}
-                  onChange={(e) => setColXml1Id(e.target.value)}
+                  value={colFilters.xml1Id}
+                  onChange={handleColFilter("xml1Id")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
-              <th className="p-1.5  border-r border-slate-200 ">
+              <th className="p-1.5 border-r border-slate-200">
                 <Select
                   height={24}
-                  value={colTrangThai}
-                  onChange={(val) => setColTrangThai(val as string)}
+                  value={colFilters.trangThai}
+                  onChange={handleColFilter("trangThai")}
                   containerClassName="mb-0"
                   className="!text-[11px]"
                   options={[
@@ -845,8 +804,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc thẻ..."
-                  value={colMaThe}
-                  onChange={(e) => setColMaThe(e.target.value)}
+                  value={colFilters.maThe}
+                  onChange={handleColFilter("maThe")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
@@ -854,8 +813,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc BN..."
-                  value={colMaBn}
-                  onChange={(e) => setColMaBn(e.target.value)}
+                  value={colFilters.maBn}
+                  onChange={handleColFilter("maBn")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
@@ -863,8 +822,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc họ tên..."
-                  value={colHoTen}
-                  onChange={(e) => setColHoTen(e.target.value)}
+                  value={colFilters.hoTen}
+                  onChange={handleColFilter("hoTen")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
@@ -872,8 +831,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc LK..."
-                  value={colMaLk}
-                  onChange={(e) => setColMaLk(e.target.value)}
+                  value={colFilters.maLk}
+                  onChange={handleColFilter("maLk")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
@@ -881,16 +840,16 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                 <input
                   type="text"
                   placeholder="Lọc ngày..."
-                  value={colNgayVao}
-                  onChange={(e) => setColNgayVao(e.target.value)}
+                  value={colFilters.ngayVao}
+                  onChange={handleColFilter("ngayVao")}
                   className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-[11px] font-mono outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </th>
               <th className="p-1.5 border-r border-slate-200">
                 <Select
                   height={24}
-                  value={colKySo}
-                  onChange={(val) => setColKySo(val as string)}
+                  value={colFilters.kySo}
+                  onChange={handleColFilter("kySo")}
                   containerClassName="mb-0"
                   className="!text-[11px]"
                   options={[
@@ -903,8 +862,8 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
               <th className="p-1.5 border-r border-slate-200">
                 <Select
                   height={24}
-                  value={colGdDuyet}
-                  onChange={(val) => setColGdDuyet(val as string)}
+                  value={colFilters.gdDuyet}
+                  onChange={handleColFilter("gdDuyet")}
                   containerClassName="mb-0"
                   className="!text-[11px]"
                   options={[
@@ -992,11 +951,9 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
                       {/* Checkbox */}
                       <td className="py-1.5 px-2.5 text-center border-r border-slate-100">
                         {!isSent ? (
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={selectedIds.has(item.id)}
                             onChange={() => toggleSelect(item)}
-                            className="w-3.5 h-3.5 accent-blue-600 cursor-pointer"
                           />
                         ) : (
                           <span title="Đã gửi giám định (khóa)">
@@ -1141,70 +1098,55 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 
                       {/* In PDF (Mục 4.2) */}
                       <td className="py-1.5 px-2 text-center border-r border-slate-100">
-                        <button
-                          type="button"
+                        <IconButton
+                          icon={<Printer size={14} />}
+                          tooltip="In Mẫu 09/BH dưới dạng PDF"
+                          type="text"
+                          className="!p-1 !text-slate-500 hover:!text-blue-600 hover:!bg-blue-50 !rounded cursor-pointer"
                           onClick={() => onPrintPdf?.(item)}
-                          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-                          title="In Mẫu 09/BH dưới dạng PDF"
-                        >
-                          <Printer size={14} />
-                        </button>
+                        />
                       </td>
 
                       {/* Thao tác */}
                       <td className="py-1.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           {/* Xem XML gốc */}
-                          <button
-                            type="button"
+                          <IconButton
+                            icon={<Eye size={14} />}
+                            tooltip="Xem chi tiết hồ sơ XML gốc"
+                            type="text"
+                            className="!p-1 !text-slate-500 hover:!text-indigo-600 hover:!bg-indigo-50 !rounded cursor-pointer"
                             onClick={() => onViewDetail(item)}
-                            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
-                            title="Xem chi tiết hồ sơ XML gốc"
-                          >
-                            <Eye size={14} />
-                          </button>
+                          />
 
                           {/* Sửa */}
-                          <button
-                            type="button"
-                            onClick={() => !isSigned && onEdit(item)}
+                          <IconButton
+                            icon={isSigned ? <Lock size={12} /> : <Edit2 size={13} />}
+                            tooltip={isSigned ? "Hồ sơ đã ký số — không thể sửa" : "Chỉnh sửa hồ sơ"}
+                            type="text"
                             disabled={isSigned}
-                            className={`p-1 rounded transition-colors ${
+                            className={`!p-1 !rounded ${
                               isSigned
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
+                                ? "!text-slate-300 cursor-not-allowed"
+                                : "!text-slate-500 hover:!text-blue-600 hover:!bg-blue-50 cursor-pointer"
                             }`}
-                            title={
-                              isSigned
-                                ? "Hồ sơ đã ký số — không thể sửa"
-                                : "Chỉnh sửa hồ sơ"
-                            }
-                          >
-                            {isSigned ? (
-                              <Lock size={12} />
-                            ) : (
-                              <Edit2 size={13} />
-                            )}
-                          </button>
+                            onClick={() => !isSigned && onEdit(item)}
+                          />
 
                           {/* Xóa */}
-                          <button
-                            type="button"
-                            onClick={() => !isSigned && onDelete(item)}
+                          <IconButton
+                            icon={<Trash2 size={13} />}
+                            tooltip={isSigned ? "Hồ sơ đã ký số — không thể xóa" : "Xóa hồ sơ"}
+                            type="text"
+                            danger
                             disabled={isSigned}
-                            className={`p-1 rounded transition-colors ${
+                            className={`!p-1 !rounded ${
                               isSigned
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                                ? "!text-slate-300 cursor-not-allowed"
+                                : "!text-slate-500 hover:!text-rose-600 hover:!bg-rose-50 cursor-pointer"
                             }`}
-                            title={
-                              isSigned
-                                ? "Hồ sơ đã ký số — không thể xóa"
-                                : "Xóa hồ sơ"
-                            }
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                            onClick={() => !isSigned && onDelete(item)}
+                          />
                         </div>
                       </td>
                     </tr>

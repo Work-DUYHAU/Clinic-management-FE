@@ -17,7 +17,7 @@ import type {
   TtXml1DieuChinhItem,
 } from "../../../../types/hs09DieuChinhTypes";
 import { SO_BANG_XML_MAP } from "../../../../utils/constants/hs09DieuChinhConstants";
-import { Modal } from "../../../../shared/components";
+import { Button, Modal } from "../../../../shared/components";
 import {
   formatCurrencyVnd,
   formatYmdHmDisplay,
@@ -438,17 +438,14 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({
               <span className="text-xs font-bold text-blue-700">
                 Khối &lt;TT_HOSO&gt; cho LK: {item.ttXml1.maLk}
               </span>
-              <button
+              <Button
+                variant="neutral"
+                size="small"
+                icon={copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                 onClick={handleCopyXmlSnippet}
-                className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-sm text-xs font-semibold cursor-pointer"
               >
-                {copied ? (
-                  <Check size={13} className="text-emerald-600" />
-                ) : (
-                  <Copy size={13} />
-                )}
-                <span>{copied ? "Đã chép" : "Sao chép XML"}</span>
-              </button>
+                {copied ? "Đã chép" : "Sao chép XML"}
+              </Button>
             </div>
             <pre className="p-3 bg-slate-900 text-slate-100 rounded-sm overflow-x-auto text-[11px] font-mono leading-relaxed max-h-[300px]">
               {renderHs09ItemXml(item)}
@@ -462,12 +459,12 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({
           <span className="text-[11px] text-slate-400 font-mono">
             ID: {item.id}
           </span>
-          <button
+          <Button
+            variant="neutral"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-sm text-xs font-semibold cursor-pointer"
           >
             Đóng
-          </button>
+          </Button>
         </div>
       }
     </Modal>

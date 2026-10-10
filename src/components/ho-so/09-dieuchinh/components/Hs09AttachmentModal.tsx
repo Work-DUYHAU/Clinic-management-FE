@@ -11,7 +11,7 @@ import type {
   TaiLieuDinhKemItem,
 } from "../../../../types/hs09DieuChinhTypes";
 import { useToast } from "../../../../context/ToastContext";
-import { Modal, Select } from "../../../../shared/components";
+import { Button, IconButton, Modal, Select } from "../../../../shared/components";
 import {
   validateAttachmentFile,
   readFileAsDataUrl,
@@ -186,7 +186,7 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
       width={720}
       title={
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold">
+          <div className="w-8 h-8 rounded bg-teal-600 text-white flex items-center justify-center font-bold">
             <Paperclip size={17} />
           </div>
           <div>
@@ -205,7 +205,7 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
       <div className="p-5 overflow-y-auto space-y-4 text-xs">
         {/* Upload Box (chỉ cho phép khi chưa gửi cổng) */}
         {!isSent ? (
-          <div className="bg-teal-50/50 border border-teal-200 rounded-xl p-4 space-y-3">
+          <div className="bg-teal-50/50 border border-teal-200 rounded-lg p-4 space-y-3">
             <span className="font-bold text-teal-900 block text-xs uppercase">
               Thêm tài liệu chứng minh mới
             </span>
@@ -238,24 +238,24 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
                   type="file"
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
                   onChange={handleFileChange}
-                  className="w-full h-8 flex items-center text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-teal-600 file:text-white hover:file:bg-teal-700 cursor-pointer"
+                  className="w-full h-8 flex items-center text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-bold file:bg-teal-600 file:text-white hover:file:bg-teal-700 cursor-pointer"
                 />
               </div>
             </div>
 
             {selectedFile && (
-              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-teal-100">
+              <div className="flex items-center justify-between bg-white px-3 py-2 rounded border border-teal-100">
                 <span className="truncate font-medium text-slate-800">
                   {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)}{" "}
                   KB)
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="teal"
+                  size="small"
                   onClick={handleUpload}
-                  className="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-md text-xs cursor-pointer shadow-xs"
                 >
                   Lưu File
-                </button>
+                </Button>
               </div>
             )}
 
@@ -265,7 +265,7 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
             </p>
           </div>
         ) : (
-          <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-slate-600 flex items-center gap-2">
+          <div className="bg-slate-100 border border-slate-200 rounded-lg p-3 text-slate-600 flex items-center gap-2">
             <AlertCircle size={16} className="text-amber-600 shrink-0" />
             <span>
               Hồ sơ đã gửi giám định — Không thể thêm hoặc xóa file đính kèm.
@@ -280,7 +280,7 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
           </h4>
 
           {normalizedAttachments.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-slate-400">
+            <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-slate-400">
               Chưa có tài liệu chứng minh nào được đính kèm
             </div>
           ) : (
@@ -288,7 +288,7 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
               {normalizedAttachments.map((att, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100/60 transition-colors"
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200 hover:bg-slate-100/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
@@ -306,23 +306,22 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                    <button
-                      type="button"
+                    <Button
+                      variant="sky"
+                      size="small"
+                      icon={<Download size={12} />}
                       onClick={() => handleDownloadAttachment(att)}
-                      className="px-2.5 py-1 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
                       title="Tải xuống tài liệu này"
                     >
-                      <Download size={12} /> Tải xuống
-                    </button>
+                      Tải xuống
+                    </Button>
                     {!isSent && (
-                      <button
-                        type="button"
+                      <IconButton
+                        icon={<Trash2 size={14} />}
+                        tooltip="Xóa tài liệu đính kèm"
+                        danger
                         onClick={() => handleDeleteAttachment(idx)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                        title="Xóa tài liệu đính kèm"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      />
                     )}
                   </div>
                 </div>
@@ -333,13 +332,9 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
       </div>
       {
         <div className="flex justify-end w-full">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs rounded-lg cursor-pointer"
-          >
+          <Button variant="neutral" onClick={onClose}>
             Đóng
-          </button>
+          </Button>
         </div>
       }
     </Modal>

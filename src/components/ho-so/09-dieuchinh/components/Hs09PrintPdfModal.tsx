@@ -5,7 +5,7 @@ import {
   formatCurrencyVnd,
   formatYmdHmDisplay,
 } from "../../../../utils/shared/excelXmlShared";
-import { Modal } from "../../../../shared/components";
+import { Button, Modal } from "../../../../shared/components";
 
 interface Hs09PrintPdfModalProps {
   isOpen: boolean;
@@ -265,12 +265,13 @@ export const Hs09PrintPdfModal: React.FC<Hs09PrintPdfModalProps> = ({
       </div>
       {
         <div className="flex items-center justify-end gap-2 w-full print:hidden">
-          <button
+          <Button
+            variant="print"
+            icon={<Printer size={14} />}
             onClick={handlePrint}
-            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <Printer size={14} /> In Mẫu 09/BH
-          </button>
+            In Mẫu 09/BH
+          </Button>
         </div>
       }
     </Modal>
