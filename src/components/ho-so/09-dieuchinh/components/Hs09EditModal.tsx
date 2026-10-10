@@ -23,7 +23,7 @@ import {
   DEFAULT_MA_CSKCB,
   getTodayYmd,
 } from "../../../../utils/shared/excelXmlShared";
-import { Modal, Select } from "../../../../shared/components";
+import { Button, IconButton, Modal, Select } from "../../../../shared/components";
 import { useToast } from "../../../../context/ToastContext";
 import {
   readAttachmentRecord,
@@ -158,6 +158,60 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
 
   const handleRemoveAttachment = (idx: number) => {
     setTaiLieuDinhKem((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAddXml1 = () => {
+    setDsXml1DieuChinh((p) => [
+      ...p,
+      {
+        stt: p.length + 1,
+        truongTtGoc: "",
+        ttGoc: "",
+        truongTtDieuChinh: "",
+        ttDieuChinh: "",
+        lyDoDieuChinh: "",
+      },
+    ]);
+  };
+
+  const handleRemoveXml1 = (idx: number) => {
+    setDsXml1DieuChinh((p) => p.filter((_, i) => i !== idx));
+  };
+
+  const handleAddChiPhi = () => {
+    setDsChiPhiDieuChinh((p) => [
+      ...p,
+      {
+        stt: p.length + 1,
+        soBangXml: 3,
+        idCp: "",
+        sttXml: p.length + 1,
+        ngayYl: "",
+        trangThai: 1,
+        truongTtGoc: "",
+        ttGoc: "",
+        tuChoi: "",
+        truongTtDieuChinh: "",
+        ttDieuChinh: "",
+        lyDoDieuChinh: "",
+      },
+    ]);
+  };
+
+  const handleRemoveChiPhi = (idx: number) => {
+    setDsChiPhiDieuChinh((p) => p.filter((_, i) => i !== idx));
+  };
+
+  const updateXml1Row = (idx: number, patch: Partial<TtXml1DieuChinhItem>) => {
+    setDsXml1DieuChinh((prev) =>
+      prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)),
+    );
+  };
+
+  const updateChiPhiRow = (idx: number, patch: Partial<ChiPhiDieuChinhItem>) => {
+    setDsChiPhiDieuChinh((prev) =>
+      prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)),
+    );
   };
 
   const handleSave = () => {
@@ -454,25 +508,14 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
               <span className="text-[11px] font-bold text-blue-700 uppercase">
                 Danh sách thẻ hành chính điều chỉnh
               </span>
-              <button
-                type="button"
-                onClick={() =>
-                  setDsXml1DieuChinh((p) => [
-                    ...p,
-                    {
-                      stt: p.length + 1,
-                      truongTtGoc: "",
-                      ttGoc: "",
-                      truongTtDieuChinh: "",
-                      ttDieuChinh: "",
-                      lyDoDieuChinh: "",
-                    },
-                  ])
-                }
-                className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-sm font-bold text-xs cursor-pointer"
+              <Button
+                variant="soft-blue"
+                size="small"
+                icon={<Plus size={13} />}
+                onClick={handleAddXml1}
               >
-                <Plus size={13} /> Thêm Thẻ XML1
-              </button>
+                Thêm Thẻ XML1
+              </Button>
             </div>
             {dsXml1DieuChinh.length === 0 ? (
               <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-sm border border-dashed border-slate-200">
@@ -492,17 +535,10 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         placeholder="vd: MA_BENH_CHINH"
                         value={item.truongTtGoc}
                         onChange={(v) =>
-                          setDsXml1DieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx
-                                ? {
-                                    ...it,
-                                    truongTtGoc: v,
-                                    truongTtDieuChinh: v,
-                                  }
-                                : it,
-                            ),
-                          )
+                          updateXml1Row(idx, {
+                            truongTtGoc: v,
+                            truongTtDieuChinh: v,
+                          })
                         }
                         mono
                         bold
@@ -513,13 +549,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="Giá Trị Cũ"
                         placeholder="Giá trị cũ"
                         value={item.ttGoc}
-                        onChange={(v) =>
-                          setDsXml1DieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, ttGoc: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateXml1Row(idx, { ttGoc: v })}
                         mono
                       />
                     </div>
@@ -546,42 +576,24 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="Giá Trị Mới"
                         placeholder="Giá trị mới"
                         value={item.ttDieuChinh}
-                        onChange={(v) =>
-                          setDsXml1DieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, ttDieuChinh: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateXml1Row(idx, { ttDieuChinh: v })}
                         mono
                         bold
                       />
                     </div>
                     <div className="sm:col-span-1 flex justify-end self-start sm:pt-0">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setDsXml1DieuChinh((p) =>
-                            p.filter((_, i) => i !== idx),
-                          )
-                        }
-                        className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <IconButton
+                        icon={<Trash2 size={14} />}
+                        danger
+                        onClick={() => handleRemoveXml1(idx)}
+                      />
                     </div>
                     <div className="sm:col-span-12">
                       <FormField
                         label="Lý Do Điều Chỉnh"
                         placeholder="Bắt buộc: nhập lý do điều chỉnh"
                         value={item.lyDoDieuChinh}
-                        onChange={(v) =>
-                          setDsXml1DieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, lyDoDieuChinh: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateXml1Row(idx, { lyDoDieuChinh: v })}
                         required
                       />
                     </div>
@@ -598,31 +610,14 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
               <span className="text-[11px] font-bold text-blue-700 uppercase">
                 Danh sách chi phí điều chỉnh
               </span>
-              <button
-                type="button"
-                onClick={() =>
-                  setDsChiPhiDieuChinh((p) => [
-                    ...p,
-                    {
-                      stt: p.length + 1,
-                      soBangXml: 3,
-                      idCp: "",
-                      sttXml: p.length + 1,
-                      ngayYl: "",
-                      trangThai: 1,
-                      truongTtGoc: "",
-                      ttGoc: "",
-                      tuChoi: "",
-                      truongTtDieuChinh: "",
-                      ttDieuChinh: "",
-                      lyDoDieuChinh: "",
-                    },
-                  ])
-                }
-                className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-sm font-bold text-xs cursor-pointer"
+              <Button
+                variant="soft-indigo"
+                size="small"
+                icon={<Plus size={13} />}
+                onClick={handleAddChiPhi}
               >
-                <Plus size={13} /> Thêm Mục Chi Phí
-              </button>
+                Thêm Mục Chi Phí
+              </Button>
             </div>
             {dsChiPhiDieuChinh.length === 0 ? (
               <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-sm border border-dashed border-slate-200">
@@ -640,17 +635,11 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                       <span>
                         Mục #{idx + 1} (Bảng XML{cp.soBangXml})
                       </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.filter((_, i) => i !== idx),
-                          )
-                        }
-                        className="text-slate-400 hover:text-rose-600 cursor-pointer"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <IconButton
+                        icon={<Trash2 size={13} />}
+                        danger
+                        onClick={() => handleRemoveChiPhi(idx)}
+                      />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                       <div>
@@ -666,13 +655,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                             { value: 4, label: "XML4 (CLS)" },
                             { value: 5, label: "XML5 (Diễn biến)" },
                           ]}
-                          onChange={(v) =>
-                            setDsChiPhiDieuChinh((p) =>
-                              p.map((it, i) =>
-                                i === idx ? { ...it, soBangXml: Number(v) } : it,
-                              ),
-                            )
-                          }
+                          onChange={(v) => updateChiPhiRow(idx, { soBangXml: Number(v) })}
                           containerClassName="mb-0"
                           className="!text-xs"
                         />
@@ -681,13 +664,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="ID Chi Phí"
                         placeholder="vd: CP-01"
                         value={cp.idCp}
-                        onChange={(v) =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, idCp: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateChiPhiRow(idx, { idCp: v })}
                         mono
                       />
                       <div>
@@ -701,13 +678,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                             { value: 2, label: "2 — Sửa thông tin" },
                             { value: 1, label: "1 — Thu hồi riêng dòng" },
                           ]}
-                          onChange={(v) =>
-                            setDsChiPhiDieuChinh((p) =>
-                              p.map((it, i) =>
-                                i === idx ? { ...it, trangThai: Number(v) } : it,
-                              ),
-                            )
-                          }
+                          onChange={(v) => updateChiPhiRow(idx, { trangThai: Number(v) })}
                           containerClassName="mb-0"
                           className="!text-xs"
                         />
@@ -717,17 +688,10 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         placeholder="vd: DON_GIA"
                         value={cp.truongTtGoc}
                         onChange={(v) =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx
-                                ? {
-                                    ...it,
-                                    truongTtGoc: v,
-                                    truongTtDieuChinh: v,
-                                  }
-                                : it,
-                            ),
-                          )
+                          updateChiPhiRow(idx, {
+                            truongTtGoc: v,
+                            truongTtDieuChinh: v,
+                          })
                         }
                         mono
                       />
@@ -735,13 +699,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="Giá Trị Cũ"
                         placeholder="Giá trị cũ"
                         value={cp.ttGoc}
-                        onChange={(v) =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, ttGoc: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateChiPhiRow(idx, { ttGoc: v })}
                         mono
                       />
                       {/* TRUONG_TT_DIEUCHINH: auto = TRUONG_TT_GOC */}
@@ -764,13 +722,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="Giá Trị Mới"
                         placeholder="Giá trị mới"
                         value={cp.ttDieuChinh}
-                        onChange={(v) =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, ttDieuChinh: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateChiPhiRow(idx, { ttDieuChinh: v })}
                         mono
                         bold
                       />
@@ -785,13 +737,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                         label="Lý Do Điều Chỉnh"
                         placeholder="Bắt buộc: nhập lý do"
                         value={cp.lyDoDieuChinh}
-                        onChange={(v) =>
-                          setDsChiPhiDieuChinh((p) =>
-                            p.map((it, i) =>
-                              i === idx ? { ...it, lyDoDieuChinh: v } : it,
-                            ),
-                          )
-                        }
+                        onChange={(v) => updateChiPhiRow(idx, { lyDoDieuChinh: v })}
                         required
                       />
                     </div>
@@ -885,14 +831,12 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
                             {docName}
                           </span>
                         </div>
-                        <button
-                          type="button"
+                        <IconButton
+                          icon={<Trash2 size={13} />}
+                          tooltip="Xóa tệp đính kèm này"
+                          danger
                           onClick={() => handleRemoveAttachment(dIdx)}
-                          className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
-                          title="Xóa tệp đính kèm này"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        />
                       </div>
                     );
                   })}
@@ -904,21 +848,16 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
       </div>
       {
         <div className="flex items-center justify-between w-full">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-sm text-xs font-semibold cursor-pointer"
-          >
+          <Button variant="neutral" onClick={onClose}>
             Hủy
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Check size={14} />}
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1677ff] hover:bg-blue-600 text-white rounded-sm text-xs font-semibold shadow-xs cursor-pointer"
           >
-            <Check size={14} />{" "}
-            <span>{initialData ? "Lưu Thay Đổi" : "Tạo Hồ Sơ 09"}</span>
-          </button>
+            {initialData ? "Lưu Thay Đổi" : "Tạo Hồ Sơ 09"}
+          </Button>
         </div>
       }
     </Modal>

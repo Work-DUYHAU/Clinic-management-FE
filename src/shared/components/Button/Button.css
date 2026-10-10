@@ -1,0 +1,220 @@
+/* ==========================================================================
+   Shared Button Styles (Thư viện phong cách nút bấm dùng chung toàn hệ thống)
+   ========================================================================== */
+
+/* Base common layout for custom styled buttons */
+.ant-btn.btn-primary,
+.ant-btn.btn-success,
+.ant-btn.btn-indigo,
+.ant-btn.btn-warning,
+.ant-btn.btn-danger,
+.ant-btn.btn-excel,
+.ant-btn.btn-sky,
+.ant-btn.btn-teal,
+.ant-btn.btn-neutral,
+.ant-btn.btn-soft-indigo,
+.ant-btn.btn-soft-blue,
+.ant-btn.btn-print {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.375rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+  transition: all 0.15s ease-in-out !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+/* 1. Primary - Xanh lam thương hiệu (Thêm mới, Lưu biểu mẫu chính) */
+.btn-primary,
+.ant-btn.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  border: 1px solid #1d4ed8 !important;
+  box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.25) !important;
+}
+.btn-primary:hover,
+.ant-btn.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+  color: #ffffff !important;
+  border-color: #1e40af !important;
+  box-shadow: 0 2px 4px 0 rgba(37, 99, 235, 0.35) !important;
+}
+
+/* 2. Success - Xanh lục ngọc (Gửi giám định, Xác nhận thành công) */
+.btn-success,
+.ant-btn.btn-success {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #ffffff !important;
+  border: 1px solid #047857 !important;
+  box-shadow: 0 1px 2px 0 rgba(5, 150, 105, 0.25) !important;
+}
+.btn-success:hover,
+.ant-btn.btn-success:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  color: #ffffff !important;
+  border-color: #065f46 !important;
+  box-shadow: 0 2px 4px 0 rgba(5, 150, 105, 0.35) !important;
+}
+
+/* 3. Indigo - Tím chàm công nghệ (Ký số điện tử SmartCA/USB) */
+.btn-indigo,
+.ant-btn.btn-indigo {
+  background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+  color: #ffffff !important;
+  border: 1px solid #4338ca !important;
+  box-shadow: 0 1px 2px 0 rgba(79, 70, 229, 0.25) !important;
+}
+.btn-indigo:hover,
+.ant-btn.btn-indigo:hover {
+  background: linear-gradient(135deg, #4338ca, #3730a3) !important;
+  color: #ffffff !important;
+  border-color: #3730a3 !important;
+  box-shadow: 0 2px 4px 0 rgba(79, 70, 229, 0.35) !important;
+}
+.ant-btn.btn-indigo:disabled,
+.ant-btn.btn-indigo[disabled] {
+  background: #f1f5f9 !important;
+  color: #94a3b8 !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* 4. Warning - Vàng cam (Hủy ký số, Cảnh báo nghiệp vụ) */
+.btn-warning,
+.ant-btn.btn-warning {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fcd34d !important;
+}
+.btn-warning:hover,
+.ant-btn.btn-warning:hover {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+}
+
+/* 5. Danger - Đỏ hồng (Hủy phiên làm việc, Xóa dữ liệu) */
+.btn-danger,
+.ant-btn.btn-danger {
+  background: #fff1f2 !important;
+  color: #be123c !important;
+  border: 1px solid #fecdd3 !important;
+}
+.btn-danger:hover,
+.ant-btn.btn-danger:hover {
+  background: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: #fda4af !important;
+}
+.ant-btn.btn-danger:disabled,
+.ant-btn.btn-danger[disabled] {
+  background: #f8fafc !important;
+  color: #cbd5e1 !important;
+  border-color: #f1f5f9 !important;
+  cursor: not-allowed !important;
+}
+
+/* 6. Excel - Xanh lá nhã nhặn (Xuất bảng kê, Đọc bảng tính) */
+.btn-excel,
+.ant-btn.btn-excel {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+}
+.btn-excel:hover,
+.ant-btn.btn-excel:hover {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  border-color: #86efac !important;
+}
+
+/* 7. Sky - Xanh da trời tươi mới (Đính kèm tài liệu, Mở file) */
+.btn-sky,
+.ant-btn.btn-sky {
+  background: #f0f9ff !important;
+  color: #0369a1 !important;
+  border: 1px solid #bae6fd !important;
+}
+.btn-sky:hover,
+.ant-btn.btn-sky:hover {
+  background: #e0f2fe !important;
+  color: #075985 !important;
+  border-color: #7dd3fc !important;
+}
+
+/* 8. Teal - Xanh mòng két (Lưu tài liệu, Chứng chỉ) */
+.btn-teal,
+.ant-btn.btn-teal {
+  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+  color: #ffffff !important;
+  border: 1px solid #0f766e !important;
+  box-shadow: 0 1px 2px 0 rgba(13, 148, 136, 0.25) !important;
+}
+.btn-teal:hover,
+.ant-btn.btn-teal:hover {
+  background: linear-gradient(135deg, #0f766e, #115e59) !important;
+  color: #ffffff !important;
+  border-color: #115e59 !important;
+}
+
+/* 9. Neutral - Xám Slate thanh lịch (Đóng modal, Hủy bỏ, Bỏ chọn) */
+.btn-neutral,
+.ant-btn.btn-neutral {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.btn-neutral:hover,
+.ant-btn.btn-neutral:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 10. Soft Indigo - Nền xanh tím dịu (Thêm mục chi phí, Thêm dòng) */
+.btn-soft-indigo,
+.ant-btn.btn-soft-indigo {
+  background: #eef2ff !important;
+  color: #4338ca !important;
+  border: 1px solid #c7d2fe !important;
+}
+.btn-soft-indigo:hover,
+.ant-btn.btn-soft-indigo:hover {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #a5b4fc !important;
+}
+
+/* 11. Soft Blue - Nền xanh lam dịu (Thêm thẻ XML1, Thêm mục mới) */
+.btn-soft-blue,
+.ant-btn.btn-soft-blue {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+.btn-soft-blue:hover,
+.ant-btn.btn-soft-blue:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+/* 12. Print - Xanh dương đậm (In biểu mẫu, Xem bản in) */
+.btn-print,
+.ant-btn.btn-print {
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  color: #ffffff !important;
+  border: 1px solid #0369a1 !important;
+  box-shadow: 0 1px 2px 0 rgba(2, 132, 199, 0.25) !important;
+}
+.btn-print:hover,
+.ant-btn.btn-print:hover {
+  background: linear-gradient(135deg, #0369a1, #075985) !important;
+  color: #ffffff !important;
+  border-color: #075985 !important;
+}

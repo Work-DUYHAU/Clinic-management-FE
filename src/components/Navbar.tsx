@@ -15,6 +15,7 @@ import {
 import { useToast } from "../context/ToastContext";
 import type { MainTabType, HoSoTabType } from "./Sidebar";
 import type { CatalogTab } from "../pages/DanhMucPage";
+import { Badge, IconButton } from "../shared/components";
 
 const CATALOG_CONFIG: Record<
   CatalogTab,
@@ -69,6 +70,90 @@ interface NavbarProps {
   catalogTab?: CatalogTab;
 }
 
+type ColorScheme = "blue" | "indigo" | "amber";
+
+interface HeaderMeta {
+  title: string;
+  sub: string;
+  badge: string;
+  icon: React.ElementType;
+  colorScheme: ColorScheme;
+}
+
+const COLOR_STYLES: Record<
+  ColorScheme,
+  {
+    iconWrap: string;
+    badgeBg: string;
+    badgeText: string;
+    badgeBorder: string;
+  }
+> = {
+  blue: {
+    iconWrap: "bg-blue-50/80 text-blue-600 border-blue-200/80",
+    badgeBg: "#eff6ff",
+    badgeText: "#1d4ed8",
+    badgeBorder: "#bfdbfe",
+  },
+  indigo: {
+    iconWrap: "bg-indigo-50/80 text-indigo-600 border-indigo-200/80",
+    badgeBg: "#eef2ff",
+    badgeText: "#4338ca",
+    badgeBorder: "#c7d2fe",
+  },
+  amber: {
+    iconWrap: "bg-amber-50/80 text-amber-600 border-amber-200/80",
+    badgeBg: "#fffbeb",
+    badgeText: "#b45309",
+    badgeBorder: "#fde68a",
+  },
+};
+
+function getHeaderMeta(
+  activeTab: MainTabType,
+  hoSoTab: HoSoTabType,
+  catalogTab: CatalogTab,
+): HeaderMeta {
+  if (activeTab === "danh-muc") {
+    const catalog = CATALOG_CONFIG[catalogTab] || CATALOG_CONFIG["01_bpcm"];
+    return {
+      title: catalog.title,
+      sub: catalog.sub,
+      badge: catalog.badge,
+      icon: catalog.icon,
+      colorScheme: "blue",
+    };
+  }
+
+  if (activeTab === "chung-tu") {
+    return {
+      title: "Phân Hệ: Hồ Sơ Chứng Từ Điện Tử",
+      sub: "Nộp hồ sơ CT01, CT07, Giấy báo tử, Giấy chứng sinh chuẩn liên thông Cổng BHXH",
+      badge: "TT 25 & BHXH 2025",
+      icon: FileSignature,
+      colorScheme: "indigo",
+    };
+  }
+
+  if (hoSoTab === "01_tonghop") {
+    return {
+      title: "Bộ 1: Bảng Tổng Hợp Chi Phí KCB",
+      sub: "Giám sát tổng hợp chi phí KCB BHYT, kiểm tra thẻ và kết xuất XML 130",
+      badge: "Mẫu 01/BH",
+      icon: FileText,
+      colorScheme: "blue",
+    };
+  }
+
+  return {
+    title: "Bộ 2: Xử Lý Xuất Toán BHYT",
+    sub: "Tiếp nhận thông báo xuất toán từ Cổng BHXH, lập giải trình và theo dõi thu hồi",
+    badge: "Mẫu 09/BH",
+    icon: ShieldAlert,
+    colorScheme: "amber",
+  };
+}
+
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab = "ho-so",
   hoSoTab = "01_tonghop",
@@ -83,94 +168,52 @@ export const Navbar: React.FC<NavbarProps> = ({
     day: "numeric",
   });
 
+  const meta = getHeaderMeta(activeTab, hoSoTab, catalogTab);
+  const colorStyle = COLOR_STYLES[meta.colorScheme];
+  const IconComponent = meta.icon;
+  const handleNotificationClick = () => {
+    toast.info(
+      "Hệ thống kiểm tra định kỳ: Không phát hiện cảnh báo lỗi mới từ Cổng Giám định BHYT.",
+      "Cổng Tiếp Nhận BHXH",
+    );
+  };
+
   return (
     <header className="h-16 bg-white border-b border-slate-200/90 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Module Title & Breadcrumbs */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        {activeTab === "danh-muc" ? (
-          (() => {
-            const currentCatalog =
-              CATALOG_CONFIG[catalogTab] || CATALOG_CONFIG["01_bpcm"];
-            const CatalogIcon = currentCatalog.icon;
-            return (
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-md bg-blue-50/80 text-blue-600 border border-blue-200/80 flex-shrink-0">
-                  <CatalogIcon size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span className="text-sm font-bold text-slate-900 tracking-tight">
-                      {currentCatalog.title}
-                    </span>
-                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
-                      {currentCatalog.badge}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
-                    {currentCatalog.sub}
-                  </span>
-                </div>
-              </div>
-            );
-          })()
-        ) : hoSoTab === "01_tonghop" ? (
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-md bg-blue-50/80 text-blue-600 border border-blue-200/80 flex-shrink-0">
-              <FileText size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-900 tracking-tight">
-                  Bộ 1: Bảng Tổng Hợp Chi Phí KCB
-                </span>
-                <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
-                  Mẫu 01/BH
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
-                Giám sát tổng hợp chi phí KCB BHYT, kiểm tra thẻ và kết xuất XML 130
-              </span>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`p-2 rounded-md border flex-shrink-0 ${colorStyle.iconWrap}`}
+          >
+            <IconComponent size={18} />
           </div>
-        ) : activeTab === "chung-tu" ? (
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-md bg-indigo-50/80 text-indigo-600 border border-indigo-200/80 flex-shrink-0">
-              <FileSignature size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-900 tracking-tight">
-                  Phân Hệ: Hồ Sơ Chứng Từ Điện Tử
-                </span>
-                <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
-                  TT 25 & BHXH 2025
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
-                Nộp hồ sơ CT01, CT07, Giấy báo tử, Giấy chứng sinh chuẩn liên thông Cổng BHXH
+          <div>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-sm font-bold text-slate-900 tracking-tight">
+                {meta.title}
               </span>
+              <Badge
+                count={meta.badge}
+                style={{
+                  backgroundColor: colorStyle.badgeBg,
+                  color: colorStyle.badgeText,
+                  border: `1px solid ${colorStyle.badgeBorder}`,
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  fontFamily: "monospace",
+                  padding: "0 6px",
+                  height: "20px",
+                  lineHeight: "18px",
+                  borderRadius: "3px",
+                }}
+              />
             </div>
+            <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
+              {meta.sub}
+            </span>
           </div>
-        ) : (
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-md bg-amber-50/80 text-amber-600 border border-amber-200/80 flex-shrink-0">
-              <ShieldAlert size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm font-bold text-slate-900 tracking-tight">
-                  Bộ 2: Xử Lý Xuất Toán BHYT
-                </span>
-                <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-sm flex-shrink-0 font-mono">
-                  Mẫu 09/BH
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
-                Tiếp nhận thông báo xuất toán từ Cổng BHXH, lập giải trình và theo dõi thu hồi
-              </span>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Right Gateway Status & Actions */}
@@ -180,26 +223,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Calendar size={13} className="text-slate-500" />
           <span>{today}</span>
         </div>
-
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50/90 border border-emerald-200 rounded-md text-xs font-semibold text-emerald-800">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Cổng BHXH: Hoạt động</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            toast.info(
-              "Hệ thống kiểm tra định kỳ: Không phát hiện cảnh báo lỗi mới từ Cổng Giám định BHYT.",
-              "Cổng Tiếp Nhận BHXH",
-            )
-          }
-          className="relative p-2 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-          title="Thông báo Cổng Giám định"
-        >
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-        </button>
+        {/* Notification Bell */}
+        <Badge dot offset={[-3, 3]} color="#f43f5e">
+          <IconButton
+            icon={<Bell size={16} />}
+            tooltip="Thông báo Cổng Giám định BHYT"
+            tooltipPlacement="bottom"
+            type="default"
+            className="!w-9 !h-9 !p-0 !inline-flex !items-center !justify-center !rounded-md !border-slate-200 hover:!bg-slate-50 !text-slate-600 hover:!text-slate-900 shadow-xs cursor-pointer"
+            onClick={handleNotificationClick}
+          />
+        </Badge>
       </div>
     </header>
   );
