@@ -5,6 +5,7 @@ import {
   ShieldAlert,
   FileText,
   FileSignature,
+  ShieldCheck,
   Building2,
   Users,
   Pill,
@@ -114,6 +115,16 @@ function getHeaderMeta(
   hoSoTab: HoSoTabType,
   catalogTab: CatalogTab,
 ): HeaderMeta {
+  if (activeTab === "ky-so") {
+    return {
+      title: "Ký Hồ Sơ Tổng Hợp",
+      sub: "Tải lên, ký số và gửi hồ sơ tổng hợp đến Cổng Giám định BHXH",
+      badge: "",
+      icon: ShieldCheck,
+      colorScheme: "blue",
+    };
+  }
+
   if (activeTab === "danh-muc") {
     const catalog = CATALOG_CONFIG[catalogTab] || CATALOG_CONFIG["01_bpcm"];
     return {
@@ -193,21 +204,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-sm font-bold text-slate-900 tracking-tight">
                 {meta.title}
               </span>
-              <Badge
-                count={meta.badge}
-                style={{
-                  backgroundColor: colorStyle.badgeBg,
-                  color: colorStyle.badgeText,
-                  border: `1px solid ${colorStyle.badgeBorder}`,
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  fontFamily: "monospace",
-                  padding: "0 6px",
-                  height: "20px",
-                  lineHeight: "18px",
-                  borderRadius: "3px",
-                }}
-              />
+              {meta.badge && (
+                <Badge
+                  count={meta.badge}
+                  style={{
+                    backgroundColor: colorStyle.badgeBg,
+                    color: colorStyle.badgeText,
+                    border: `1px solid ${colorStyle.badgeBorder}`,
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    fontFamily: "monospace",
+                    padding: "0 6px",
+                    height: "20px",
+                    lineHeight: "18px",
+                    borderRadius: "3px",
+                  }}
+                />
+              )}
             </div>
             <span className="text-[11px] text-slate-500 whitespace-nowrap block mt-0.5 font-medium">
               {meta.sub}

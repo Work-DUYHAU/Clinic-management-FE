@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { MainTabType, HoSoTabType } from "../components/Sidebar";
 import type { CatalogTab } from "../pages/DanhMucPage";
 
-const VALID_MAIN_TABS: MainTabType[] = ["danh-muc", "ho-so", "chung-tu"];
+const VALID_MAIN_TABS: MainTabType[] = ["danh-muc", "ho-so", "chung-tu", "ky-so"];
 const VALID_HOSO_TABS: HoSoTabType[] = ["01_tonghop", "09_xuattoan"];
 const VALID_CATALOG_TABS: CatalogTab[] = [
   "01_bpcm",
@@ -66,6 +66,8 @@ function parseHash(hashStr: string): ParsedRoute {
     canonicalHash = `#/ho-so?sub=${hoSoTab}`;
   } else if (activeTab === "chung-tu") {
     canonicalHash = "#/chung-tu";
+  } else if (activeTab === "ky-so") {
+    canonicalHash = "#/ky-so";
   }
 
   const isCanonical =
@@ -126,6 +128,8 @@ export function useAppRouter(): AppRouterState {
         targetHash = `#/ho-so?sub=${targetSub}`;
       } else if (tab === "chung-tu") {
         targetHash = "#/chung-tu";
+      } else if (tab === "ky-so") {
+        targetHash = "#/ky-so";
       }
 
       if (window.location.hash !== targetHash) {
