@@ -1,6 +1,8 @@
 import React from 'react';
 import { Search, Cpu, Edit2, Trash2, Plus, AlertTriangle } from 'lucide-react';
 import type { DmTbytThdvItem } from '../../../../types';
+import { Pagination } from '../../../common';
+import { usePagination } from '../../../../hooks/usePagination';
 
 interface TbytThdvTableProps {
   items: DmTbytThdvItem[];
@@ -19,8 +21,17 @@ export const TbytThdvTable: React.FC<TbytThdvTableProps> = ({
   onEdit,
   onDelete
 }) => {
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems,
+    startIdx,
+    setCurrentPage,
+    setPageSize
+  } = usePagination(items, 20);
+
   return (
-    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
       {/* Table Search & Filter Bar */}
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -61,7 +72,7 @@ export const TbytThdvTable: React.FC<TbytThdvTableProps> = ({
       </div>
 
       {/* Responsive Table with horizontal scroll */}
-      <div className="overflow-x-auto max-h-[600px] relative">
+      <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative table-scrollbar">
         <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[1700px]">
           <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
             <tr>
@@ -91,14 +102,14 @@ export const TbytThdvTable: React.FC<TbytThdvTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={15} className="py-12 text-center text-slate-400">
-                  <Cpu size={32} className="mx-auto mb-2 text-slate-300" />
-                  <p className="font-bold text-sm text-slate-600">Chưa có dữ liệu Thiết Bị Y Tế Thực Hiện DVKT</p>
-                  <p className="text-xs text-slate-400 mt-1">Vui lòng nạp file Excel hoặc bấm "Thêm Thiết Bị" mới</p>
+                <td colSpan={15} className="py-6 sm:py-7 text-center text-slate-400">
+                  <Cpu size={26} className="mx-auto mb-1 text-slate-300" />
+                  <p className="font-bold text-xs text-slate-600">Chưa có dữ liệu Thiết Bị Y Tế Thực Hiện DVKT</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Vui lòng nạp file Excel hoặc bấm "Thêm Thiết Bị" mới</p>
                 </td>
               </tr>
             ) : (
-              items.map((item, idx) => {
+              paginatedItems.map((item, idx) => {
                 const isInvalid = item.isValid === false || (item.errors && item.errors.length > 0);
                 const errorTooltip = item.errors?.join('\n') || 'Dữ liệu chưa hợp lệ';
 
@@ -118,7 +129,7 @@ export const TbytThdvTable: React.FC<TbytThdvTableProps> = ({
                           : 'bg-white group-hover:bg-slate-50 text-slate-400'
                       }`}
                     >
-                      {item.stt || idx + 1}
+                      {item.stt || startIdx + idx + 1}
                     </td>
                     <td
                       className={`py-3 px-3 font-bold sticky left-[52px] z-10 border-r border-slate-200/80 shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)] min-w-[260px] ${
@@ -195,6 +206,18 @@ export const TbytThdvTable: React.FC<TbytThdvTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Bar */}
+      <Pagination
+        currentPage={currentPage}
+        totalItems={items.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[10, 20, 50, 100]}
+        itemLabel="thiết bị KCB"
+        themeColor="blue"
+      />
     </div>
   );
 };

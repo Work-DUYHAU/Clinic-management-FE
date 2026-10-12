@@ -249,8 +249,8 @@ export function parseYmdDate(val: unknown, defaultVal = ""): string {
   }
   const dateToken = str.split(/[\sT]+/)[0];
 
-  if (/[\/\-.]/.test(dateToken)) {
-    const parts = dateToken.split(/[\/\-.]/).map((p) => p.trim());
+  if (/[/\-.]/.test(dateToken)) {
+    const parts = dateToken.split(/[/\-.]/).map((p) => p.trim());
     if (parts.length === 3) {
       const [a, b, c] = parts;
       const candidate =
@@ -411,6 +411,25 @@ export function formatCurrencyDecimals(val?: number): string {
 // ĐỌC WORKBOOK EXCEL
 export function readExcelFile(file: File): Promise<XLSX.WorkBook> {
   return new Promise((resolve, reject) => {
+    if (!file || file.size === 0) {
+      reject(
+        new Error(
+          "Tệp rỗng (0 bytes). Vui lòng chọn tệp bảng tính Excel hợp lệ.",
+        ),
+      );
+      return;
+    }
+
+    const MAX_EXCEL_SIZE = 25 * 1024 * 1024; // 25MB
+    if (file.size > MAX_EXCEL_SIZE) {
+      reject(
+        new Error(
+          `Dung lượng tệp (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá giới hạn 25MB cho phép xử lý trên trình duyệt. Vui lòng chia nhỏ tệp.`,
+        ),
+      );
+      return;
+    }
+
     const isXml =
       file.name.toLowerCase().endsWith(".xml") ||
       file.type === "application/xml" ||
@@ -656,7 +675,7 @@ export function xmlToBase64(xmlString: string): string {
       binary += String.fromCharCode(utf8Bytes[i]);
     }
     return window.btoa(binary);
-  } catch (e) {
+  } catch {
     return window.btoa(unescape(encodeURIComponent(xmlString)));
   }
 }

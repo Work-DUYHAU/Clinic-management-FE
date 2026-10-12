@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -23,6 +23,7 @@ import {
 } from "../../../../utils/shared/excelXmlShared";
 import { getEffectiveHs09TrangThai } from "../../../../utils/hs09RequestTypeResolver";
 import { Pagination } from "../../../common";
+import { usePagination } from "../../../../hooks/usePagination";
 import {
   Select,
   DatePicker,
@@ -32,6 +33,7 @@ import {
 } from "../../../../shared/components";
 import dayjs from "dayjs";
 import { useToast } from "../../../../context/ToastContext";
+import { useHs09TableHandlers } from "../handlers";
 
 const MAX_KY_SO = 10;
 
@@ -109,45 +111,9 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
 }) => {
   const toast = useToast();
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Scroll and Drag-to-scroll logic
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeftPos, setScrollLeftPos] = useState(0);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === "INPUT" ||
-      target.tagName === "BUTTON" ||
-      target.tagName === "SELECT" ||
-      target.closest("button") ||
-      target.closest("input") ||
-      target.closest("a")
-    ) {
-      return;
-    }
-    if (!tableContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - tableContainerRef.current.offsetLeft);
-    setScrollLeftPos(tableContainerRef.current.scrollLeft);
-  };
-
-  const handleMouseLeaveOrUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !tableContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - tableContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    tableContainerRef.current.scrollLeft = scrollLeftPos - walk;
-  };
 
   // Gridview Column Quick Filters (Mục 2.1)
   const [colFilters, setColFilters] = useState({
@@ -195,10 +161,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
       }
       return next.size === previous.size ? previous : next;
     });
-
-    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [items, pageSize]);
+  }, [items]);
 
   const toggleSelect = (item: HoSoDieuChinh09Item) => {
     if (item.tinhTrangGui === 2) return;
@@ -339,97 +302,48 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     onClearSelection?.();
   };
 
-  const paginatedItems = useMemo(() => {
-    const totalPages = Math.max(
-      1,
-      Math.ceil(filteredGridItems.length / pageSize),
-    );
-    const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
-    const start = (validCurrentPage - 1) * pageSize;
-    return filteredGridItems.slice(start, start + pageSize);
-  }, [filteredGridItems, currentPage, pageSize]);
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems,
+    setCurrentPage,
+    setPageSize,
+  } = usePagination(filteredGridItems, 10);
 
-  // Handle Bulk Sign according to Mục 4.2 TT 12/2026/TT-BTC
-  const handleTriggerBulkSign = () => {
-    if (selectedCount === 0 || overLimit) return;
-    const alreadySigned = selectedItemsList.filter((i) => i.ttKySo === 2);
-    if (alreadySigned.length > 0) {
-      toast.warning(
-        "Chỉ được ký số cho các hồ sơ chưa ký (TT_KYSO = 0)! Vui lòng bỏ chọn các hồ sơ đã ký.",
-        "Thông báo",
-      );
-      return;
-    }
-    onBulkSign?.(selectedItemsList);
-  };
-
-  // Handle Send Giam Dinh according to Mục 6 TT 12/2026/TT-BTC
-  const handleTriggerSendGiamDinh = () => {
-    if (selectedCount === 0) {
-      toast.warning("Chưa chọn bản ghi nào!", "Thông báo");
-      return;
-    }
-
-    const hasUnsignedOrSent = selectedItemsList.some(
-      (item) => item.ttKySo !== 2 || item.tinhTrangGui === 2,
-    );
-    if (hasUnsignedOrSent) {
-      toast.error(
-        "Có hồ sơ chưa ký số hoặc hồ sơ đã gửi giám định!",
-        "Không thể gửi",
-      );
-      return;
-    }
-
-    onSendGiamDinh?.(selectedItemsList);
-  };
-
-  // Handle Cancel Session (Hủy phiên làm việc) according to Mục 7 TT 12/2026/TT-BTC
-  const handleTriggerHuyPhien = () => {
-    if (selectedCount === 0) {
-      toast.warning("Chưa chọn bản ghi nào!", "Thông báo");
-      return;
-    }
-
-    // Điều kiện: Tất cả hồ sơ được chọn bắt buộc phải có TT_KYSO = 0
-    const hasSigned = selectedItemsList.some((item) => item.ttKySo === 2);
-    if (hasSigned) {
-      toast.error(
-        "Tất cả hồ sơ được chọn bắt buộc phải có TT_KYSO = 0 (Chưa ký số)! Vui lòng bỏ chọn các hồ sơ đã ký.",
-        "Lỗi hủy phiên",
-      );
-      return;
-    }
-
-    onHuyPhien?.(selectedItemsList);
-  };
-
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearchChange(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleKyQtFilterChange = (val: unknown) => {
-    onFilterKyQtChange?.(val as string);
-  };
-
-  const handleTinhTrangGuiFilterChange = (val: unknown) => {
-    onFilterTinhTrangGuiChange?.(val as string);
-  };
-
-  const handleDateRangeFilterChange = (dates: any) => {
-    if (!dates || !dates[0] || !dates[1]) {
-      onFilterTuNgayChange?.("");
-      onFilterDenNgayChange?.("");
-    } else {
-      onFilterTuNgayChange?.(dates[0].format("YYYY-MM-DD"));
-      onFilterDenNgayChange?.(dates[1].format("YYYY-MM-DD"));
-    }
-  };
-
-  const handleLoaiThaoTacFilterChange = (val: unknown) => {
-    onFilterLoaiThaoTacChange?.(val as string);
-  };
+  const {
+    tableContainerRef,
+    isDragging,
+    handleMouseDown,
+    handleMouseLeaveOrUp,
+    handleMouseMove,
+    handleSearchInputChange,
+    handleKyQtFilterChange,
+    handleTinhTrangGuiFilterChange,
+    handleLoaiThaoTacFilterChange,
+    handleDateRangeFilterChange,
+    handleTriggerBulkSign,
+    handleTriggerSendGiamDinh,
+    handleTriggerHuyPhien,
+    handleTriggerExportSelected,
+    handleTriggerUnsign,
+  } = useHs09TableHandlers({
+    items,
+    selectedItemsList,
+    selectedCount,
+    overLimit,
+    onSearchChange,
+    onFilterKyQtChange,
+    onFilterTinhTrangGuiChange,
+    onFilterLoaiThaoTacChange,
+    onFilterTuNgayChange,
+    onFilterDenNgayChange,
+    onBulkSign,
+    onSendGiamDinh,
+    onHuyPhien,
+    onExportExcel,
+    onUnsign,
+    setCurrentPage,
+  });
 
   const handleResetMainFilters = () => {
     onFilterKyQtChange?.("all");
@@ -445,13 +359,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
     else toast.warning("Chưa có hồ sơ nào để đính kèm!");
   };
 
-  const handleUnsignClick = () => {
-    onUnsign?.(selectedSignedList);
-  };
 
-  const handleExportExcelClick = () => {
-    onExportExcel?.(filteredGridItems);
-  };
 
   const hasAnyColumnFilter = Object.entries(colFilters).some(([k, v]) =>
     k === "trangThai" || k === "kySo" || k === "gdDuyet" ? v !== "all" : Boolean(v)
@@ -645,7 +553,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
             <Button
               variant="warning"
               icon={<RotateCcw size={13} />}
-              onClick={handleUnsignClick}
+              onClick={() => handleTriggerUnsign(selectedSignedList)}
               title="Hủy chữ ký số để chỉnh sửa lại hồ sơ"
             >
               Hủy ký số ({selectedSignedList.length})
@@ -656,7 +564,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           <Button
             variant="excel"
             icon={<FileSpreadsheet size={13} />}
-            onClick={handleExportExcelClick}
+            onClick={handleTriggerExportSelected}
             title="Xuất danh sách hồ sơ điều chỉnh ra file Excel"
           >
             Xuất Excel
@@ -704,13 +612,13 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
         onMouseLeave={handleMouseLeaveOrUp}
         onMouseUp={handleMouseLeaveOrUp}
         onMouseMove={handleMouseMove}
-        className={`overflow-x-auto w-full border-t border-slate-200 table-scrollbar ${
+        className={`overflow-x-auto overflow-y-auto max-h-[600px] w-full border-t border-slate-200 table-scrollbar ${
           isDragging ? "cursor-grabbing select-none" : "cursor-grab"
         }`}
         title="Nhấn giữ chuột để kéo ngang bảng hoặc dùng thanh cuộn màu xám bên dưới"
       >
         <table className="w-full text-left border-collapse text-xs min-w-[1750px]">
-          <thead>
+          <thead className="sticky top-0 z-20 shadow-2xs">
             {/* Header Titles */}
             <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
               <th className="py-2.5 px-2.5 w-11 min-w-[44px] text-center border-r border-slate-200">
@@ -1169,10 +1077,7 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
           totalItems={filteredGridItems.length}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
-          onPageSizeChange={(newSize) => {
-            setPageSize(newSize);
-            setCurrentPage(1);
-          }}
+          onPageSizeChange={setPageSize}
         />
       </div>
     </div>

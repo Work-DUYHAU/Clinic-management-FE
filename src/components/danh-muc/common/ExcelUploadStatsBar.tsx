@@ -14,7 +14,6 @@ export interface ExcelUploadStatsBarProps {
   fileName?: string;
   availableSheets?: ExcelSheetInfo[];
   themeColor?: ThemeColor;
-  onOpenSchemaModal?: () => void;
   onSwitchSheet?: (sheetName: string) => void;
   extraBadge?: React.ReactNode;
   onClearFile?: () => void;
@@ -59,7 +58,6 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
   fileName,
   availableSheets = [],
   themeColor = 'blue',
-  onOpenSchemaModal,
   onSwitchSheet,
   extraBadge,
   onClearFile,
@@ -84,23 +82,13 @@ export const ExcelUploadStatsBar: React.FC<ExcelUploadStatsBarProps> = ({
             </strong>
           </span>
 
-          {onOpenSchemaModal && (
-            <button
-              type="button"
-              onClick={onOpenSchemaModal}
-              className={`text-slate-600 ${currentTheme.btnHoverText} transition-all flex items-center gap-1.5 ${currentTheme.btnBg} px-2.5 py-1 rounded-sm border ${currentTheme.btnBorder} font-medium cursor-pointer shadow-2xs group`}
-              title="Bấm để xem chi tiết đối soát từng cột"
-            >
-              <span>Cột khớp chuẩn:</span>
-              <strong className={`${currentTheme.textStrong} font-bold group-hover:underline`}>
+          {matchedColumnsCount !== undefined && totalColumnsCount !== undefined && (
+            <span className="text-slate-500">
+              Cột khớp:{' '}
+              <strong className="text-emerald-700 font-bold">
                 {matchedColumnsCount}/{totalColumnsCount} trường
               </strong>
-              <span
-                className={`text-[10px] ${currentTheme.badgeBg} text-white px-1.5 py-0.2 rounded-sm font-mono font-bold ml-0.5`}
-              >
-                Chi tiết
-              </span>
-            </button>
+            </span>
           )}
 
           {extraBadge}

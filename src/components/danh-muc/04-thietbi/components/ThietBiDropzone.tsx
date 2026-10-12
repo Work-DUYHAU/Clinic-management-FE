@@ -13,7 +13,6 @@ interface ThietBiDropzoneProps {
   onClearData: () => void;
   onOpenXmlModal: () => void;
   onOpenApiTab: () => void;
-  onOpenSchemaModal: () => void;
   onAddNew: () => void;
 }
 
@@ -27,7 +26,6 @@ export const ThietBiDropzone: React.FC<ThietBiDropzoneProps> = ({
   onClearData,
   onOpenXmlModal,
   onOpenApiTab,
-  onOpenSchemaModal,
   onAddNew,
 }) => {
   return (
@@ -61,7 +59,6 @@ export const ThietBiDropzone: React.FC<ThietBiDropzoneProps> = ({
       itemsCount={itemsCount}
       onFileUpload={onFileUpload}
       onSwitchSheet={onSwitchSheet}
-      onOpenSchemaModal={onOpenSchemaModal}
       onDownloadTemplate={onDownloadTemplate}
       onClearData={onClearData}
       onOpenXmlModal={onOpenXmlModal}

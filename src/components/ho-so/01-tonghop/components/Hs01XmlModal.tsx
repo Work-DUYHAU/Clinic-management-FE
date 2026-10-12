@@ -2,13 +2,13 @@ import React from "react";
 import type {
   Hs01TongHopItem,
   SendHs01GatewayResult,
-} from "../services/hs01TongHopService";
+} from "../../../../types/hs01TongHopTypes";
 import {
   generateHs01Xml,
   xmlToBase64,
   downloadHs01XmlFile,
   sendHs01ToBhxhGateway,
-} from "../services/hs01TongHopService";
+} from "../../../../utils/hs01TongHopXmlEngine";
 import { XmlExportModal } from "../../../common";
 import { useXmlExportModal } from "../../../../hooks";
 import { DEFAULT_MA_CSKCB } from "../../../../utils/shared/excelXmlShared";

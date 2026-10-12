@@ -105,9 +105,9 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
   ];
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-2.5">
       {/* 6 Tab Switcher Grid - Phong cách góc cạnh, chuyên nghiệp */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
         {catalogTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeCatalogTab === tab.id;
@@ -116,24 +116,24 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
               key={tab.id}
               type="button"
               onClick={() => handleTabChange(tab.id)}
-              className={`p-3 rounded-md border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between cursor-pointer ${
+              className={`p-2 sm:p-2.5 rounded-md border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between cursor-pointer ${
                 isActive
                   ? "bg-white border-blue-600 shadow-sm border-t-[3px] border-t-blue-600 ring-1 ring-blue-500/20"
                   : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/70"
               }`}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <div
-                  className={`p-1.5 rounded-sm ${
+                  className={`p-1 rounded-sm ${
                     isActive
                       ? "bg-blue-50 text-blue-600 border border-blue-200/60"
                       : "bg-slate-100 text-slate-500 border border-slate-200/60"
                   }`}
                 >
-                  <Icon size={15} />
+                  <Icon size={14} />
                 </div>
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm font-mono ${
+                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm font-mono ${
                     isActive
                       ? "bg-blue-50 text-blue-700 border border-blue-200"
                       : "bg-slate-100 text-slate-500 border border-slate-200/60"
@@ -150,7 +150,7 @@ export const DanhMucPage: React.FC<DanhMucPageProps> = ({
                 >
                   {tab.label}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 font-normal line-clamp-2 leading-snug">
+                <div className="text-[10.5px] text-slate-500 mt-0.5 font-normal line-clamp-1 leading-tight">
                   {tab.sub}
                 </div>
               </div>

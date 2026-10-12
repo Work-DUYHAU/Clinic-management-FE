@@ -18,6 +18,7 @@ import {
   type Hs09UserAction,
 } from "../../../../utils/hs09RequestTypeResolver";
 import { Hs09LockBanner } from "./Hs09LockBanner";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09ChiPhiModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export const Hs09ChiPhiModal: React.FC<Hs09ChiPhiModalProps> = ({
   item,
   onSave,
 }) => {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [rows, setRows] = useState<ChiPhiDieuChinhItem[]>([]);
   const listRef = useRef<HTMLDivElement>(null);

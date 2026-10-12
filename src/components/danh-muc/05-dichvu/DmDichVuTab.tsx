@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { DmDichVuItem, DmThuocPxItem } from "../../../types";
 import {
-  DICHVU_SCHEMA_FIELDS,
   parseDichVuExcelFile,
   parseDichVuWorksheet,
   generateDichVuTemplate,
@@ -15,9 +14,6 @@ import {
   ThuocPxModal,
   DichVuXmlModal,
 } from "./components";
-import { SchemaMappingModal } from "../common/SchemaMappingModal";
-import { SchemaMappingCard } from "../common/SchemaMappingCard";
-import { useSchemaMappingProps } from "../../../hooks";
 import { useRegisterSignModal } from "../../../context/SignModalContext";
 
 interface DmDichVuTabProps {
@@ -50,9 +46,6 @@ export const DmDichVuTab: React.FC<DmDichVuTabProps> = ({ isActive = true }) => 
   const [isThuocPxModalOpen, setIsThuocPxModalOpen] = useState(false);
   const [selectedServiceForPx, setSelectedServiceForPx] =
     useState<DmDichVuItem | null>(null);
-
-  // Schema Mapping Inspector Modal State
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
   // File Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,10 +187,8 @@ export const DmDichVuTab: React.FC<DmDichVuTabProps> = ({ isActive = true }) => 
     );
   }, [dichVuItems, searchTerm]);
 
-  const schemaProps = useSchemaMappingProps(DICHVU_SCHEMA_FIELDS, fileUploadStats);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       {/* 2. Excel Upload Dropzone & Action Toolbar */}
       <DichVuDropzone
         isLoadingFile={isLoadingFile}
@@ -215,19 +206,10 @@ export const DmDichVuTab: React.FC<DmDichVuTabProps> = ({ isActive = true }) => 
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
-        onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingItem(null);
           setIsEditModalOpen(true);
         }}
-      />
-
-      {/* 3. Schema Mapping Inspection Card */}
-      <SchemaMappingCard
-        {...schemaProps}
-        loaiHsBadge="Loại HS 12 - 16 Trường"
-        title="Đặc Tả Cấu Trúc 16 Trường Danh Mục Dịch Vụ KBCB (Mẫu 05/DM - Loại HS 12)"
-        defaultExpanded={!!fileUploadStats}
       />
 
       {/* 4. Table of Services */}
@@ -280,15 +262,6 @@ export const DmDichVuTab: React.FC<DmDichVuTabProps> = ({ isActive = true }) => 
         items={dichVuItems}
         defaultTab={xmlModalTab}
         fileUploadStats={fileUploadStats}
-      />
-
-      {/* 8. 16 Standard Fields Schema Mapping Inspector Modal */}
-      <SchemaMappingModal
-        isOpen={isSchemaModalOpen}
-        onClose={() => setIsSchemaModalOpen(false)}
-        title="Mẫu 05/DM: Danh Mục Dịch Vụ Khám Bệnh, Chữa Bệnh Áp Dụng BHYT"
-        loaiHsBadge="Loại HS 12 - 16 Trường"
-        {...schemaProps}
       />
     </div>
   );

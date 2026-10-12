@@ -111,7 +111,7 @@ export const ThuocPxListEditor: React.FC<ThuocPxListEditorProps> = ({
 
       {/* Table of Drugs with Sticky Columns */}
       <div className="border border-slate-200 rounded-md overflow-hidden shadow-2xs bg-white">
-        <div className="overflow-x-auto max-h-[420px] relative">
+        <div className="overflow-x-auto overflow-y-auto max-h-[420px] relative table-scrollbar">
           <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[1450px]">
             <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
               <tr>

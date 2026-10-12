@@ -1,6 +1,8 @@
 import React from 'react';
 import { Search, Edit2, Trash2, AlertCircle, CheckCircle2, Pill } from 'lucide-react';
 import type { DmThuocItem } from '../../../../types';
+import { Pagination } from '../../../common';
+import { usePagination } from '../../../../hooks/usePagination';
 
 interface ThuocTableProps {
   items: DmThuocItem[];
@@ -72,8 +74,17 @@ export const ThuocTable: React.FC<ThuocTableProps> = ({
   onEdit,
   onDelete
 }) => {
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems,
+    startIdx,
+    setCurrentPage,
+    setPageSize
+  } = usePagination(items, 20);
+
   return (
-    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
       {/* Table Search & Filter Bar */}
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
         <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -108,7 +119,7 @@ export const ThuocTable: React.FC<ThuocTableProps> = ({
       </div>
 
       {/* Responsive Table */}
-      <div className="overflow-x-auto max-h-[600px] relative">
+      <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative table-scrollbar">
         <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[1350px]">
           <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
             <tr>
@@ -134,19 +145,19 @@ export const ThuocTable: React.FC<ThuocTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-12 text-center text-slate-400">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Pill size={32} className="mx-auto text-slate-300" />
-                    <p className="font-bold text-sm text-slate-600">Không tìm thấy mặt hàng thuốc nào phù hợp</p>
-                    <p className="text-xs text-slate-400">Vui lòng nạp file Excel hoặc bấm "Thêm Thuốc Mới"</p>
+                <td colSpan={11} className="py-6 sm:py-7 text-center text-slate-400">
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <Pill size={26} className="mx-auto text-slate-300" />
+                    <p className="font-bold text-xs text-slate-600">Không tìm thấy mặt hàng thuốc nào phù hợp</p>
+                    <p className="text-[11px] text-slate-400">Vui lòng nạp file Excel hoặc bấm "Thêm Thuốc Mới"</p>
                   </div>
                 </td>
               </tr>
             ) : (
-              items.map((th, idx) => (
+              paginatedItems.map((th, idx) => (
                 <tr key={th.id || th.maThuoc || idx} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="py-3 px-2 text-center font-bold text-slate-400 w-[52px] min-w-[52px] max-w-[52px] sticky left-0 bg-white group-hover:bg-slate-50 z-10">
-                    {th.stt || idx + 1}
+                    {th.stt || startIdx + idx + 1}
                   </td>
                   <td className="py-3 px-3 font-mono font-bold text-[#1677ff] whitespace-nowrap sticky left-[52px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200/80 shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)]">
                     {th.maThuoc}
@@ -219,6 +230,18 @@ export const ThuocTable: React.FC<ThuocTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Bar */}
+      <Pagination
+        currentPage={currentPage}
+        totalItems={items.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[10, 20, 50, 100]}
+        itemLabel="mặt hàng thuốc"
+        themeColor="blue"
+      />
     </div>
   );
 };

@@ -26,6 +26,7 @@ import { renderHs09ItemXml } from "../../../../utils/parsers/hs09RowParser";
 import { getEffectiveHs09TrangThai } from "../../../../utils/hs09RequestTypeResolver";
 import { useToast } from "../../../../context/ToastContext";
 import { InfoGrid } from "../../../common";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09DetailModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({
   onClose,
   item,
 }) => {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<
     "overview" | "xml1_diff" | "expenses" | "legal" | "xml"
@@ -261,8 +263,8 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({
                 Không có thay đổi hành chính
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-sm overflow-hidden max-h-[280px] overflow-y-auto">
-                <table className="w-full text-left text-xs">
+              <div className="border border-slate-200 rounded-sm overflow-hidden max-h-[280px] overflow-y-auto overflow-x-auto table-scrollbar">
+                <table className="w-full text-left text-xs min-w-[700px]">
                   <thead className="bg-slate-100 text-slate-700 font-bold text-[11px] uppercase sticky top-0">
                     <tr>
                       <th className="py-2 px-2.5">STT</th>
@@ -326,8 +328,8 @@ export const Hs09DetailModal: React.FC<Hs09DetailModalProps> = ({
                 Không có chi phí điều chỉnh
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-sm overflow-hidden max-h-[280px] overflow-y-auto">
-                <table className="w-full text-left text-xs">
+              <div className="border border-slate-200 rounded-sm overflow-hidden max-h-[280px] overflow-y-auto overflow-x-auto table-scrollbar">
+                <table className="w-full text-left text-xs min-w-[750px]">
                   <thead className="bg-slate-100 text-slate-700 font-bold text-[11px] uppercase sticky top-0">
                     <tr>
                       <th className="py-2 px-2.5">Bảng XML</th>

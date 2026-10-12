@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { DmThietBiItem } from "../../../types";
 import {
-  THIETBI_SCHEMA_FIELDS,
   parseThietBiExcelFile,
   parseThietBiWorksheet,
   downloadThietBiExcelTemplate,
@@ -12,9 +11,6 @@ import { ThietBiDropzone } from "./components/ThietBiDropzone";
 import { ThietBiTable } from "./components/ThietBiTable";
 import { ThietBiXmlModal } from "./components/ThietBiXmlModal";
 import { ThietBiEditModal } from "./components/ThietBiEditModal";
-import { SchemaMappingModal } from "../common/SchemaMappingModal";
-import { SchemaMappingCard } from "../common/SchemaMappingCard";
-import { useSchemaMappingProps } from "../../../hooks";
 import { useRegisterSignModal } from "../../../context/SignModalContext";
 
 interface DmThietBiTabProps {
@@ -36,9 +32,6 @@ export const DmThietBiTab: React.FC<DmThietBiTabProps> = ({ isActive = true }) =
   // Edit / Add Modal State for Mẫu 04/DM
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmThietBiItem | null>(null);
-
-  // Schema Mapping Inspector Modal State
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
   // Đăng ký mở modal ký số khi tab này active
   useRegisterSignModal(isActive, () => {
@@ -158,13 +151,8 @@ export const DmThietBiTab: React.FC<DmThietBiTabProps> = ({ isActive = true }) =
     );
   }, [thietBiItems, searchTerm]);
 
-  const schemaProps = useSchemaMappingProps(
-    THIETBI_SCHEMA_FIELDS,
-    fileUploadStats,
-  );
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       {/* 2. Excel Upload Dropzone & Action Toolbar */}
       <ThietBiDropzone
         isLoadingFile={isLoadingFile}
@@ -182,19 +170,10 @@ export const DmThietBiTab: React.FC<DmThietBiTabProps> = ({ isActive = true }) =
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
-        onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingItem(null);
           setIsEditModalOpen(true);
         }}
-      />
-
-      {/* 3. Schema Mapping Inspection Card */}
-      <SchemaMappingCard
-        {...schemaProps}
-        loaiHsBadge="Loại HS 11 - 26 Trường"
-        title="Đặc Tả Cấu Trúc 26 Trường Danh Mục Thiết Bị Y Tế (Mẫu 04/DM - Loại HS 11)"
-        defaultExpanded={!!fileUploadStats}
       />
 
       {/* 4. Table of Devices & Consumables */}
@@ -231,15 +210,6 @@ export const DmThietBiTab: React.FC<DmThietBiTabProps> = ({ isActive = true }) =
         items={thietBiItems}
         defaultTab={xmlModalTab}
         fileUploadStats={fileUploadStats}
-      />
-
-      {/* 7. Schema Mapping Inspector Modal */}
-      <SchemaMappingModal
-        isOpen={isSchemaModalOpen}
-        onClose={() => setIsSchemaModalOpen(false)}
-        title="Mẫu 04/DM: Danh Mục Thiết Bị Y Tế Áp Dụng Thanh Toán BHYT"
-        loaiHsBadge="Loại HS 11 - 26 Trường"
-        {...schemaProps}
       />
     </div>
   );

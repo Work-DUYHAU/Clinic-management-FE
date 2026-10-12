@@ -14,6 +14,7 @@ import {
   type Hs09UserAction,
 } from "../../../../utils/hs09RequestTypeResolver";
 import { Hs09LockBanner } from "./Hs09LockBanner";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09HanhChinhModalProps {
   isOpen: boolean;
@@ -72,6 +73,7 @@ export const Hs09HanhChinhModal: React.FC<Hs09HanhChinhModalProps> = ({
   item,
   onSave,
 }) => {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [form, setForm] = useState<HanhChinhFormState>(DEFAULT_FORM);
 

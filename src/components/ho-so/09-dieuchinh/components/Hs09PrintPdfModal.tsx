@@ -6,6 +6,7 @@ import {
   formatYmdHmDisplay,
 } from "../../../../utils/shared/excelXmlShared";
 import { Button, Modal } from "../../../../shared/components";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09PrintPdfModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ export const Hs09PrintPdfModal: React.FC<Hs09PrintPdfModalProps> = ({
   onClose,
   item,
 }) => {
+  useModalBehavior(isOpen, onClose);
+
   if (!isOpen || !item) return null;
 
   const handlePrint = () => {

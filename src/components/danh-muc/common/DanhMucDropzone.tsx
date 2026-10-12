@@ -65,7 +65,6 @@ export interface DanhMucDropzoneProps {
   itemsCount?: number;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSwitchSheet?: (sheetName: string) => void;
-  onOpenSchemaModal?: () => void;
   onDownloadTemplate?: () => void;
   onClearData?: () => void;
   onOpenXmlModal: () => void;
@@ -93,7 +92,6 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   uploadStats,
   onFileUpload,
   onSwitchSheet,
-  onOpenSchemaModal,
   onOpenXmlModal,
   xmlLabel,
   xmlTooltip,
@@ -112,7 +110,7 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
   const theme = dropzoneThemeStyles[themeColor] || dropzoneThemeStyles.blue;
 
   return (
-    <div className="bg-white rounded-md p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3">
+    <div className="bg-white rounded-md p-2.5 sm:p-3 border border-slate-200/90 shadow-sm space-y-2">
       {/* Upload Dropzone */}
       <div>
         <input
@@ -128,24 +126,24 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-md p-3.5 sm:p-4 text-center cursor-pointer transition-all duration-150 flex flex-col md:flex-row items-center justify-between gap-3.5 ${
+          className={`border-2 border-dashed rounded-md p-2.5 sm:p-3 text-center cursor-pointer transition-all duration-150 flex flex-col md:flex-row items-center justify-between gap-2.5 ${
             isLoadingFile
               ? "pointer-events-none opacity-60 cursor-not-allowed"
               : ""
           } ${isDragging ? theme.dragging : theme.border}`}
         >
-          <div className="flex items-center gap-3 text-left">
+          <div className="flex items-center gap-2.5 text-left">
             <div
-              className={`w-9 h-9 rounded-md bg-white shadow-2xs flex items-center justify-center shrink-0 border ${theme.iconText} ${theme.iconBorder}`}
+              className={`w-8 h-8 rounded-md bg-white shadow-2xs flex items-center justify-center shrink-0 border ${theme.iconText} ${theme.iconBorder}`}
             >
-              <Upload size={18} />
+              <Upload size={16} />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900 leading-snug">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                 {isLoadingFile ? loadingTitle : title}
               </h4>
               {description && (
-                <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{description}</p>
               )}
             </div>
           </div>
@@ -158,9 +156,9 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
                 e.stopPropagation();
                 openFilePicker();
               }}
-              className={`px-3.5 py-2 disabled:opacity-50 text-white rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-xs ${theme.btn}`}
+              className={`px-3 py-1.5 disabled:opacity-50 text-white rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-xs ${theme.btn}`}
             >
-              <Upload size={14} />
+              <Upload size={13} />
               <span>{isLoadingFile ? "Đang Xử Lý..." : buttonLabel}</span>
             </button>
 
@@ -170,10 +168,10 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
                 e.stopPropagation();
                 onOpenXmlModal();
               }}
-              className={`px-3 py-2 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all border cursor-pointer ${theme.xmlBtn}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all border cursor-pointer ${theme.xmlBtn}`}
               title={xmlTooltip}
             >
-              <ShieldCheck size={14} />
+              <ShieldCheck size={13} />
               <span>{xmlLabel || "Ký Số & Gửi Cổng"}</span>
             </button>
           </div>
@@ -191,7 +189,6 @@ export const DanhMucDropzone: React.FC<DanhMucDropzoneProps> = ({
               fileName={uploadStats.fileName}
               availableSheets={uploadStats.availableSheets}
               themeColor={themeColor}
-              onOpenSchemaModal={onOpenSchemaModal}
               onSwitchSheet={onSwitchSheet}
               extraBadge={uploadStats.extraBadge}
               onClearFile={onClearData}

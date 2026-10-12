@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Paperclip,
   FileText,
@@ -16,6 +16,7 @@ import {
   validateAttachmentFile,
   readFileAsDataUrl,
 } from "../../../../utils/hs09Helpers";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09AttachmentModalProps {
   isOpen: boolean;
@@ -30,34 +31,36 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
   item,
   onSave,
 }) => {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
 
   const [selectedMaLyDo, setSelectedMaLyDo] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  if (!isOpen || !item) return null;
-
-  const isSent = item.tinhTrangGui === 2;
-
   // Extract unique refusal codes from chi phí or default reasons
-  const availableReasons = Array.from(
-    new Set(
-      item.dsChiPhiDieuChinh
-        .map((cp) => cp.tuChoi)
-        .filter((code): code is string => !!code && code.trim().length > 0),
-    ),
-  );
-  if (availableReasons.length === 0) {
-    availableReasons.push(
-      "LD_XUATTOAN_CHUNG",
-      "LD_CHI_PHI_SAI_QUY_DINH",
-      "LD_KHAC",
+  const availableReasons = useMemo(() => {
+    if (!item) return ["LD_XUATTOAN_CHUNG", "LD_CHI_PHI_SAI_QUY_DINH", "LD_KHAC"];
+    const reasons = Array.from(
+      new Set(
+        item.dsChiPhiDieuChinh
+          .map((cp) => cp.tuChoi)
+          .filter((code): code is string => !!code && code.trim().length > 0),
+      ),
     );
-  }
+    if (reasons.length === 0) {
+      reasons.push(
+        "LD_XUATTOAN_CHUNG",
+        "LD_CHI_PHI_SAI_QUY_DINH",
+        "LD_KHAC",
+      );
+    }
+    return reasons;
+  }, [item]);
 
-  const rawAttachments = item.taiLieuDinhKem || [];
-  const normalizedAttachments: TaiLieuDinhKemItem[] = rawAttachments.map(
-    (att) => {
+  const normalizedAttachments: TaiLieuDinhKemItem[] = useMemo(() => {
+    if (!item) return [];
+    const rawAttachments = item.taiLieuDinhKem || [];
+    return rawAttachments.map((att) => {
       if (typeof att === "string") {
         return {
           tenFile: att,
@@ -67,8 +70,12 @@ export const Hs09AttachmentModal: React.FC<Hs09AttachmentModalProps> = ({
         };
       }
       return att;
-    },
-  );
+    });
+  }, [item, availableReasons]);
+
+  if (!isOpen || !item) return null;
+
+  const isSent = item.tinhTrangGui === 2;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

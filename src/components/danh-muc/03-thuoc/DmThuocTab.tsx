@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { DmThuocItem } from '../../../types';
 import {
-  THUOC_SCHEMA_FIELDS,
   parseThuocExcelFile,
   parseThuocWorksheet,
   downloadThuocExcelTemplate,
@@ -12,8 +11,6 @@ import { ThuocDropzone } from './components/ThuocDropzone';
 import { ThuocTable } from './components/ThuocTable';
 import { ThuocEditModal } from './components/ThuocEditModal';
 import { ThuocXmlModal } from './components/ThuocXmlModal';
-import { SchemaMappingModal, SchemaMappingCard } from '../common';
-import { useSchemaMappingProps } from '../../../hooks';
 import { useRegisterSignModal } from '../../../context/SignModalContext';
 
 interface DmThuocTabProps {
@@ -33,8 +30,6 @@ export const DmThuocTab: React.FC<DmThuocTabProps> = ({ isActive = true }) => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmThuocItem | null>(null);
-
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
   // Đăng ký mở modal ký số khi tab này active
   useRegisterSignModal(isActive, () => {
@@ -116,21 +111,21 @@ export const DmThuocTab: React.FC<DmThuocTabProps> = ({ isActive = true }) => {
     });
   };
 
-  const filteredItems = thuocItems.filter((i) => {
-    const q = searchTerm.toLowerCase();
-    return (
-      i.tenThuoc.toLowerCase().includes(q) ||
-      (i.tenHoatChat && i.tenHoatChat.toLowerCase().includes(q)) ||
-      i.maThuoc.toLowerCase().includes(q) ||
-      i.soDangKy.toLowerCase().includes(q) ||
-      (i.nhaThau && i.nhaThau.toLowerCase().includes(q))
+  const filteredItems = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return thuocItems;
+    return thuocItems.filter(
+      (i) =>
+        i.tenThuoc.toLowerCase().includes(q) ||
+        (i.tenHoatChat && i.tenHoatChat.toLowerCase().includes(q)) ||
+        i.maThuoc.toLowerCase().includes(q) ||
+        i.soDangKy.toLowerCase().includes(q) ||
+        (i.nhaThau && i.nhaThau.toLowerCase().includes(q)),
     );
-  });
-
-  const schemaProps = useSchemaMappingProps(THUOC_SCHEMA_FIELDS, fileUploadStats);
+  }, [thuocItems, searchTerm]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       <ThuocDropzone
         isLoadingFile={isLoadingFile}
         fileUploadStats={fileUploadStats}
@@ -147,19 +142,10 @@ export const DmThuocTab: React.FC<DmThuocTabProps> = ({ isActive = true }) => {
           setIsXmlModalOpen(true);
           setXmlModalTab('smartca');
         }}
-        onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingItem(null);
           setIsEditModalOpen(true);
         }}
-      />
-
-      {/* Schema Mapping & Column Comparison Card */}
-      <SchemaMappingCard
-        title="Đối Soát Khớp Cột Chuẩn Mẫu 03/DM (Thuốc, Máu & Chế Phẩm Máu)"
-        loaiHsBadge="Loại HS 10 - 37 Trường"
-        {...schemaProps}
-        defaultExpanded={!!fileUploadStats}
       />
 
       <ThuocTable
@@ -191,15 +177,6 @@ export const DmThuocTab: React.FC<DmThuocTabProps> = ({ isActive = true }) => {
         }}
         onSave={handleSaveItem}
         initialData={editingItem}
-      />
-
-      {/* Reusable Schema Inspector Modal */}
-      <SchemaMappingModal
-        isOpen={isSchemaModalOpen}
-        onClose={() => setIsSchemaModalOpen(false)}
-        title="Mẫu 03/DM: Danh Mục Thuốc, Máu & Chế Phẩm Máu BHYT"
-        loaiHsBadge="Loại HS 10 - 37 Trường"
-        {...schemaProps}
       />
     </div>
   );
