@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { DmBpcmItem } from "../../../types";
 import {
-  BPCM_SCHEMA_FIELDS,
   parseBpcmExcelFile,
   parseWorksheet,
   downloadBpcmExcelTemplate,
@@ -12,9 +11,6 @@ import { BpcmDropzone } from "./components/BpcmDropzone";
 import { BpcmTable } from "./components/BpcmTable";
 import { BpcmXmlModal } from "./components/BpcmXmlModal";
 import { BpcmEditModal } from "./components/BpcmEditModal";
-import { SchemaMappingModal } from "../common/SchemaMappingModal";
-import { SchemaMappingCard } from "../common/SchemaMappingCard";
-import { useSchemaMappingProps } from "../../../hooks";
 import { useRegisterSignModal } from "../../../context/SignModalContext";
 
 interface DmBpcmTabProps {
@@ -34,7 +30,6 @@ export const DmBpcmTab: React.FC<DmBpcmTabProps> = ({ isActive = true }) => {
   const [xmlModalTab, setXmlModalTab] = useState<"smartca" | "base64">("smartca");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmBpcmItem | null>(null);
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
   // Đăng ký mở modal ký số khi tab này active
   useRegisterSignModal(isActive, () => {
@@ -129,17 +124,19 @@ export const DmBpcmTab: React.FC<DmBpcmTabProps> = ({ isActive = true }) => {
     });
   };
 
-  const filteredItems = bpcmItems.filter(
-    (i) =>
-      i.tenKhoa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.maKhoa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.maCskcb.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const schemaProps = useSchemaMappingProps(BPCM_SCHEMA_FIELDS, fileUploadStats);
+  const filteredItems = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return bpcmItems;
+    return bpcmItems.filter(
+      (i) =>
+        i.tenKhoa.toLowerCase().includes(q) ||
+        i.maKhoa.toLowerCase().includes(q) ||
+        i.maCskcb.toLowerCase().includes(q),
+    );
+  }, [bpcmItems, searchTerm]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       <BpcmDropzone
         isLoadingFile={isLoadingFile}
         fileUploadStats={fileUploadStats}
@@ -156,19 +153,10 @@ export const DmBpcmTab: React.FC<DmBpcmTabProps> = ({ isActive = true }) => {
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
-        onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingItem(null);
           setIsEditModalOpen(true);
         }}
-      />
-
-      {/* Reusable Inline Schema Mapping & Column Comparison */}
-      <SchemaMappingCard
-        title="Đối Soát Khớp Cột Chuẩn Mẫu 01/DM (Bộ Phận Chuyên Môn)"
-        loaiHsBadge="Loại HS 70 - 11 Trường"
-        {...schemaProps}
-        defaultExpanded={!!fileUploadStats}
       />
 
       <BpcmTable
@@ -199,15 +187,6 @@ export const DmBpcmTab: React.FC<DmBpcmTabProps> = ({ isActive = true }) => {
         }}
         onSave={handleSaveItem}
         initialData={editingItem}
-      />
-
-      {/* Reusable Schema Inspector Modal */}
-      <SchemaMappingModal
-        isOpen={isSchemaModalOpen}
-        onClose={() => setIsSchemaModalOpen(false)}
-        title="Mẫu 01/DM: Bộ Phận Chuyên Môn (Khoa, Phòng, Bàn Khám & Giường Bệnh)"
-        loaiHsBadge="Loại HS 70 - 11 Trường"
-        {...schemaProps}
       />
     </div>
   );

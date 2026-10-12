@@ -14,7 +14,6 @@ interface TbytThdvDropzoneProps {
   onClearData: () => void;
   onOpenXmlModal: () => void;
   onOpenApiTab: () => void;
-  onOpenSchemaModal: () => void;
   onAddNew: () => void;
 }
 
@@ -28,7 +27,6 @@ export const TbytThdvDropzone: React.FC<TbytThdvDropzoneProps> = ({
   onClearData,
   onOpenXmlModal,
   onOpenApiTab,
-  onOpenSchemaModal,
   onAddNew
 }) => {
   const totalSchemaFields = TBYTTHDV_SCHEMA_FIELDS.length;
@@ -64,7 +62,6 @@ export const TbytThdvDropzone: React.FC<TbytThdvDropzoneProps> = ({
       itemsCount={itemsCount}
       onFileUpload={onFileUpload}
       onSwitchSheet={onSwitchSheet}
-      onOpenSchemaModal={onOpenSchemaModal}
       onDownloadTemplate={onDownloadTemplate}
       onClearData={onClearData}
       onOpenXmlModal={onOpenXmlModal}

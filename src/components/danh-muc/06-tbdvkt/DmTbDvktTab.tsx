@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { DmTbytThdvItem } from "../../../types";
 import {
-  TBYTTHDV_SCHEMA_FIELDS,
   parseTbytThdvExcelFile,
   parseTbytThdvWorksheet,
   downloadTbytThdvExcelTemplate,
@@ -12,9 +11,6 @@ import { TbytThdvDropzone } from "./components/TbytThdvDropzone";
 import { TbytThdvTable } from "./components/TbytThdvTable";
 import { TbytThdvXmlModal } from "./components/TbytThdvXmlModal";
 import { TbytThdvEditModal } from "./components/TbytThdvEditModal";
-import { SchemaMappingModal } from "../common/SchemaMappingModal";
-import { SchemaMappingCard } from "../common/SchemaMappingCard";
-import { useSchemaMappingProps } from "../../../hooks";
 import { useRegisterSignModal } from "../../../context/SignModalContext";
 
 interface DmTbDvktTabProps {
@@ -36,9 +32,6 @@ export const DmTbDvktTab: React.FC<DmTbDvktTabProps> = ({ isActive = true }) => 
   // Edit / Add Modal State for Mẫu 06/DM
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DmTbytThdvItem | null>(null);
-
-  // Schema Mapping Inspector Modal State
-  const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
   // Đăng ký mở modal ký số khi tab này active
   useRegisterSignModal(isActive, () => {
@@ -160,10 +153,8 @@ export const DmTbDvktTab: React.FC<DmTbDvktTabProps> = ({ isActive = true }) => 
     );
   }, [tbytItems, searchTerm]);
 
-  const schemaProps = useSchemaMappingProps(TBYTTHDV_SCHEMA_FIELDS, fileUploadStats);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       {/* 2. Excel Upload Dropzone & Action Toolbar */}
       <TbytThdvDropzone
         isLoadingFile={isLoadingFile}
@@ -181,19 +172,10 @@ export const DmTbDvktTab: React.FC<DmTbDvktTabProps> = ({ isActive = true }) => 
           setXmlModalTab("smartca");
           setIsXmlModalOpen(true);
         }}
-        onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingItem(null);
           setIsEditModalOpen(true);
         }}
-      />
-
-      {/* 3. Schema Mapping Inspection Card */}
-      <SchemaMappingCard
-        {...schemaProps}
-        loaiHsBadge="Loại HS 72 - 14 Trường"
-        title="Đặc Tả Cấu Trúc 14 Trường Danh Mục Thiết Bị Y Tế Thực Hiện DVKT (Mẫu 06/DM - Loại HS 72)"
-        defaultExpanded={!!fileUploadStats}
       />
 
       {/* 4. Table of Medical Equipment */}
@@ -230,15 +212,6 @@ export const DmTbDvktTab: React.FC<DmTbDvktTabProps> = ({ isActive = true }) => 
         items={tbytItems}
         defaultTab={xmlModalTab}
         fileUploadStats={fileUploadStats}
-      />
-
-      {/* 7. Schema Mapping Inspector Modal */}
-      <SchemaMappingModal
-        isOpen={isSchemaModalOpen}
-        onClose={() => setIsSchemaModalOpen(false)}
-        title="Mẫu 06/DM: Danh Mục Thiết Bị Y Tế Thực Hiện Dịch Vụ Kỹ Thuật"
-        loaiHsBadge="Loại HS 72 - 14 Trường"
-        {...schemaProps}
       />
     </div>
   );

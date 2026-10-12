@@ -31,6 +31,7 @@ import {
 } from "../../../../utils/hs09Helpers";
 import { getEffectiveHs09TrangThai } from "../../../../utils/hs09RequestTypeResolver";
 import { FormField } from "../../../common";
+import { useModalBehavior } from "../../../../hooks/useModalBehavior";
 
 interface Hs09EditModalProps {
   isOpen: boolean;
@@ -69,6 +70,7 @@ export const Hs09EditModal: React.FC<Hs09EditModalProps> = ({
   initialData,
   totalItemsCount,
 }) => {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<
     "info" | "xml1_diff" | "expenses" | "legal"

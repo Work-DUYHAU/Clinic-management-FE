@@ -64,32 +64,37 @@
   scrollbar-width: none;
 }
 
-/* Custom scrollbar cho các bảng dữ liệu để người dùng dễ nhìn thấy và kéo ngang */
-.table-scrollbar {
+/* Custom scrollbar cho các bảng dữ liệu để người dùng dễ nhìn thấy và kéo ngang/dọc */
+.table-scrollbar,
+div:has(> table) {
   scrollbar-width: thin !important;
+  scrollbar-color: #94a3b8 #f1f5f9 !important;
   -ms-overflow-style: auto !important;
-  overflow-x: auto !important;
 }
 
+div:has(> table)::-webkit-scrollbar,
 .table-scrollbar::-webkit-scrollbar {
   display: block !important;
-  height: 10px !important;
-  width: 10px !important;
+  height: 9px !important;
+  width: 9px !important;
 }
 
+div:has(> table)::-webkit-scrollbar-track,
 .table-scrollbar::-webkit-scrollbar-track {
-  background: #e2e8f0 !important;
+  background: #f1f5f9 !important;
   border-radius: 6px !important;
 }
 
+div:has(> table)::-webkit-scrollbar-thumb,
 .table-scrollbar::-webkit-scrollbar-thumb {
   background: #94a3b8 !important;
   border-radius: 6px !important;
-  border: 2px solid #e2e8f0 !important;
+  border: 2px solid #f1f5f9 !important;
 }
 
+div:has(> table)::-webkit-scrollbar-thumb:hover,
 .table-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #475569 !important;
+  background: #64748b !important;
 }
 
 /* In Mẫu 09/BH: chỉ in vùng .print-area trong modal, ẩn toàn bộ phần còn lại của app */

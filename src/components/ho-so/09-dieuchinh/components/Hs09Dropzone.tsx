@@ -14,7 +14,6 @@ interface Hs09DropzoneProps {
   onClearData: () => void;
   onOpenXmlModal: () => void;
   onOpenApiTab: () => void;
-  onOpenSchemaModal: () => void;
   onAddNew: () => void;
 }
 
@@ -28,7 +27,6 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
   onClearData,
   onOpenXmlModal,
   onOpenApiTab,
-  onOpenSchemaModal,
   onAddNew,
 }) => {
   const totalSchemaFields = HS09_SCHEMA_FIELDS.length;
@@ -65,7 +63,6 @@ export const Hs09Dropzone: React.FC<Hs09DropzoneProps> = ({
       itemsCount={itemsCount}
       onFileUpload={onFileUpload}
       onSwitchSheet={onSwitchSheet}
-      onOpenSchemaModal={onOpenSchemaModal}
       onDownloadTemplate={onDownloadTemplate}
       onClearData={onClearData}
       onOpenXmlModal={onOpenXmlModal}

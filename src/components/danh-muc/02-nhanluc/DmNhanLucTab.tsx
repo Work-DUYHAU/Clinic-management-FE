@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { DmNhanLucItem } from '../../../types';
 import {
-  NHANLUC_SCHEMA_FIELDS,
   parseNhanLucExcelFile,
   parseNhanLucWorksheet,
   downloadNhanLucExcelTemplate,
@@ -12,9 +11,6 @@ import { NhanLucDropzone } from './components/NhanLucDropzone';
 import { NhanLucTable } from './components/NhanLucTable';
 import { NhanLucXmlModal } from './components/NhanLucXmlModal';
 import { NhanLucEditModal } from './components/NhanLucEditModal';
-import { SchemaMappingModal } from '../common/SchemaMappingModal';
-import { SchemaMappingCard } from '../common/SchemaMappingCard';
-import { useSchemaMappingProps } from '../../../hooks';
 import { useRegisterSignModal } from '../../../context/SignModalContext';
 
 interface DmNhanLucTabProps {
@@ -35,9 +31,6 @@ export const DmNhanLucTab: React.FC<DmNhanLucTabProps> = ({ isActive = true }) =
   // Edit / Add Modal State for Mẫu 02/DM
   const [isNhanLucEditModalOpen, setIsNhanLucEditModalOpen] = useState(false);
   const [editingNhanLucItem, setEditingNhanLucItem] = useState<DmNhanLucItem | null>(null);
-
-  // Schema Mapping Inspector Modal State
-  const [isNhanLucSchemaModalOpen, setIsNhanLucSchemaModalOpen] = useState(false);
 
   // Đăng ký mở modal ký số khi tab này active
   useRegisterSignModal(isActive, () => {
@@ -123,21 +116,21 @@ export const DmNhanLucTab: React.FC<DmNhanLucTabProps> = ({ isActive = true }) =
     });
   };
 
-  const filteredNhanLucItems = nhanLucItems.filter((i) => {
-    const q = searchNhanLuc.toLowerCase();
-    return (
-      i.hoTen.toLowerCase().includes(q) ||
-      i.soDinhDanh.toLowerCase().includes(q) ||
-      i.maKhoa.toLowerCase().includes(q) ||
-      (i.macchn && i.macchn.toLowerCase().includes(q)) ||
-      (i.phamviCm && i.phamviCm.toLowerCase().includes(q))
+  const filteredNhanLucItems = useMemo(() => {
+    const q = searchNhanLuc.trim().toLowerCase();
+    if (!q) return nhanLucItems;
+    return nhanLucItems.filter(
+      (i) =>
+        i.hoTen.toLowerCase().includes(q) ||
+        i.soDinhDanh.toLowerCase().includes(q) ||
+        i.maKhoa.toLowerCase().includes(q) ||
+        (i.macchn && i.macchn.toLowerCase().includes(q)) ||
+        (i.phamviCm && i.phamviCm.toLowerCase().includes(q)),
     );
-  });
-
-  const schemaProps = useSchemaMappingProps(NHANLUC_SCHEMA_FIELDS, nhanLucFileUploadStats);
+  }, [nhanLucItems, searchNhanLuc]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5">
       <NhanLucDropzone
         isLoadingFile={isLoadingNhanLucFile}
         fileUploadStats={nhanLucFileUploadStats}
@@ -154,19 +147,10 @@ export const DmNhanLucTab: React.FC<DmNhanLucTabProps> = ({ isActive = true }) =
           setIsNhanLucXmlModalOpen(true);
           setXmlModalTab('smartca');
         }}
-        onOpenSchemaModal={() => setIsNhanLucSchemaModalOpen(true)}
         onAddNew={() => {
           setEditingNhanLucItem(null);
           setIsNhanLucEditModalOpen(true);
         }}
-      />
-
-      {/* Reusable Inline Schema Mapping & Column Comparison for Nhân Lực */}
-      <SchemaMappingCard
-        title="Đối Soát Khớp Cột Chuẩn Mẫu 02/DM (Nhân Lực KCB BHYT)"
-        loaiHsBadge="Loại HS 71 - 24 Trường"
-        {...schemaProps}
-        defaultExpanded={!!nhanLucFileUploadStats}
       />
 
       <NhanLucTable
@@ -197,15 +181,6 @@ export const DmNhanLucTab: React.FC<DmNhanLucTabProps> = ({ isActive = true }) =
         }}
         onSave={handleSaveNhanLucItem}
         initialData={editingNhanLucItem}
-      />
-
-      {/* Reusable Schema Inspector Modal for Mẫu 02/DM */}
-      <SchemaMappingModal
-        isOpen={isNhanLucSchemaModalOpen}
-        onClose={() => setIsNhanLucSchemaModalOpen(false)}
-        title="Mẫu 02/DM: Danh Mục Nhân Lực KCB BHYT (Cán Bộ & Bác Sỹ)"
-        loaiHsBadge="Loại HS 71 - 24 Trường"
-        {...schemaProps}
       />
     </div>
   );

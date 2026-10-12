@@ -1,6 +1,9 @@
+import React from 'react';
 import { Search, Edit3, Trash2, AlertCircle, RefreshCw, Cpu } from 'lucide-react';
 import type { DmThietBiItem } from '../../../../types';
 import { LOAI_THAU_OPTIONS, HT_THAU_OPTIONS } from '../services/thietBiService';
+import { Pagination } from '../../../common';
+import { usePagination } from '../../../../hooks/usePagination';
 
 interface ThietBiTableProps {
   items: DmThietBiItem[];
@@ -19,6 +22,15 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
   onEdit,
   onDelete
 }) => {
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems,
+    startIdx,
+    setCurrentPage,
+    setPageSize
+  } = usePagination(items, 20);
+
   const formatCurrency = (val?: number) => {
     if (val === undefined || val === null || isNaN(val)) return '0 đ';
     return `${val.toLocaleString('vi-VN')} đ`;
@@ -43,61 +55,61 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
   return (
     <div className="bg-white rounded-md border border-slate-200/90 shadow-sm overflow-hidden">
       {/* Header Search & Actions */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70">
+      <div className="p-2.5 sm:p-3 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-2.5 bg-slate-50/70">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
               Danh Sách Thiết Bị / Vật Tư Y Tế Áp Dụng BHYT
             </h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-sm font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 font-mono">
+            <span className="text-[10px] px-2 py-0.2 rounded-sm font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 font-mono">
               {items.length} bản ghi
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+          <p className="text-[10.5px] text-slate-500 mt-0.5 font-medium">
             Mẫu 04/DM theo quy định TT 04/2017/TT-BYT, TT 24/2025/TT-BYT &amp; QĐ 3176/QĐ-BYT
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="relative flex-1 md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
             <input
               type="text"
               placeholder="Tìm kiếm theo mã, tên TBYT, nhóm, hãng SX, số LH..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-2xs font-medium"
+              className="w-full pl-8 pr-3 py-1 bg-white border border-slate-200 rounded-sm text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-2xs font-medium"
             />
           </div>
         </div>
       </div>
 
       {/* Responsive Table */}
-      <div className="overflow-x-auto max-h-[600px] relative">
+      <div className="overflow-x-auto overflow-y-auto max-h-[600px] relative table-scrollbar">
         <table className="w-full text-left text-xs text-slate-700 border-separate border-spacing-0 min-w-[1800px]">
           <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-20 shadow-2xs">
             <tr>
-              <th className="py-3 px-3 text-center w-[50px] min-w-[50px] max-w-[50px] sticky left-0 bg-slate-100 z-30 border-b border-r border-slate-200">
+              <th className="py-2.5 px-3 text-center w-[50px] min-w-[50px] max-w-[50px] sticky left-0 bg-slate-100 z-30 border-b border-r border-slate-200">
                 STT
               </th>
-              <th className="py-3 px-3 min-w-[130px] sticky left-[50px] bg-slate-100 z-30 border-b border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.03)]">
+              <th className="py-2.5 px-3 min-w-[130px] sticky left-[50px] bg-slate-100 z-30 border-b border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.03)]">
                 Mã Vật Tư
               </th>
-              <th className="py-3 px-4 min-w-[280px] border-b border-slate-200 bg-slate-100">Tên Vật Tư / TBYT</th>
-              <th className="py-3 px-3 min-w-[150px] border-b border-slate-200 bg-slate-100">Nhóm TBYT</th>
-              <th className="py-3 px-3 min-w-[140px] border-b border-slate-200 bg-slate-100">Mã Hiệu / Số LH</th>
-              <th className="py-3 px-3 text-center min-w-[70px] border-b border-slate-200 bg-slate-100">ĐVT</th>
-              <th className="py-3 px-3 text-right min-w-[120px] border-b border-slate-200 bg-slate-100">Đơn Giá</th>
-              <th className="py-3 px-3 text-right min-w-[120px] border-b border-slate-200 bg-slate-100">Đơn Giá BHYT</th>
-              <th className="py-3 px-3 text-center min-w-[90px] border-b border-slate-200 bg-slate-100">Tỷ Lệ BHYT</th>
-              <th className="py-3 px-3 text-right min-w-[90px] border-b border-slate-200 bg-slate-100">Số Lượng</th>
-              <th className="py-3 px-3 text-center min-w-[90px] border-b border-slate-200 bg-slate-100">Định Mức</th>
-              <th className="py-3 px-3 min-w-[200px] border-b border-slate-200 bg-slate-100">Nhà Thầu / TT Thầu</th>
-              <th className="py-3 px-3 min-w-[160px] border-b border-slate-200 bg-slate-100">Loại & HT Thầu</th>
-              <th className="py-3 px-3 min-w-[120px] border-b border-slate-200 bg-slate-100">Hạn Hợp Đồng</th>
-              <th className="py-3 px-3 min-w-[120px] border-b border-slate-200 bg-slate-100">Thời Gian Áp Dụng</th>
-              <th className="py-3 px-3 text-center min-w-[80px] border-b border-slate-200 bg-slate-100">Mã CSKCB</th>
-              <th className="py-3 px-3 text-center min-w-[100px] sticky right-0 bg-slate-100 z-30 border-b border-l border-slate-200 shadow-[-2px_0_5px_rgba(0,0,0,0.03)]">
+              <th className="py-2.5 px-4 min-w-[280px] border-b border-slate-200 bg-slate-100">Tên Vật Tư / TBYT</th>
+              <th className="py-2.5 px-3 min-w-[150px] border-b border-slate-200 bg-slate-100">Nhóm TBYT</th>
+              <th className="py-2.5 px-3 min-w-[140px] border-b border-slate-200 bg-slate-100">Mã Hiệu / Số LH</th>
+              <th className="py-2.5 px-3 text-center min-w-[70px] border-b border-slate-200 bg-slate-100">ĐVT</th>
+              <th className="py-2.5 px-3 text-right min-w-[120px] border-b border-slate-200 bg-slate-100">Đơn Giá</th>
+              <th className="py-2.5 px-3 text-right min-w-[120px] border-b border-slate-200 bg-slate-100">Đơn Giá BHYT</th>
+              <th className="py-2.5 px-3 text-center min-w-[90px] border-b border-slate-200 bg-slate-100">Tỷ Lệ BHYT</th>
+              <th className="py-2.5 px-3 text-right min-w-[90px] border-b border-slate-200 bg-slate-100">Số Lượng</th>
+              <th className="py-2.5 px-3 text-center min-w-[90px] border-b border-slate-200 bg-slate-100">Định Mức</th>
+              <th className="py-2.5 px-3 min-w-[200px] border-b border-slate-200 bg-slate-100">Nhà Thầu / TT Thầu</th>
+              <th className="py-2.5 px-3 min-w-[160px] border-b border-slate-200 bg-slate-100">Loại & HT Thầu</th>
+              <th className="py-2.5 px-3 min-w-[120px] border-b border-slate-200 bg-slate-100">Hạn Hợp Đồng</th>
+              <th className="py-2.5 px-3 min-w-[120px] border-b border-slate-200 bg-slate-100">Thời Gian Áp Dụng</th>
+              <th className="py-2.5 px-3 text-center min-w-[80px] border-b border-slate-200 bg-slate-100">Mã CSKCB</th>
+              <th className="py-2.5 px-3 text-center min-w-[100px] sticky right-0 bg-slate-100 z-30 border-b border-l border-slate-200 shadow-[-2px_0_5px_rgba(0,0,0,0.03)]">
                 Thao Tác
               </th>
             </tr>
@@ -106,21 +118,21 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={17} className="py-12 text-center text-slate-400 bg-white">
-                  <Cpu size={32} className="mx-auto mb-2 text-slate-300" />
-                  <p className="font-bold text-sm text-slate-600">Không tìm thấy thiết bị y tế nào</p>
-                  <p className="text-xs text-slate-400 mt-1">Vui lòng nạp file Excel hoặc bấm "Thêm Mới Thiết Bị"</p>
+                <td colSpan={17} className="py-6 sm:py-7 text-center text-slate-400 bg-white">
+                  <Cpu size={26} className="mx-auto mb-1 text-slate-300" />
+                  <p className="font-bold text-xs text-slate-600">Không tìm thấy thiết bị y tế nào</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Vui lòng nạp file Excel hoặc bấm "Thêm Mới Thiết Bị"</p>
                   <button
                     type="button"
                     onClick={onAddNew}
-                    className="mt-3 px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-colors shadow-2xs inline-flex items-center gap-1"
+                    className="mt-2.5 px-3 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-xs font-bold transition-colors shadow-2xs inline-flex items-center gap-1 cursor-pointer"
                   >
                     Thêm Mới Thiết Bị
                   </button>
                 </td>
               </tr>
             ) : (
-              items.map((item, index) => {
+              paginatedItems.map((item, index) => {
                 const isBhyt100 = (item.tyleTtBh ?? 100) === 100;
                 const isTaiSuDung = item.dinhMuc && item.dinhMuc > 1;
 
@@ -133,7 +145,7 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
                   >
                     {/* STT (Sticky Left 0) */}
                     <td className="py-3 px-3 text-center font-bold text-slate-400 sticky left-0 bg-white group-hover:bg-slate-50 z-10 w-[50px] min-w-[50px] max-w-[50px] border-b border-r border-slate-100">
-                      {item.stt || index + 1}
+                      {item.stt || startIdx + index + 1}
                     </td>
 
                     {/* Mã Vật Tư (Sticky Left 50px) */}
@@ -304,6 +316,18 @@ export const ThietBiTable: React.FC<ThietBiTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Bar */}
+      <Pagination
+        currentPage={currentPage}
+        totalItems={items.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[10, 20, 50, 100]}
+        itemLabel="thiết bị / vật tư"
+        themeColor="blue"
+      />
     </div>
   );
 };

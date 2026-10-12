@@ -1,8 +1,8 @@
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
-import type { ParseHs01ExcelResult } from "../services/hs01TongHopService";
+import type { ParseHs01ExcelResult } from "../../../../types/hs01TongHopTypes";
 import { DanhMucDropzone } from "../../../danh-muc/common";
-import { HS01_SCHEMA_FIELDS } from "../services/hs01TongHopService";
+import { HS01_SCHEMA_FIELDS } from "../../../../utils/constants/hs01TongHopConstants";
 
 interface Hs01DropzoneProps {
   isLoadingFile: boolean;
@@ -14,7 +14,6 @@ interface Hs01DropzoneProps {
   onClearData: () => void;
   onOpenXmlModal: () => void;
   onOpenApiTab: () => void;
-  onOpenSchemaModal: () => void;
   onAddNew: () => void;
 }
 
@@ -28,7 +27,6 @@ export const Hs01Dropzone: React.FC<Hs01DropzoneProps> = ({
   onClearData,
   onOpenXmlModal,
   onOpenApiTab,
-  onOpenSchemaModal,
   onAddNew,
 }) => {
   const totalSchemaFields = HS01_SCHEMA_FIELDS.length;
@@ -65,7 +63,6 @@ export const Hs01Dropzone: React.FC<Hs01DropzoneProps> = ({
       itemsCount={itemsCount}
       onFileUpload={onFileUpload}
       onSwitchSheet={onSwitchSheet}
-      onOpenSchemaModal={onOpenSchemaModal}
       onDownloadTemplate={onDownloadTemplate}
       onClearData={onClearData}
       onOpenXmlModal={onOpenXmlModal}

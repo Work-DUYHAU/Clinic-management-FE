@@ -155,6 +155,17 @@ export async function parseUniversalChungTuExcelFile(
   currentSelectType: DocSignOptionType = "CURRENT",
   defaultMaCskcb = DEFAULT_MA_CSKCB,
 ): Promise<ParsedUniversalExcelResult> {
+  if (!file || file.size === 0) {
+    throw new Error("Tệp rỗng (0 bytes). Vui lòng chọn tệp bảng tính Excel hợp lệ.");
+  }
+
+  const MAX_EXCEL_SIZE = 25 * 1024 * 1024; // 25MB
+  if (file.size > MAX_EXCEL_SIZE) {
+    throw new Error(
+      `Dung lượng tệp (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá giới hạn 25MB cho phép xử lý trên trình duyệt. Vui lòng chia nhỏ tệp.`,
+    );
+  }
+
   try {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, {

@@ -4,5 +4,6 @@ export * from './XmlExportModal';
 export * from './Pagination';
 export * from './SearchableSelect';
 export * from './ErrorModal';
+export * from './ErrorBoundary';
 export * from './SmartCaSignPanel';
 export * from './smartca';
