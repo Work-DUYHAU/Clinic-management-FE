@@ -26,6 +26,7 @@ const ChungTuPage = lazy(() =>
     default: m.ChungTuPage,
   }))
 );
+import { KyHoSoPage } from './pages/KyHoSoPage';
 
 const PageLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center h-64 w-full">
@@ -81,17 +82,17 @@ export const App: React.FC = () => {
                 catalogTab={catalogTab}
               />
 
-              <main className="flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto overflow-y-auto no-scrollbar">
+              <main className={`flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto ${activeTab === 'ky-so' ? 'overflow-hidden flex flex-col min-h-0' : 'overflow-y-auto no-scrollbar'}`}>
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoadingFallback />}>
                     {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
-                    <div className={activeTab === 'danh-muc' ? 'block' : 'hidden'}>
+                    {activeTab === 'danh-muc' && (
                       <DanhMucPage
                         isActive={activeTab === 'danh-muc'}
                         activeCatalogTab={catalogTab}
                         onCatalogTabChange={setCatalogTab}
                       />
-                    </div>
+                    )}
 
                     {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
                     {activeTab === 'ho-so' && (
@@ -109,6 +110,11 @@ export const App: React.FC = () => {
                     {/* 3. HỒ SƠ CHỨNG TỪ & GIẤY TỜ ĐIỆN TỬ (TT 25 & BHXH 2025) */}
                     {activeTab === 'chung-tu' && (
                       <ChungTuPage isActive={activeTab === 'chung-tu'} />
+                    )}
+
+                    {/* 4. KÝ SỐ & GỬI BHXH (KÝ HỒ SƠ TỔNG HỢP) */}
+                    {activeTab === 'ky-so' && (
+                      <KyHoSoPage isActive={activeTab === 'ky-so'} />
                     )}
                   </Suspense>
                 </ErrorBoundary>

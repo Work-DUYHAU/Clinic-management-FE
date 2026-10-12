@@ -4,6 +4,7 @@ import {
   FileText,
   ShieldAlert,
   FileSignature,
+  ShieldCheck,
   LogOut,
   Stethoscope,
   Building2,
@@ -18,7 +19,7 @@ import {
 } from "../utils/shared/excelXmlShared";
 import { Badge, IconButton } from "../shared/components";
 
-export type MainTabType = "danh-muc" | "ho-so" | "chung-tu";
+export type MainTabType = "danh-muc" | "ho-so" | "chung-tu" | "ky-so";
 export type HoSoTabType = "01_tonghop" | "09_xuattoan";
 
 interface SidebarProps {
@@ -57,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isHoSo01Active = activeTab === "ho-so" && hoSoTab === "01_tonghop";
   const isHoSo09Active = activeTab === "ho-so" && hoSoTab === "09_xuattoan";
   const isChungTuActive = activeTab === "chung-tu";
+  const isKySoActive = activeTab === "ky-so";
 
   const navSections: NavSection[] = [
     {
@@ -109,6 +111,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: FileSignature,
           isActive: isChungTuActive,
           onClick: () => onNavigate("chung-tu"),
+          accent: "blue",
+        },
+      ],
+    },
+    {
+      title: "KÝ SỐ & GỬI BHXH",
+      items: [
+        {
+          id: "ky-so",
+          label: "Ký Hồ Sơ Tổng Hợp",
+          code: "PDF",
+          icon: ShieldCheck,
+          isActive: isKySoActive,
+          onClick: () => onNavigate("ky-so"),
           accent: "blue",
         },
       ],
@@ -213,6 +229,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           item.isActive
                             ? isAmber
                               ? "bg-amber-500/25 text-amber-200 border border-amber-400/30"
+                              : item.id === "ky-so"
+                              ? "bg-blue-600 text-white font-bold border-blue-500"
                               : "bg-blue-500/25 text-blue-200 border border-blue-400/30"
                             : "bg-slate-800 text-slate-400 border border-slate-700/50"
                         }`}

@@ -29,3 +29,5 @@ dist-ssr
 
 # Documentation & local docs
 docs/
+public/cmaps/
+public/assets/
