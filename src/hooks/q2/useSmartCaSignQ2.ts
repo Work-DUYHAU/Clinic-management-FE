@@ -95,8 +95,6 @@ export function useSmartCaSignQ2({
     };
   }, [effectiveXmlToSign]);
 
-
-
   const handleStartSignQ2 = useCallback(async () => {
     if (!effectiveXmlToSign) {
       toast.warning("Chưa có nội dung file XML để ký số.", "Cảnh báo");
