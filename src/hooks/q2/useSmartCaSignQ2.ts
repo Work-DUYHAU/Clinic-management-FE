@@ -111,6 +111,7 @@ export function useSmartCaSignQ2({
         rawXml: effectiveXmlToSign,
         fileName: effectiveFileName,
         userId: identityValue.trim() || undefined,
+        signal: controller.signal,
       });
 
       if (beRes.success && beRes.signedXml) {
@@ -143,8 +144,23 @@ export function useSmartCaSignQ2({
     } catch (backendErr: unknown) {
       setIsInitiating(false);
       autoAbortRef.current = null;
-      const errMsg =
+
+      if (controller.signal.aborted) {
+        // Người dùng đã chủ động hủy ký số, không hiển thị thông báo lỗi
+        return;
+      }
+
+      const rawMsg =
         backendErr instanceof Error ? backendErr.message : String(backendErr);
+      const isNetworkErr =
+        rawMsg.includes("Failed to fetch") ||
+        rawMsg.includes("NetworkError") ||
+        rawMsg.includes("ECONNREFUSED");
+
+      const errMsg = isNetworkErr
+        ? "Không thể kết nối đến máy chủ Backend (http://localhost:3000). Vui lòng kiểm tra xem Backend đã khởi động chưa."
+        : rawMsg;
+
       console.error("[Q2] Lỗi ký số qua Backend:", backendErr);
       toast.error(`Ký số Backend thất bại: ${errMsg}`, "Lỗi Ký Số");
     }

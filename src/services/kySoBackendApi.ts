@@ -1,11 +1,11 @@
-import type { SignaturePosition, KyHoSoSignatureMeta } from "../components/ky-ho-so/types";
+import type {
+  SignaturePosition,
+  KyHoSoSignatureMeta,
+} from "../components/ky-ho-so/types";
 
 const BACKEND_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:3000/api";
 
-/**
- * Chuyển đổi URL hình ảnh (ảnh tĩnh / assets / blob) sang DataURL Base64
- */
 export async function urlToDataUrl(url?: string): Promise<string> {
   if (!url) return "";
   if (url.startsWith("data:")) return url;
@@ -42,9 +42,6 @@ export interface SignPdfWithBackendResult {
   signedPdfBase64: string;
 }
 
-/**
- * 1. Gọi Backend để thực hiện Ký số SmartCA và dán con dấu + chữ ký vào PDF
- */
 export async function signPdfWithBackend(
   params: SignPdfWithBackendParams,
 ): Promise<SignPdfWithBackendResult> {
@@ -105,13 +102,16 @@ export interface SendBhxhGiayToDienTuResult {
   data?: any;
 }
 
-/**
- * 2. Gọi Backend gửi Giấy tờ điện tử / Hồ sơ PDF đã ký lên Cổng BHXH (Mã loại HS 60, 61)
- */
 export async function sendBhxhGiayToDienTuWithBackend(
   params: SendBhxhGiayToDienTuParams,
 ): Promise<SendBhxhGiayToDienTuResult> {
-  const { pdfBlobOrFile, fileBase64Str, loaiHs = "60", maLienThong, maCskcb } = params;
+  const {
+    pdfBlobOrFile,
+    fileBase64Str,
+    loaiHs = "60",
+    maLienThong,
+    maCskcb,
+  } = params;
 
   let base64 = fileBase64Str || "";
   if (!base64 && pdfBlobOrFile) {
@@ -152,6 +152,7 @@ export interface SignXmlWithBackendParams {
   signatureFormat?: "standard" | "compact" | "enveloped" | "q2-vnpt";
   targetDataId?: string;
   userId?: string;
+  signal?: AbortSignal;
 }
 
 export interface SignXmlWithBackendResult {
@@ -167,9 +168,6 @@ export interface SignXmlWithBackendResult {
   signatureId?: string;
 }
 
-/**
- * 3. Gọi Backend để thực hiện Ký số XML SmartCA (Chuẩn W3C XMLDSig / QĐ 130 / Phụ lục 02)
- */
 export async function signXmlWithBackend(
   params: SignXmlWithBackendParams,
 ): Promise<SignXmlWithBackendResult> {
@@ -179,6 +177,7 @@ export async function signXmlWithBackend(
     signatureFormat = "standard",
     targetDataId,
     userId,
+    signal,
   } = params;
 
   if (!rawXml || !rawXml.trim()) {
@@ -191,6 +190,7 @@ export async function signXmlWithBackend(
     headers: {
       "Content-Type": "application/json",
     },
+    signal,
     body: JSON.stringify({
       rawXml,
       fileName,
@@ -218,6 +218,7 @@ export interface SendBhxhHoSo01Params {
   maCskcb?: string;
   maTinh?: string;
   tranId?: string;
+  signal?: AbortSignal;
 }
 
 export interface SendBhxhHoSo01Result {
@@ -230,9 +231,6 @@ export interface SendBhxhHoSo01Result {
   data?: any;
 }
 
-/**
- * 4. Gọi Backend gửi Hồ sơ tổng hợp 01/BH lên Cổng BHXH (Loại HS 5: GuiHoSoTongHop01BH)
- */
 export async function sendBhxhHoSo01WithBackend(
   params: SendBhxhHoSo01Params,
 ): Promise<SendBhxhHoSo01Result> {
@@ -244,6 +242,7 @@ export async function sendBhxhHoSo01WithBackend(
     maCskcb,
     maTinh,
     tranId,
+    signal,
   } = params;
 
   let base64 = fileBase64Str || "";
@@ -261,6 +260,7 @@ export async function sendBhxhHoSo01WithBackend(
     headers: {
       "Content-Type": "application/json",
     },
+    signal,
     body: JSON.stringify({
       fileBase64Str: base64,
       loaiHs,
@@ -273,4 +273,36 @@ export async function sendBhxhHoSo01WithBackend(
 
   const resJson = await response.json();
   return resJson;
+}
+
+export interface BhxhGatewayStatusInfo {
+  connected: boolean;
+  message: string;
+  env?: string;
+  baseUrl?: string;
+  username?: string;
+  maCskcb?: string;
+  maTinh?: string;
+  hasToken?: boolean;
+}
+
+export async function getBhxhGatewayStatusInfo(): Promise<BhxhGatewayStatusInfo> {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/bhxh/status`);
+    if (!res.ok) {
+      return {
+        connected: false,
+        message: `Lỗi kết nối Backend (Mã ${res.status})`,
+      };
+    }
+    return await res.json();
+  } catch (err) {
+    return {
+      connected: false,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Không thể kết nối đến máy chủ Backend",
+    };
+  }
 }
