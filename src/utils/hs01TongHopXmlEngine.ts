@@ -1,13 +1,10 @@
 import * as XLSX from "xlsx";
-import {
-  BhxhChungTuService,
-  BHXH_CONFIG,
-} from "../services/bhxh/bhxhChungTuService";
 import type {
   Hs01TongHopItem,
   ParseHs01ExcelResult,
   SendHs01GatewayResult,
 } from "../types/hs01TongHopTypes";
+import { sendBhxhHoSo01WithBackend } from "../services/kySoBackendApi";
 import {
   HS01_SCHEMA_FIELDS,
   HS01_FIELD_HEURISTICS,
@@ -477,98 +474,58 @@ export async function sendHs01ToBhxhGateway(
   const dataKyQt = `${finalNamQt}${finalThangQt}`;
   const kyQT = credentials?.kyQT || dataKyQt;
 
-  const tokenRes = await BhxhChungTuService.takeToken();
-  const token = tokenRes.apiToken || tokenRes.APIKey?.access_token;
-  if (String(tokenRes.maKetQua) !== "200" || !token) {
+  // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
+  const signedXmlFromSig = (signature as any)?.signedXml;
+  const base64 =
+    signedXmlFromSig
+      ? xmlToBase64(signedXmlFromSig)
+      : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));
+
+  // 1. ƯU TIÊN: Gửi qua Backend API (Server-side Cổng BHXH, bảo mật token & xử lý retry tập trung)
+  try {
+    const beRes = await sendBhxhHoSo01WithBackend({
+      fileBase64Str: base64,
+      loaiHs: "5",
+      kyQT,
+      maCskcb,
+      maTinh: credentials?.maTinh || DEFAULT_MA_TINH,
+      tranId: signature?.tranId,
+    });
+
+    const isOk =
+      String(beRes.maKetQua) === "200" ||
+      String(beRes.maKetQua) === "0" ||
+      beRes.success;
+
     return {
-      maKetQua: String(tokenRes.maKetQua || "401"),
-      maGiaoDich: "",
+      maKetQua: String(beRes.maKetQua || (isOk ? "200" : "500")),
+      maGiaoDich:
+        beRes.maGiaoDich ||
+        (isOk
+          ? `HS01BH_${maCskcb}_${kyQT}_${Date.now().toString().slice(-6)}`
+          : ""),
       thongDiep:
-        tokenRes.thongDiep ||
-        tokenRes.message ||
-        "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
+        beRes.thongDiep ||
+        beRes.ghiChu ||
+        (isOk
+          ? `Tiếp nhận thành công ${items.length} hồ sơ tổng hợp Mẫu 01/BH (Kỳ QT: ${finalThangQt}/${finalNamQt}) lên Cổng BHXH qua Backend` +
+            (signature ? ` (đã ký số SmartCA)` : "")
+          : `Cổng BHXH phản hồi mã: ${beRes.maKetQua}`),
       thoiGianTiepNhan: getThoiGianTiepNhan(),
       totalRecords: items.length,
       kyQT,
       loaiHs: "5",
     };
-  }
-
-  try {
-    // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
-    const signedXmlFromSig = (signature as any)?.signedXml;
-    const base64 =
-      signedXmlFromSig
-        ? xmlToBase64(signedXmlFromSig)
-        : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));
-
-    const params = new URLSearchParams();
-    params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
-    params.append("loaiHs", "5");
-    params.append("maTinh", credentials?.maTinh || DEFAULT_MA_TINH);
-    params.append("maCskcb", maCskcb);
-    params.append("kyQT", kyQT);
-    params.append("fileHsBase64", base64);
-    if (signature?.tranId) {
-      params.append("tranId", signature.tranId);
-    }
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/x-www-form-urlencoded",
-      accessToken: token,
-      tokenId: tokenRes.idToken || tokenRes.APIKey?.id_token || "",
-      passwordHash: tokenRes.passwordHash || "",
-    };
-
-    const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await BhxhChungTuService.fetchGateway(
-      `${baseUrl}${BHXH_CONFIG.ENDPOINTS.GUI_HO_SO_TONG_HOP_01BH}`,
-      {
-        method: "POST",
-        headers,
-        body: params.toString(),
-      },
-    );
-
-    let data: any = {};
-    const text = await response.text();
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = {
-        maKetQua: String(response.status),
-        thongDiep:
-          text.slice(0, 150) || `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
-      };
-    }
-    const isOk =
-      String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
-    return {
-      maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
-      maGiaoDich:
-        data.maGiaoDich ||
-        (isOk
-          ? `HS01BH_${maCskcb}_${kyQT}_${Date.now().toString().slice(-6)}`
-          : ""),
-      thongDiep:
-        data.thongDiep ||
-        data.ghiChu ||
-        (isOk
-          ? `Tiếp nhận thành công ${items.length} hồ sơ tổng hợp Mẫu 01/BH (Kỳ QT: ${thangQt}/${namQt}) lên Cổng BHXH` +
-            (signature ? ` (đã ký số SmartCA)` : "")
-          : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
-      thoiGianTiepNhan: data.thoiGianTiepNhan || getThoiGianTiepNhan(),
-      totalRecords: items.length,
-      kyQT,
-      loaiHs: "5",
-    };
-  } catch (err: unknown) {
+  } catch (backendErr: unknown) {
     const errorMsg =
-      err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
+      backendErr instanceof Error
+        ? backendErr.message
+        : "Không thể kết nối đến máy chủ Backend hoặc Cổng BHXH";
+    console.error("[HS01] Lỗi gửi hồ sơ qua Backend:", backendErr);
     return {
       maKetQua: "500",
       maGiaoDich: "",
-      thongDiep: errorMsg,
+      thongDiep: `Lỗi kết nối Backend: ${errorMsg}`,
       thoiGianTiepNhan: getThoiGianTiepNhan(),
       totalRecords: items.length,
       kyQT,

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useClipboard } from "../useClipboard";
 import { computeXmlDigest } from "../../utils/xmlDsigEngine";
-import { signAutoQ2 } from "../../services/smartca/q2/smartcaQ2Handlers";
+import { signXmlWithBackend } from "../../services/kySoBackendApi";
 import { SMARTCA_TOTP_SECRET } from "../../services/smartca/smartcaConfig";
 import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
 import { useSignerFormState, type SignerFormState } from "../useSignerFormState";
@@ -103,68 +103,52 @@ export function useSmartCaSignQ2({
       return;
     }
 
-    if (!identityValue.trim()) {
-      toast.warning(
-        "Vui lòng nhập định danh tài khoản SmartCA.",
-        "Thiếu thông tin",
-      );
-      return;
-    }
-
-    const cleanSecret = (totpSecret || SMARTCA_TOTP_SECRET || "").trim();
-
-    if (!cleanSecret) {
-      toast.warning(
-        "Vui lòng cấu hình Secret Key để sử dụng chế độ Ký Tự Động Q2.",
-        "Chưa có Secret Key",
-      );
-      return;
-    }
-
     const controller = new AbortController();
     autoAbortRef.current = controller;
     setIsInitiating(true);
 
+    // 1. ƯU TIÊN: Ký số qua Backend (Server-side SmartCA với TOTP & W3C XMLDSig chuẩn)
     try {
-      const autoResult = await signAutoQ2({
+      const beRes = await signXmlWithBackend({
         rawXml: effectiveXmlToSign,
-        documentDigest: digestInfo?.digestValue,
         fileName: effectiveFileName,
-        identityValue: identityValue.trim(),
-        password,
-        idType,
-        signer: undefined,
-        totpSecret: cleanSecret,
-        abortSignal: controller.signal,
+        userId: identityValue.trim() || undefined,
       });
 
-      setIsInitiating(false);
-      autoAbortRef.current = null;
+      if (beRes.success && beRes.signedXml) {
+        setIsInitiating(false);
+        autoAbortRef.current = null;
 
-      if (
-        autoResult.success &&
-        autoResult.signedXml &&
-        autoResult.signResponse
-      ) {
-        onSignedSuccess(autoResult.signedXml, autoResult.signResponse);
+        const signResponse: SmartCaSignResponse = {
+          success: true,
+          tranId: beRes.signatureId || `BE-${Date.now()}`,
+          tranCode: "00",
+          status: 1,
+          signatureValue: beRes.meta?.signatureValue || "",
+          subjectDN: beRes.meta?.signerName || "",
+          serialNumber: beRes.meta?.certSerial || "",
+          issuerDN: beRes.meta?.caProvider || "VNPT-CA",
+          x509Certificate: "",
+          signedAt: beRes.meta?.signTime || new Date().toISOString(),
+          digestValue:
+            beRes.meta?.digestValue || digestInfo?.digestValue || "",
+          signedXml: beRes.signedXml,
+        };
+
+        onSignedSuccess(beRes.signedXml, signResponse);
         toast.success(
-          "Đã tự động xác thực bằng Secret Key và ký số thành công.",
-          "Ký số tự động Q2 thành công",
+          "Ký số SmartCA qua Backend thành công.",
+          "Ký số XML hoàn tất",
         );
-      } else {
-        toast.error(
-          autoResult.error || "Lỗi ủy quyền ký số tự động.",
-          "Ký số thất bại",
-        );
-      }
-    } catch (err: unknown) {
-      setIsInitiating(false);
-      autoAbortRef.current = null;
-      const errMsg = err instanceof Error ? err.message : String(err);
-      if (errMsg.includes("Đã hủy")) {
         return;
       }
-      toast.error(errMsg, "Lỗi ký số tự động");
+    } catch (backendErr: unknown) {
+      setIsInitiating(false);
+      autoAbortRef.current = null;
+      const errMsg =
+        backendErr instanceof Error ? backendErr.message : String(backendErr);
+      console.error("[Q2] Lỗi ký số qua Backend:", backendErr);
+      toast.error(`Ký số Backend thất bại: ${errMsg}`, "Lỗi Ký Số");
     }
   }, [
     effectiveXmlToSign,

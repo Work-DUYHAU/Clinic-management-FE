@@ -145,3 +145,132 @@ export async function sendBhxhGiayToDienTuWithBackend(
   const resJson = await response.json();
   return resJson;
 }
+
+export interface SignXmlWithBackendParams {
+  rawXml: string;
+  fileName?: string;
+  signatureFormat?: "standard" | "compact" | "enveloped" | "q2-vnpt";
+  targetDataId?: string;
+  userId?: string;
+}
+
+export interface SignXmlWithBackendResult {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  signedXml: string;
+  meta: KyHoSoSignatureMeta & {
+    signatureValue?: string;
+    digestValue?: string;
+    isXmlSigned?: boolean;
+  };
+  signatureId?: string;
+}
+
+/**
+ * 3. Gọi Backend để thực hiện Ký số XML SmartCA (Chuẩn W3C XMLDSig / QĐ 130 / Phụ lục 02)
+ */
+export async function signXmlWithBackend(
+  params: SignXmlWithBackendParams,
+): Promise<SignXmlWithBackendResult> {
+  const {
+    rawXml,
+    fileName = "HSTH01BH.xml",
+    signatureFormat = "standard",
+    targetDataId,
+    userId,
+  } = params;
+
+  if (!rawXml || !rawXml.trim()) {
+    throw new Error("Không có nội dung XML để thực hiện ký số.");
+  }
+
+  const endpoint = `${BACKEND_BASE_URL}/smart-ca/sign-xml`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      rawXml,
+      fileName,
+      signatureFormat,
+      targetDataId,
+      userId,
+    }),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok || !resJson.success) {
+    throw new Error(
+      resJson.message || `Lỗi ký số XML Backend (Mã lỗi ${response.status})`,
+    );
+  }
+
+  return resJson;
+}
+
+export interface SendBhxhHoSo01Params {
+  fileBase64Str?: string;
+  xmlContent?: string;
+  loaiHs?: string;
+  kyQT?: string;
+  maCskcb?: string;
+  maTinh?: string;
+  tranId?: string;
+}
+
+export interface SendBhxhHoSo01Result {
+  success: boolean;
+  statusCode: number;
+  maKetQua: string;
+  thongDiep: string;
+  ghiChu?: string;
+  maGiaoDich?: string;
+  data?: any;
+}
+
+/**
+ * 4. Gọi Backend gửi Hồ sơ tổng hợp 01/BH lên Cổng BHXH (Loại HS 5: GuiHoSoTongHop01BH)
+ */
+export async function sendBhxhHoSo01WithBackend(
+  params: SendBhxhHoSo01Params,
+): Promise<SendBhxhHoSo01Result> {
+  const {
+    fileBase64Str,
+    xmlContent,
+    loaiHs = "5",
+    kyQT,
+    maCskcb,
+    maTinh,
+    tranId,
+  } = params;
+
+  let base64 = fileBase64Str || "";
+  if (!base64 && xmlContent) {
+    base64 = btoa(unescape(encodeURIComponent(xmlContent)));
+  }
+
+  if (!base64) {
+    throw new Error("Không có dữ liệu tệp XML / Base64 để gửi lên Cổng BHXH.");
+  }
+
+  const endpoint = `${BACKEND_BASE_URL}/bhxh/gui-ho-so-tong-hop-01`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      fileBase64Str: base64,
+      loaiHs,
+      kyQT,
+      maCskcb,
+      maTinh,
+      tranId,
+    }),
+  });
+
+  const resJson = await response.json();
+  return resJson;
+}

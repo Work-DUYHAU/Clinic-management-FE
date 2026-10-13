@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
+import { useToast } from '../../../context/ToastContext';
 import type { KyHoSoDocInfo } from '../types';
 
 interface UploadDropzoneProps {
@@ -9,9 +10,48 @@ interface UploadDropzoneProps {
 export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const toast = useToast();
 
   const handleProcessFile = (file?: File) => {
     if (!file) return;
+
+    const isDocx =
+      file.name.toLowerCase().endsWith('.docx') ||
+      file.type.includes('wordprocessingml') ||
+      file.type.includes('docx');
+
+    const isPdf =
+      file.name.toLowerCase().endsWith('.pdf') ||
+      file.type.includes('pdf');
+
+    const isImage =
+      /\.(png|jpe?g|webp|bmp|gif|svg)$/i.test(file.name) ||
+      (file.type.startsWith('image/') && file.type !== '');
+
+    if (isImage) {
+      toast.warning(
+        'Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!',
+        'Chỉ Chấp Nhận PDF & DOCX',
+      );
+      return;
+    }
+
+    if (!isPdf && !isDocx) {
+      toast.error(
+        'Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận định dạng .pdf hoặc .docx.',
+        'Lỗi Định Dạng Tệp',
+      );
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error(
+        'Dung lượng tệp vượt quá 25MB!',
+        'Tệp Quá Lớn',
+      );
+      return;
+    }
+
     const fileSize = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
     onFileSelect({
       file,
@@ -55,7 +95,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+        accept=".pdf,.docx"
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
@@ -72,7 +112,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
         Kéo thả hoặc chọn tệp hồ sơ
       </h3>
       <p className="text-xs text-slate-500 mb-6 font-medium">
-        Hỗ trợ định dạng PDF, DOCX, PNG, JPG, JPEG, WEBP — tối đa 25MB mỗi tệp
+        Hỗ trợ định dạng PDF, DOCX — tối đa 25MB mỗi tệp (ảnh PNG/JPG chỉ dùng làm con dấu hoặc chữ ký)
       </p>
 
       <button

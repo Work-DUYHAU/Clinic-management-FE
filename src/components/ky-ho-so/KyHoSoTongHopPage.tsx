@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText, Clock, Check, Loader2 } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
 import { UploadDropzone } from "./components/UploadDropzone";
 import { DocumentPreview } from "./components/DocumentPreview";
 import { SigningActionsCard } from "./components/SigningActionsCard";
@@ -14,6 +15,7 @@ interface KyHoSoTongHopPageProps {
 }
 
 export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
+  const toast = useToast();
   const stampSig = useStampSignature();
   const docSigning = useDocumentSigning({
     stampImageUrl: stampSig.stampImageUrl,
@@ -44,6 +46,46 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
   const handleDocChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const isDocx =
+        file.name.toLowerCase().endsWith(".docx") ||
+        file.type.includes("wordprocessingml") ||
+        file.type.includes("docx");
+
+      const isPdf =
+        file.name.toLowerCase().endsWith(".pdf") ||
+        file.type.includes("pdf");
+
+      const isImage =
+        /\.(png|jpe?g|webp|bmp|gif|svg)$/i.test(file.name) ||
+        (file.type.startsWith("image/") && file.type !== "");
+
+      if (isImage) {
+        toast.warning(
+          "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!",
+          "Chỉ Chấp Nhận PDF & DOCX",
+        );
+        e.target.value = "";
+        return;
+      }
+
+      if (!isPdf && !isDocx) {
+        toast.error(
+          "Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận tệp .pdf hoặc .docx.",
+          "Lỗi Định Dạng Tệp",
+        );
+        e.target.value = "";
+        return;
+      }
+
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error(
+          "Dung lượng tệp vượt quá 25MB!",
+          "Tệp Quá Lớn",
+        );
+        e.target.value = "";
+        return;
+      }
+
       const fileSize = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
       handleFileSelect({
         file,
@@ -58,11 +100,11 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-84px)] min-h-0 items-start overflow-hidden pb-1">
-      {/* Input ẩn để đổi nhanh tệp tài liệu PDF/DOCX/Ảnh */}
+      {/* Input ẩn để đổi nhanh tệp tài liệu PDF/DOCX */}
       <input
         ref={docFileInputRef}
         type="file"
-        accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+        accept=".pdf,.docx"
         className="hidden"
         onChange={handleDocChangeInput}
       />

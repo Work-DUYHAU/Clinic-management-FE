@@ -13,7 +13,6 @@ import {
 import { useToast } from "../../../../context/ToastContext";
 import { getTodayIsoDate } from "../../../../utils/shared/excelXmlShared";
 import { useRegisterSignModal } from "../../../../context/SignModalContext";
-import { BhxhChungTuService } from "../../../../services/bhxh/bhxhChungTuService";
 
 export function useHs01TongHopTab() {
   const toast = useToast();
@@ -72,8 +71,6 @@ export function useHs01TongHopTab() {
         const result = await parseHs01ExcelFile(file);
         setItems(result.items);
         setFileUploadStats(result);
-        // Tiền kết nối Cổng BHXH trong lúc người dùng xem dữ liệu
-        BhxhChungTuService.takeToken().catch(() => {});
         toast.success(
           `Đã nạp thành công ${result.items.length} hồ sơ tổng hợp từ tệp "${file.name}"\nSheet: "${result.selectedSheet}"`,
           "Nạp File Excel Mẫu 01/BH Thành Công",

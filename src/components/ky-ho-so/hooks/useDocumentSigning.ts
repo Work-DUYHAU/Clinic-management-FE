@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useToast } from "../../../context/ToastContext";
-import { convertImageToPdf } from "../utils/pdf";
 import { parseDocxAndConvertToPdf } from "../utils/docx";
 import {
   signPdfWithBackend,
@@ -48,10 +47,8 @@ export function useDocumentSigning({
     bhxhCode: "",
   });
 
-  // 1. Tải lên tệp hồ sơ (Hỗ trợ PDF, DOCX và MỌI LOẠI ẢNH: PNG, JPG, WEBP, BMP...)
+  // 1. Tải lên tệp hồ sơ (Chỉ cho phép PDF và DOCX. Ảnh chỉ dùng để đổi Con dấu / Chữ ký)
   const handleFileSelect = async (doc: KyHoSoDocInfo) => {
-    setDocInfo(doc);
-
     try {
       if (doc.file) {
         const isDocx =
@@ -59,20 +56,39 @@ export function useDocumentSigning({
           doc.fileType.includes("wordprocessingml") ||
           doc.fileType.includes("docx");
 
-        const isImage =
-          /\.(png|jpe?g|webp)$/i.test(doc.fileName) ||
-          (doc.file.type.startsWith("image/") &&
-            /(png|jpe?g|webp)/i.test(doc.file.type));
-
         const isPdf =
           doc.fileName.toLowerCase().endsWith(".pdf") ||
           doc.fileType.includes("pdf");
 
-        if (!isPdf && !isDocx && !isImage) {
-          throw new Error(
-            "Định dạng tệp không được hỗ trợ. Chỉ chấp nhận các tệp: .pdf, .docx, .png, .jpg, .jpeg, .webp",
+        const isImage =
+          /\.(png|jpe?g|webp|bmp|gif|svg)$/i.test(doc.fileName) ||
+          (doc.file.type.startsWith("image/") && doc.file.type !== "");
+
+        if (isImage) {
+          toast.warning(
+            "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!",
+            "Chỉ Chấp Nhận PDF & DOCX",
           );
+          return;
         }
+
+        if (!isPdf && !isDocx) {
+          toast.error(
+            "Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận tệp .pdf hoặc .docx.",
+            "Lỗi Định Dạng Tệp",
+          );
+          return;
+        }
+
+        if (doc.file.size > 25 * 1024 * 1024) {
+          toast.error(
+            "Dung lượng tệp vượt quá 25MB!",
+            "Tệp Quá Lớn",
+          );
+          return;
+        }
+
+        setDocInfo(doc);
 
         let rawBuffer: ArrayBuffer;
         let finalUrl: string;
@@ -85,14 +101,6 @@ export function useDocumentSigning({
           const docxResult = await parseDocxAndConvertToPdf(doc.file);
           rawBuffer = await docxResult.pdfBlob.arrayBuffer();
           finalUrl = URL.createObjectURL(docxResult.pdfBlob);
-        } else if (isImage) {
-          toast.info(
-            "Đang tối ưu và đóng gói tệp hình ảnh sang định dạng PDF chuẩn...",
-            "Chuyển Đổi Hình Ảnh",
-          );
-          const imageResult = await convertImageToPdf(doc.file);
-          rawBuffer = await imageResult.pdfBlob.arrayBuffer();
-          finalUrl = URL.createObjectURL(imageResult.pdfBlob);
         } else {
           rawBuffer = await doc.file.arrayBuffer();
           finalUrl = URL.createObjectURL(doc.file);

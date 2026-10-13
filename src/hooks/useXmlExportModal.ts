@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useToast } from "../context/ToastContext";
 import { extractXmlSignature } from "../utils/xmlDsigEngine";
-import { BhxhChungTuService } from "../services/bhxh/bhxhChungTuService";
 import { isBhxhGatewaySuccess } from "../utils/shared/excelXmlShared";
 
 export type XmlExportTabType = "base64" | "smartca";
@@ -60,10 +59,7 @@ export function useXmlExportModal<T, R = any>({
     if (isOpen) {
       setTab(defaultTab === "base64" ? "base64" : "smartca");
       setSendProgress(null);
-      // Chủ động tiền kết nối & lấy sẵn Token Cổng BHXH ngay khi mở modal
-      BhxhChungTuService.takeToken().catch(() => {});
     } else {
-      // Khi đóng modal thì xóa kết quả gửi để sẵn sàng cho phiên mới
       setSendResult(null);
       setSendProgress(null);
     }
@@ -72,8 +68,6 @@ export function useXmlExportModal<T, R = any>({
   const prevItemIdsRef = useRef<string>("");
   useEffect(() => {
     const currentItemIds = items.map((i: any) => i.id || "").join(",");
-    // Chỉ reset kết quả gửi khi danh sách bản ghi thực sự thay đổi (chọn hồ sơ khác hoặc nạp file khác)
-    // KHÔNG reset khi cùng danh sách đó được cập nhật trạng thái (ttKySo, tinhTrangGui...) sau khi gửi thành công
     if (
       !isSending &&
       prevItemIdsRef.current &&
