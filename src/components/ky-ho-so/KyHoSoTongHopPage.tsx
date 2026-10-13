@@ -1,5 +1,5 @@
 import React from "react";
-import { FileText, Clock, Check } from "lucide-react";
+import { FileText, Clock, Check, Loader2 } from "lucide-react";
 import { UploadDropzone } from "./components/UploadDropzone";
 import { DocumentPreview } from "./components/DocumentPreview";
 import { SigningActionsCard } from "./components/SigningActionsCard";
@@ -31,6 +31,7 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
     signatureMeta,
     canvasSizesRef,
     handleFileSelect,
+    handlePositionsInit,
     handlePositionChange,
     handleSignSmartCS,
     handleExportPdf,
@@ -38,8 +39,34 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
     handleReset,
   } = docSigning;
 
+  const docFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleDocChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const fileSize = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+      handleFileSelect({
+        file,
+        fileName: file.name,
+        fileSize,
+        fileType: file.type,
+        uploadedAt: new Date().toLocaleTimeString("vi-VN"),
+      });
+    }
+    e.target.value = "";
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-84px)] min-h-0 items-start overflow-hidden pb-1">
+      {/* Input ẩn để đổi nhanh tệp tài liệu PDF/DOCX/Ảnh */}
+      <input
+        ref={docFileInputRef}
+        type="file"
+        accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+        className="hidden"
+        onChange={handleDocChangeInput}
+      />
+
       {/* Input ẩn để tải ảnh con dấu và chữ ký (Hỗ trợ PNG, JPG, JPEG, WEBP) */}
       <input
         ref={stampSig.stampInputRef}
@@ -62,15 +89,20 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
         <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
             <FileText size={18} className="text-slate-400 flex-shrink-0" />
-            <span className="font-bold text-sm text-slate-800 truncate max-w-50 md:max-w-xs">
+            <span
+              onClick={() => step !== "empty" && docFileInputRef.current?.click()}
+              title={step !== "empty" ? "Nhấn để đổi tệp tài liệu khác" : undefined}
+              className={`font-bold text-sm text-slate-800 truncate max-w-50 md:max-w-xs ${
+                step !== "empty" ? "cursor-pointer hover:text-blue-600 transition-colors" : ""
+              }`}
+            >
               {step === "empty"
                 ? "Xem trước hồ sơ tổng hợp"
                 : docInfo?.fileName}
             </span>
-
-            {/* Thanh công cụ Đổi tệp, Đổi con dấu, Đổi chữ ký kèm cache 30' & popover */}
             <StampSignatureToolbar
               step={step}
+              onChangeDoc={() => docFileInputRef.current?.click()}
               onResetDoc={handleReset}
               stampSig={stampSig}
             />
@@ -100,10 +132,10 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
           </div>
         </div>
 
-        {/* Khung nội dung chính (CHỈ VÙNG NÀY CUỘN DỌC ĐỂ XEM FILE PDF) */}
-        <div className="flex-1 min-h-0 bg-slate-100/70 p-4 md:p-6 overflow-y-auto pdf-scrollbar flex justify-center items-start">
+        {/* Khung nội dung chính xem trước tệp tài liệu PDF */}
+        <div className="flex-1 min-h-0 bg-slate-100/70 flex flex-col overflow-hidden relative">
           {step === "empty" ? (
-            <div className="h-full flex items-center justify-center w-full">
+            <div className="h-full flex items-center justify-center w-full p-4 md:p-6 overflow-y-auto">
               <UploadDropzone onFileSelect={handleFileSelect} />
             </div>
           ) : (
@@ -111,6 +143,7 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
               step={step}
               pdfUrl={pdfUrl}
               positions={positions}
+              onPositionsInit={handlePositionsInit}
               onPositionChange={handlePositionChange}
               onPageRendered={(pageIdx, w, h) => {
                 canvasSizesRef.current[pageIdx] = { width: w, height: h };
@@ -118,6 +151,16 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
               stampSrc={stampSig.stampImageUrl}
               signatureSrc={stampSig.signatureImageUrl}
             />
+          )}
+
+          {/* Loading xoay xoay khi nhấn Ký số */}
+          {isSigning && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white/95 rounded-lg shadow-md border border-slate-200 text-slate-700 text-sm font-medium">
+                <Loader2 size={20} className="text-blue-600 animate-spin" />
+                <span>Đang ký số...</span>
+              </div>
+            </div>
           )}
         </div>
 

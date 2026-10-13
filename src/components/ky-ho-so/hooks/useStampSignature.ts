@@ -51,8 +51,8 @@ export function useStampSignature() {
         setHasCustomStamp(false);
         setStampRemainingMin(null);
         toast.info(
-          "Con dấu tùy chỉnh đã hết hạn lưu tạm 30 phút và tự động đặt lại về mặc định.",
-          "Hết Hạn Cache 30 Phút",
+          "Con dấu tùy chỉnh đã hết hạn lưu tạm 15 phút và tự động đặt lại về mặc định.",
+          "Hết Hạn Cache 15 Phút",
         );
       } else {
         setStampRemainingMin(stampCached?.remainingMinutes ?? null);
@@ -64,8 +64,8 @@ export function useStampSignature() {
         setHasCustomSignature(false);
         setSigRemainingMin(null);
         toast.info(
-          "Chữ ký tùy chỉnh đã hết hạn lưu tạm 30 phút và tự động đặt lại về mặc định.",
-          "Hết Hạn Cache 30 Phút",
+          "Chữ ký tùy chỉnh đã hết hạn lưu tạm 15 phút và tự động đặt lại về mặc định.",
+          "Hết Hạn Cache 15 Phút",
         );
       } else {
         setSigRemainingMin(sigCached?.remainingMinutes ?? null);

@@ -1,18 +1,12 @@
 import { useState, useRef } from "react";
 import { useToast } from "../../../context/ToastContext";
-import {
-  loadPdfDocument,
-  detectSignAnchor,
-  createDefaultPositions,
-  exportPdfWithStamps,
-  convertImageToPdf,
-} from "../utils/pdf";
+import { convertImageToPdf } from "../utils/pdf";
 import { parseDocxAndConvertToPdf } from "../utils/docx";
 import {
-  signWithSmartCS,
-  isSmartCsSignSuccess,
-  toSignatureMeta,
-} from "../utils/smartcs";
+  signPdfWithBackend,
+  sendBhxhGiayToDienTuWithBackend,
+} from "../../../services/kySoBackendApi";
+
 import type {
   KyHoSoDocInfo,
   KyHoSoSignatureMeta,
@@ -104,50 +98,20 @@ export function useDocumentSigning({
           finalUrl = URL.createObjectURL(doc.file);
         }
 
-        // Truyền bản sao slice(0) để worker không làm detached mảng rawBuffer gốc về 0 bytes
-        const loadedPdf = await loadPdfDocument(rawBuffer.slice(0));
-
-        // Ước lượng chiều rộng khả dụng của khung xem trước để tính toán anchor chuẩn xác
-        const estimatedPreviewWidth =
-          typeof window !== "undefined"
-            ? Math.max(
-                600,
-                Math.min(
-                  880,
-                  window.innerWidth - (window.innerWidth >= 1024 ? 360 : 48),
-                ),
-              )
-            : 800;
-
-        const anchor = await detectSignAnchor(loadedPdf, {
-          targetWidth: estimatedPreviewWidth,
+        if (pdfUrl) {
+          URL.revokeObjectURL(pdfUrl);
+        }
+        setPositions([]);
+        setSignatureMeta({
+          signerName: "",
+          signTime: "",
+          certSerial: "",
+          caProvider: "",
+          bhxhCode: "",
         });
-
-        // Lấy kích thước trang chuẩn từ PDF để khởi tạo tọa độ chính xác tuyệt đối
-        const targetPage = await loadedPdf.getPage(anchor.pageIndex + 1);
-        const targetVp = targetPage.getViewport({ scale: 1.0 });
-        const defaultPositions = createDefaultPositions(
-          anchor,
-          targetVp.width,
-          targetVp.height,
-        );
-
-        setPositions(defaultPositions);
         setPdfBytes(rawBuffer);
         setPdfUrl(finalUrl);
         setStep("uploaded");
-
-        if (anchor.found) {
-          toast.success(
-            `Đã tự động xác định vị trí ký tại Trang ${anchor.pageIndex + 1} (${anchor.matchedText}).`,
-            "Nhận Diện Vị Trí Ký",
-          );
-        } else {
-          toast.info(
-            `Đã tải lên tệp ${doc.fileName}. Đặt vị trí con dấu mặc định ở trang cuối. Bạn có thể chọn vị trí gợi ý bên trên hoặc kéo thả để căn chỉnh.`,
-            "Tải Tệp Thành Công",
-          );
-        }
       } else {
         toast.error("Không tìm thấy tệp tài liệu hợp lệ để xử lý", "Lỗi Tệp");
       }
@@ -157,6 +121,10 @@ export function useDocumentSigning({
       console.error("Lỗi nạp file:", err);
       toast.error(`Không thể xử lý tệp: ${msg}`, "Lỗi Nạp Tệp");
     }
+  };
+
+  const handlePositionsInit = (newPositions: SignaturePosition[]) => {
+    setPositions(newPositions);
   };
 
   // 2. Kéo thả di chuyển con dấu hoặc chữ ký (Đồng bộ cả tọa độ pixel lẫn tỷ lệ % chuẩn hóa)
@@ -186,31 +154,71 @@ export function useDocumentSigning({
     );
   };
 
-  // 3. Ký số SmartCS: Validate mã kết quả 200 từ SmartCS
+  // 3. Ký số SmartCA qua Backend (chuẩn Q2 + dán con dấu và chữ ký trực tiếp vào PDF)
   const handleSignSmartCS = async () => {
     setIsSigning(true);
+    const startTime = Date.now();
     try {
-      if (!docInfo?.file) {
+      if (!docInfo?.file && !pdfBytes) {
         throw new Error("Chưa có tệp tài liệu để thực hiện ký số");
       }
-      const signResult = await signWithSmartCS(docInfo.file, positions);
 
-      // Validate khi nào bên SmartCS đã ký được (status 200 & có chữ ký) thì mới hiển thị lên
-      if (isSmartCsSignSuccess(signResult)) {
-        const meta = toSignatureMeta(signResult);
-        setSignatureMeta(meta);
+      const bufferToSign = pdfBytes || (await docInfo!.file!.arrayBuffer());
+      const pdfBlob = new Blob([bufferToSign], { type: "application/pdf" });
+      const finalFileName =
+        (docInfo?.fileName.replace(/\.[^/.]+$/, "") || "document") + ".pdf";
+
+      toast.info("Đang gửi tài liệu lên hệ thống ký số SmartCA...", "Ký Số SmartCA");
+
+      // Gọi Backend ký số và đóng dấu tập trung
+      const signResult = await signPdfWithBackend({
+        pdfBlobOrFile: pdfBlob,
+        fileName: finalFileName,
+        positions,
+        stampImageUrl,
+        signatureImageUrl,
+      });
+
+      // Đảm bảo thời gian hiển thị hiệu ứng ký số khoảng 1s như người dùng yêu cầu
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1000) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 - elapsed));
+      }
+
+      if (signResult.success && signResult.signedPdfBase64) {
+        // Chuyển đổi chuỗi signedPdfBase64 nhận từ Backend sang ArrayBuffer
+        const binaryStr = atob(signResult.signedPdfBase64);
+        const len = binaryStr.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        const signedPdfArrayBuffer = bytes.buffer;
+
+        // Khóa cố định snapshot hình ảnh con dấu & chữ ký ngay tại thời điểm ký vào từng vị trí
+        // Giúp tài liệu đã ký không bao giờ bị đổi dấu khi người dùng tải ảnh mới lên
+        setPositions((prev) =>
+          prev.map((pos) => ({
+            ...pos,
+            imageSrc: pos.type === "stamp" ? stampImageUrl : signatureImageUrl,
+          })),
+        );
+
+        // Lưu buffer PDF đã ký từ Backend để sẵn sàng xuất file
+        setPdfBytes(signedPdfArrayBuffer);
+        setSignatureMeta(signResult.meta);
         setStep("signed");
+
         toast.success(
-          `Ký số SmartCS thành công! Chứng thư số ${signResult.serialNumber} (${signResult.issuer}). Đã hiển thị con dấu & chữ ký thật.`,
+          `Ký số SmartCA thành công! Chứng thư số ${signResult.meta.certSerial} (${signResult.meta.caProvider || "VNPT-CA"}). Đã đóng dấu & dán chữ ký thật vào PDF.`,
           "Ký Số Thành Công (Mã 200)",
         );
       } else {
-        throw new Error(
-          "Dịch vụ SmartCS phản hồi không thành công hoặc thiếu chữ ký",
-        );
+        throw new Error(signResult.message || "Dịch vụ ký số phản hồi không thành công.");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Lỗi kết nối SmartCS";
+      const msg = err instanceof Error ? err.message : "Lỗi kết nối ký số SmartCA";
+      console.error("Lỗi ký số Backend:", err);
       toast.error(`Ký số thất bại: ${msg}`, "Lỗi Ký Số");
     } finally {
       setIsSigning(false);
@@ -227,15 +235,10 @@ export function useDocumentSigning({
         throw new Error("Chưa có dữ liệu tệp PDF để xuất");
       }
 
-      const signedPdfBlob = await exportPdfWithStamps({
-        pdfBytes: bufferToExport,
-        positions,
-        stampImageUrl,
-        signatureImageUrl,
-        canvasSizes: canvasSizesRef.current,
+      // Tải trực tiếp tệp PDF đã được Backend ký và đóng dấu chuẩn
+      const signedPdfBlob = new Blob([bufferToExport], {
+        type: "application/pdf",
       });
-
-      // Tải tệp xuống máy
       const downloadUrl = URL.createObjectURL(signedPdfBlob);
       const a = document.createElement("a");
       a.href = downloadUrl;
@@ -260,9 +263,42 @@ export function useDocumentSigning({
     }
   };
 
-  // 5. Gửi hồ sơ lên Cổng BHXH
-  const handleSendBhxh = () => {
-    toast.info("Chưa thêm chức năng gửi cổng BHXH.", "Gửi Cổng BHXH");
+  // 5. Gửi hồ sơ lên Cổng BHXH (Giấy tờ điện tử - Mã loại HS: 60)
+  const handleSendBhxh = async () => {
+    if (!pdfBytes) {
+      toast.error("Chưa có tệp hồ sơ PDF đã ký để gửi lên Cổng BHXH", "Lỗi Dữ Liệu");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      toast.info("Đang gửi Giấy tờ điện tử lên Cổng Tiếp Nhận BHXH...", "Gửi Cổng BHXH");
+
+      const res = await sendBhxhGiayToDienTuWithBackend({
+        pdfBlobOrFile: new Blob([pdfBytes], { type: "application/pdf" }),
+        loaiHs: "60",
+        maLienThong: signatureMeta.bhxhCode || `GD_${Date.now()}`,
+      });
+
+      if (res.success || String(res.maKetQua) === "200" || String(res.maKetQua) === "0") {
+        setStep("sent");
+        toast.success(
+          `Gửi hồ sơ lên Cổng BHXH thành công!\nMã giao dịch: ${res.maGiaoDich || "Đã tiếp nhận"}`,
+          "Cổng Tiếp Nhận BHXH",
+        );
+      } else {
+        toast.error(
+          `Cổng BHXH từ chối tiếp nhận (Mã ${res.maKetQua}): ${res.thongDiep || res.ghiChu || "Thất bại"}`,
+          "Lỗi Gửi Cổng BHXH",
+        );
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Lỗi khi gửi Cổng BHXH";
+      console.error("Lỗi gửi BHXH:", err);
+      toast.error(`Gửi Cổng BHXH thất bại: ${msg}`, "Lỗi Gửi Cổng BHXH");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // 6. Đặt lại / tải tệp khác
@@ -296,6 +332,7 @@ export function useDocumentSigning({
     signatureMeta,
     canvasSizesRef,
     handleFileSelect,
+    handlePositionsInit,
     handlePositionChange,
     handleSignSmartCS,
     handleExportPdf,

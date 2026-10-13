@@ -84,18 +84,20 @@ export const App: React.FC = () => {
 
               <main className={`flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto ${activeTab === 'ky-so' ? 'overflow-hidden flex flex-col min-h-0' : 'overflow-y-auto no-scrollbar'}`}>
                 <ErrorBoundary>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
-                    {activeTab === 'danh-muc' && (
+                  {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
+                  {activeTab === 'danh-muc' && (
+                    <Suspense fallback={<PageLoadingFallback />}>
                       <DanhMucPage
                         isActive={activeTab === 'danh-muc'}
                         activeCatalogTab={catalogTab}
                         onCatalogTabChange={setCatalogTab}
                       />
-                    )}
+                    </Suspense>
+                  )}
 
-                    {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
-                    {activeTab === 'ho-so' && (
+                  {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
+                  {activeTab === 'ho-so' && (
+                    <Suspense fallback={<PageLoadingFallback />}>
                       <div className="space-y-3 pb-4">
                         {hoSoTab === '01_tonghop' && <Hs01TongHopTab />}
                         {hoSoTab === '09_xuattoan' && (
@@ -105,18 +107,20 @@ export const App: React.FC = () => {
                           />
                         )}
                       </div>
-                    )}
+                    </Suspense>
+                  )}
 
-                    {/* 3. HỒ SƠ CHỨNG TỪ & GIẤY TỜ ĐIỆN TỬ (TT 25 & BHXH 2025) */}
-                    {activeTab === 'chung-tu' && (
+                  {/* 3. HỒ SƠ CHỨNG TỪ & GIẤY TỜ ĐIỆN TỬ (TT 25 & BHXH 2025) */}
+                  {activeTab === 'chung-tu' && (
+                    <Suspense fallback={<PageLoadingFallback />}>
                       <ChungTuPage isActive={activeTab === 'chung-tu'} />
-                    )}
+                    </Suspense>
+                  )}
 
-                    {/* 4. KÝ SỐ & GỬI BHXH (KÝ HỒ SƠ TỔNG HỢP) */}
-                    {activeTab === 'ky-so' && (
-                      <KyHoSoPage isActive={activeTab === 'ky-so'} />
-                    )}
-                  </Suspense>
+                  {/* 4. KÝ SỐ & GỬI BHXH (KÝ HỒ SƠ TỔNG HỢP) */}
+                  {activeTab === 'ky-so' && (
+                    <KyHoSoPage isActive={activeTab === 'ky-so'} />
+                  )}
                 </ErrorBoundary>
               </main>
             </div>

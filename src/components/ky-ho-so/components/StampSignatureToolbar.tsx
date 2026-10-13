@@ -5,12 +5,14 @@ import type { UseStampSignatureReturn } from "../hooks/useStampSignature";
 
 interface StampSignatureToolbarProps {
   step: KyHoSoStep;
-  onResetDoc: () => void;
+  onChangeDoc?: () => void;
+  onResetDoc?: () => void;
   stampSig: UseStampSignatureReturn;
 }
 
 export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
   step,
+  onChangeDoc,
   onResetDoc,
   stampSig,
 }) => {
@@ -37,9 +39,9 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
         <>
           <button
             type="button"
-            onClick={onResetDoc}
-            title="Tải lên tệp hồ sơ khác"
-            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors"
+            onClick={onChangeDoc || onResetDoc}
+            title="Chọn tệp tài liệu khác để tải lên và thay thế bản hiện tại"
+            className="text-slate-500 hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors font-medium bg-slate-50 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 hover:border-blue-200"
           >
             <RefreshCw size={12} />
             <span>Đổi tệp</span>
@@ -49,7 +51,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
         </>
       )}
 
-      {/* Nhóm Đổi con dấu & Reset (Tự động xóa nền + Cache 30' + Xem trước) */}
+      {/* Nhóm Đổi con dấu & Reset (Tự động xóa nền + Cache 15' + Xem trước) */}
       <div
         className="relative flex items-center gap-1.5 bg-slate-50/90 hover:bg-slate-100/90 px-2 py-1 rounded-md border border-slate-200 transition-colors"
         onMouseEnter={() => setHoveredPreview("stamp")}
@@ -63,7 +65,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           />
           {hasCustomStamp && (
             <span
-              title="Đã lưu tạm con dấu (hết hạn sau 30 phút)"
+              title="Đã lưu tạm con dấu (hết hạn sau 15 phút)"
               className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white"
             />
           )}
@@ -73,7 +75,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           type="button"
           disabled={isProcessingStamp}
           onClick={() => stampInputRef.current?.click()}
-          title="Tải ảnh con dấu mới - Tự động xóa phông nền (Remove background) và lưu cache 30 phút"
+          title="Tải ảnh con dấu mới - Tự động xóa phông nền (Remove background) và lưu cache 15 phút"
           className="text-slate-600 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors font-medium disabled:opacity-50"
         >
           <Stamp size={12} className="text-rose-500" />
@@ -91,7 +93,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           <button
             type="button"
             onClick={handleResetStamp}
-            title="Đặt lại con dấu mặc định (Xóa cache 30 phút)"
+            title="Đặt lại con dấu mặc định (Xóa cache 15 phút)"
             className="ml-0.5 text-[11px] text-rose-500 hover:text-rose-700 hover:bg-rose-100/70 px-1 py-0.5 rounded flex items-center gap-0.5 transition-colors cursor-pointer"
           >
             <RotateCcw size={10} />
@@ -115,7 +117,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
               </div>
               <div className="text-[10px] text-slate-500">
                 {hasCustomStamp
-                  ? `Đã tách nền • Còn ${stampRemainingMin ?? 30} phút`
+                  ? `Đã tách nền • Còn ${stampRemainingMin ?? 15} phút`
                   : "Mẫu chuẩn của trung tâm"}
               </div>
             </div>
@@ -123,7 +125,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
         )}
       </div>
 
-      {/* Nhóm Đổi chữ ký & Reset (Tự động xóa nền + Cache 30' + Xem trước) */}
+      {/* Nhóm Đổi chữ ký & Reset (Tự động xóa nền + Cache 15' + Xem trước) */}
       <div
         className="relative flex items-center gap-1.5 bg-slate-50/90 hover:bg-slate-100/90 px-2 py-1 rounded-md border border-slate-200 transition-colors"
         onMouseEnter={() => setHoveredPreview("signature")}
@@ -137,7 +139,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           />
           {hasCustomSignature && (
             <span
-              title="Đã lưu tạm chữ ký (hết hạn sau 30 phút)"
+              title="Đã lưu tạm chữ ký (hết hạn sau 15 phút)"
               className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white"
             />
           )}
@@ -147,7 +149,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           type="button"
           disabled={isProcessingSignature}
           onClick={() => signatureInputRef.current?.click()}
-          title="Tải ảnh chữ ký mới - Tự động xóa phông nền (Remove background) và lưu cache 30 phút"
+          title="Tải ảnh chữ ký mới - Tự động xóa phông nền (Remove background) và lưu cache 15 phút"
           className="text-slate-600 hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors font-medium disabled:opacity-50"
         >
           <Feather size={12} className="text-blue-500" />
@@ -165,7 +167,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
           <button
             type="button"
             onClick={handleResetSignature}
-            title="Đặt lại chữ ký mặc định (Xóa cache 30 phút)"
+            title="Đặt lại chữ ký mặc định (Xóa cache 15 phút)"
             className="ml-0.5 text-[11px] text-blue-500 hover:text-blue-700 hover:bg-blue-100/70 px-1 py-0.5 rounded flex items-center gap-0.5 transition-colors cursor-pointer"
           >
             <RotateCcw size={10} />
@@ -189,7 +191,7 @@ export const StampSignatureToolbar: React.FC<StampSignatureToolbarProps> = ({
               </div>
               <div className="text-[10px] text-slate-500">
                 {hasCustomSignature
-                  ? `Đã tách nền • Còn ${sigRemainingMin ?? 30} phút`
+                  ? `Đã tách nền • Còn ${sigRemainingMin ?? 15} phút`
                   : "Chữ ký số mặc định"}
               </div>
             </div>

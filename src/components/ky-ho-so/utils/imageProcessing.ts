@@ -1,8 +1,8 @@
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 phút
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
 
 export const CACHE_KEYS = {
-  STAMP: "clinic_cache_custom_stamp_v1",
-  SIGNATURE: "clinic_cache_custom_signature_v1",
+  STAMP: "clinic_cache_custom_stamp_v2",
+  SIGNATURE: "clinic_cache_custom_signature_v2",
 };
 
 export const DEFAULT_ASSETS = {
@@ -213,14 +213,14 @@ export function getCachedImage(
     const elapsed = Date.now() - item.savedAt;
 
     if (elapsed >= CACHE_TTL_MS) {
-      // Đã quá 30 phút -> Tự động xóa cache
+      // Đã quá 15 phút -> Tự động xóa cache
       localStorage.removeItem(key);
       return null;
     }
 
-    const remainingMinutes = Math.max(
-      1,
-      Math.round((CACHE_TTL_MS - elapsed) / 60000),
+    const remainingMinutes = Math.min(
+      15,
+      Math.max(1, Math.round((CACHE_TTL_MS - elapsed) / 60000)),
     );
     return {
       dataUrl: item.dataUrl,

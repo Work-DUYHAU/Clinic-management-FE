@@ -42,16 +42,26 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const showToast = useCallback((type: ToastType, message: string, title?: string, duration = 4000) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const newToast: ToastItem = { id, type, title, message, duration };
+    setToasts(prev => {
+      // Ngăn chặn duplicate toast: Nếu đang có toast cùng loại, cùng tiêu đề và cùng nội dung thì không thêm mới
+      const isDuplicate = prev.some(
+        t => t.type === type && t.message === message && t.title === title
+      );
+      if (isDuplicate) {
+        return prev;
+      }
 
-    setToasts(prev => [...prev, newToast]);
+      const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const newToast: ToastItem = { id, type, title, message, duration };
 
-    if (duration > 0) {
-      setTimeout(() => {
-        removeToast(id);
-      }, duration);
-    }
+      if (duration > 0) {
+        setTimeout(() => {
+          removeToast(id);
+        }, duration);
+      }
+
+      return [...prev, newToast];
+    });
   }, [removeToast]);
 
   const success = useCallback((message: string, title?: string) => {

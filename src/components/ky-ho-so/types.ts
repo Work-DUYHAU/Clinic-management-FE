@@ -15,6 +15,7 @@ export interface SignaturePosition {
   percentY?: number;
   percentWidth?: number;
   percentHeight?: number;
+  imageSrc?: string;
 }
 
 export interface SignAnchorTarget {

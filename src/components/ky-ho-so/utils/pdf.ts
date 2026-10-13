@@ -1,10 +1,5 @@
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import type { SignaturePosition, SignAnchorTarget } from "../types";
-
-// Sử dụng worker được Vite tự động đóng gói từ node_modules
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export interface AnchorDetectionResult {
   found: boolean;
@@ -18,17 +13,8 @@ export interface AnchorDetectionResult {
   selectedTargetId?: string;
 }
 
-export async function loadPdfDocument(data: ArrayBuffer | Uint8Array) {
-  const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(data),
-    cMapUrl: "/cmaps/",
-    cMapPacked: true,
-  });
-  return await loadingTask.promise;
-}
-
 export async function detectSignAnchor(
-  pdfDoc: pdfjsLib.PDFDocumentProxy,
+  pdfDoc: any,
   scaleOrOptions: number | { targetWidth?: number } = 1.0,
 ): Promise<AnchorDetectionResult> {
   const numPages = pdfDoc.numPages;
@@ -247,15 +233,15 @@ export function createDefaultPositions(
   baseWidth = 842,
   baseHeight = 595,
 ): SignaturePosition[] {
-  // Con dấu vuông: kích thước ~125px
-  const stampWidth = 125;
-  const stampHeight = 125;
+  // Con dấu tròn chuẩn cơ quan/y tế (~36mm ngoài đời thực): kích thước ~100px x 100px
+  const stampWidth = 100;
+  const stampHeight = 100;
   const stampPercentW = stampWidth / baseWidth;
   const stampPercentH = stampHeight / baseHeight;
 
-  // Chữ ký chữ nhật: kích thước ~120px x 65px
-  const signWidth = 120;
-  const signHeight = 65;
+  // Chữ ký chữ nhật: kích thước ~110px x 58px
+  const signWidth = 110;
+  const signHeight = 58;
   const signPercentW = signWidth / baseWidth;
   const signPercentH = signHeight / baseHeight;
 
@@ -263,8 +249,8 @@ export function createDefaultPositions(
   const signPercentX = Math.min(0.85, Math.max(0.1, anchor.percentX));
   const signPercentY = Math.min(0.88, Math.max(0.1, anchor.percentY + 0.03));
 
-  // Vị trí con dấu: nằm hơi chếch sang trái chức danh một chút, đóng đè lên 1/3 chữ ký
-  const stampPercentX = Math.max(0.05, signPercentX - 0.05);
+  // Vị trí con dấu: nằm hơi chếch sang trái chức danh một chút, đóng đè lên 1/3 chữ ký chuẩn NĐ 30/2020
+  const stampPercentX = Math.max(0.05, signPercentX - 0.04);
   const stampPercentY = Math.min(0.86, Math.max(0.05, signPercentY - 0.02));
 
   return [
@@ -393,202 +379,3 @@ export async function convertImageToPdf(
   };
 }
 
-/**
- * Tải ảnh từ đường dẫn URL hoặc Data URL thành mảng byte Uint8Array
- * Tự động chuyển đổi mọi định dạng ảnh (WEBP, BMP, JPG, PNG,...) thành PNG an toàn
- */
-async function fetchImageBytes(
-  url: string,
-): Promise<{ bytes: Uint8Array; format: "png" | "jpg" }> {
-  // Thử chuyển đổi qua Canvas để hỗ trợ tất cả các đuôi ảnh (WebP, BMP, PNG, JPG, v.v.)
-  try {
-    const convertedBytes = await convertImageToPngBytes(url);
-    return { bytes: convertedBytes, format: "png" };
-  } catch {
-    // Fallback sang fetch mạng nếu chạy ngoài môi trường DOM
-    let res = await fetch(url).catch(() => null);
-
-    if (!res || !res.ok) {
-      const fallbacks = [
-        "/assets/Mau_Dau _Trung_Tam.png",
-        "/assets/Mau_Dau_Trung_Tam.png",
-        "/assets/Mau Dau Trung Tam.png",
-        "/assets/Mau_Dau_Trung_Tam.jpg",
-        "/assets/Mau Dau Trung Tam.jpg",
-        "/assets/H-removebg-preview.png",
-      ];
-
-      for (const fb of fallbacks) {
-        if (fb !== url) {
-          try {
-            const testRes = await fetch(fb);
-            if (testRes.ok) {
-              res = testRes;
-              url = fb;
-              break;
-            }
-          } catch {}
-        }
-      }
-    }
-
-    if (!res || !res.ok) {
-      throw new Error(`Không thể nạp tệp hình ảnh: ${url}`);
-    }
-
-    const blob = await res.blob();
-    const buffer = await blob.arrayBuffer();
-    const format =
-      blob.type.includes("png") || url.toLowerCase().endsWith(".png")
-        ? "png"
-        : "jpg";
-    return { bytes: new Uint8Array(buffer), format };
-  }
-}
-
-/**
- * Xuất file PDF đã nhúng con dấu & chữ ký thật bằng pdf-lib
- */
-export async function exportPdfWithStamps(opts: {
-  pdfBytes: ArrayBuffer;
-  positions: SignaturePosition[];
-  stampImageUrl: string;
-  signatureImageUrl: string;
-  canvasSizes: Record<number, { width: number; height: number }>;
-}): Promise<Blob> {
-  const { pdfBytes, positions, stampImageUrl, signatureImageUrl, canvasSizes } =
-    opts;
-
-  const pdfDoc = await PDFDocument.load(pdfBytes);
-
-  // Tải ảnh con dấu và ảnh chữ ký
-  const [stampData, signData] = await Promise.all([
-    fetchImageBytes(stampImageUrl).catch(() => null),
-    fetchImageBytes(signatureImageUrl).catch(() => null),
-  ]);
-
-  let embeddedStamp: any = null;
-  if (stampData) {
-    embeddedStamp =
-      stampData.format === "png"
-        ? await pdfDoc.embedPng(stampData.bytes)
-        : await pdfDoc.embedJpg(stampData.bytes);
-  }
-
-  let embeddedSign: any = null;
-  if (signData) {
-    embeddedSign =
-      signData.format === "png"
-        ? await pdfDoc.embedPng(signData.bytes)
-        : await pdfDoc.embedJpg(signData.bytes);
-  }
-
-  for (const pos of positions) {
-    const pageIndex = pos.pageIndex;
-    if (pageIndex >= pdfDoc.getPageCount()) continue;
-
-    const page = pdfDoc.getPage(pageIndex);
-    const { width: ptWidth, height: ptHeight } = page.getSize();
-    const rotation = ((page.getRotation().angle % 360) + 360) % 360;
-
-    let drawX: number;
-    let drawY: number;
-    let drawW: number;
-    let drawH: number;
-    let rotateDeg: number | undefined;
-
-    if (pos.percentX !== undefined && pos.percentY !== undefined) {
-      if (rotation === 90) {
-        // Khổ hiển thị thị giác: chiều rộng là ptHeight, chiều cao là ptWidth
-        const visualW = ptHeight;
-        const visualH = ptWidth;
-        const pw = pos.percentWidth ?? pos.width / visualW;
-        const ph = pos.percentHeight ?? pos.height / visualH;
-
-        const vx = pos.percentX * visualW;
-        const vy = pos.percentY * visualH;
-        const vw = pw * visualW;
-        const vh = ph * visualH;
-
-        drawX = vy;
-        drawY = ptHeight - vx;
-        drawW = vw;
-        drawH = vh;
-        rotateDeg = -90;
-      } else if (rotation === 270) {
-        const visualW = ptHeight;
-        const visualH = ptWidth;
-        const pw = pos.percentWidth ?? pos.width / visualW;
-        const ph = pos.percentHeight ?? pos.height / visualH;
-
-        const vx = pos.percentX * visualW;
-        const vy = pos.percentY * visualH;
-        const vw = pw * visualW;
-        const vh = ph * visualH;
-
-        drawX = ptWidth - vy;
-        drawY = vx;
-        drawW = vw;
-        drawH = vh;
-        rotateDeg = 90;
-      } else if (rotation === 180) {
-        const pw = pos.percentWidth ?? pos.width / ptWidth;
-        const ph = pos.percentHeight ?? pos.height / ptHeight;
-
-        const vx = pos.percentX * ptWidth;
-        const vy = pos.percentY * ptHeight;
-        const vw = pw * ptWidth;
-        const vh = ph * ptHeight;
-
-        drawX = ptWidth - (vx + vw);
-        drawY = vy;
-        drawW = vw;
-        drawH = vh;
-        rotateDeg = 180;
-      } else {
-        // rotation === 0: Trang PDF chuẩn unrotated
-        const pw = pos.percentWidth ?? pos.width / ptWidth;
-        const ph = pos.percentHeight ?? pos.height / ptHeight;
-
-        drawX = pos.percentX * ptWidth;
-        drawY = ptHeight - (pos.percentY + ph) * ptHeight;
-        drawW = pw * ptWidth;
-        drawH = ph * ptHeight;
-      }
-    } else {
-      const canvasSize = canvasSizes[pageIndex] || {
-        width: ptWidth,
-        height: ptHeight,
-      };
-
-      const scaleX = ptWidth / canvasSize.width;
-      const scaleY = ptHeight / canvasSize.height;
-
-      drawX = pos.x * scaleX;
-      drawY = ptHeight - (pos.y + pos.height) * scaleY;
-      drawW = pos.width * scaleX;
-      drawH = pos.height * scaleY;
-    }
-
-    const drawOpts: any = {
-      x: drawX,
-      y: drawY,
-      width: drawW,
-      height: drawH,
-    };
-    if (rotateDeg !== undefined) {
-      drawOpts.rotate = degrees(rotateDeg);
-    }
-
-    if (pos.type === "stamp" && embeddedStamp) {
-      page.drawImage(embeddedStamp, drawOpts);
-    } else if (pos.type === "signature" && embeddedSign) {
-      page.drawImage(embeddedSign, drawOpts);
-    }
-  }
-
-  const outputBytes = await pdfDoc.save();
-  return new Blob([outputBytes as unknown as BlobPart], {
-    type: "application/pdf",
-  });
-}

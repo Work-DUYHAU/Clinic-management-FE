@@ -82,6 +82,7 @@ export const DraggableImage: React.FC<DraggableImageProps> = ({
 
   return (
     <div
+      data-draggable-stamp={disabled ? "false" : "true"}
       style={{
         left: `${x}px`,
         top: `${y}px`,
