@@ -13,7 +13,7 @@ import {
   BhxhFlowStepper,
 } from "./smartca";
 import type { SignerProfile } from "../../types/smartcaTypes";
-import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
+import type { SmartCaSignResponse } from "../../services/api";
 
 export interface SmartCaSignAction {
   visible: boolean;

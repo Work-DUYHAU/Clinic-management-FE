@@ -4,7 +4,7 @@ import type {
   ParseHs01ExcelResult,
   SendHs01GatewayResult,
 } from "../types/hs01TongHopTypes";
-import { sendBhxhHoSo01WithBackend } from "../services/kySoBackendApi";
+import { sendBhxhHoSo01WithBackend } from "../services/api";
 import {
   HS01_SCHEMA_FIELDS,
   HS01_FIELD_HEURISTICS,
@@ -48,9 +48,6 @@ export const matchHs01SchemaKey = createSchemaKeyMatcher(
   HS01_FIELD_HEURISTICS,
 );
 
-/**
- * Parse một sheet Excel thành danh sách Hs01TongHopItem
- */
 export function parseHs01Worksheet(
   worksheet: XLSX.WorkSheet,
   sheetName: string,
@@ -159,9 +156,6 @@ export function parseHs01Worksheet(
   };
 }
 
-/**
- * Tùy chọn gộp toàn bộ các sheet trong file Excel thành 1 tập dữ liệu duy nhất
- */
 export function parseHs01AllSheets(
   workbook: XLSX.WorkBook,
   fileName: string,
@@ -221,9 +215,6 @@ export function parseHs01AllSheets(
   };
 }
 
-/**
- * Parse trực tiếp tệp XML Mẫu 01/BH (<HSTH01BH>) thành danh sách Hs01TongHopItem
- */
 export function parseHs01XmlText(
   xmlText: string,
   fileName: string,
@@ -329,9 +320,6 @@ export function parseHs01XmlText(
   };
 }
 
-/**
- * Đọc file Excel hoặc XML Hồ sơ tổng hợp Mẫu 01/BH
- */
 export async function parseHs01ExcelFile(
   file: File,
   selectedSheetName?: string,
@@ -476,10 +464,9 @@ export async function sendHs01ToBhxhGateway(
 
   // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
   const signedXmlFromSig = (signature as any)?.signedXml;
-  const base64 =
-    signedXmlFromSig
-      ? xmlToBase64(signedXmlFromSig)
-      : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));
+  const base64 = signedXmlFromSig
+    ? xmlToBase64(signedXmlFromSig)
+    : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));
 
   // 1. ƯU TIÊN: Gửi qua Backend API (Server-side Cổng BHXH, bảo mật token & xử lý retry tập trung)
   try {

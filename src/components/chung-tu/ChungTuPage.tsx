@@ -1,10 +1,5 @@
 import React, { useState, useRef, useMemo } from "react";
-import {
-  FileSignature,
-  Layers,
-  Upload,
-  ChevronRight,
-} from "lucide-react";
+import { FileSignature, Layers, Upload, ChevronRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { useRegisterSignModal } from "../../context/SignModalContext";
 import { XmlExportModal } from "../common/XmlExportModal";
@@ -21,20 +16,22 @@ import {
   isBhxhGatewaySuccess,
 } from "../../utils/shared/excelXmlShared";
 import { extractXmlSignature } from "../../utils/xmlDsigEngine";
-import { BhxhChungTuService } from "../../services/bhxh/bhxhChungTuService";
+import { sendBhxhChungTu2025WithBackend } from "../../services/api";
 
 interface ChungTuPageProps {
   isActive?: boolean;
 }
 
-export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => {
+export const ChungTuPage: React.FC<ChungTuPageProps> = ({
+  isActive = true,
+}) => {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Lưu loại chứng từ đang thao tác nạp tệp ("MULTI" hoặc ID cụ thể như "CT03", "CT07"...)
-  const [targetUploadType, setTargetUploadType] = useState<DocSignOptionType | "MULTI">("MULTI");
+  const [targetUploadType, setTargetUploadType] = useState<
+    DocSignOptionType | "MULTI"
+  >("MULTI");
 
-  // State dữ liệu chuẩn bị ký số trong Modal
   const [modalConfig, setModalConfig] = useState<{
     title: string;
     badge: string;
@@ -87,7 +84,8 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         const text = await file.text();
         const upper = text.toUpperCase();
         const fileHoSoCount = (upper.match(/<FILEHOSO>/g) || []).length;
-        const isMultiPackage = upper.includes("<HSCHUNGTU>") && fileHoSoCount > 1;
+        const isMultiPackage =
+          upper.includes("<HSCHUNGTU>") && fileHoSoCount > 1;
         const detected = detectXmlDocType(text);
         const docDef = TT25_DOC_DEFINITIONS.find((d) => d.id === detected);
         const matchLoai = upper.match(/<LOAIHOSO>([^<]+)<\/LOAIHOSO>/);
@@ -100,8 +98,10 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         setModalConfig({
           title: isMultiPackage
             ? `Gói Hồ Sơ Tổng Hợp (${fileHoSoCount} chứng từ)`
-            : (docDef ? docDef.title : `Tệp XML ${file.name}`),
-          badge: isMultiPackage ? "Tổng hợp" : (docDef ? docDef.badge : "XML"),
+            : docDef
+              ? docDef.title
+              : `Tệp XML ${file.name}`,
+          badge: isMultiPackage ? "Tổng hợp" : docDef ? docDef.badge : "XML",
           code: resolvedCode,
           fileName: file.name,
           xmlContent: text,
@@ -118,31 +118,41 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
           toast.success(`Đã nạp tệp XML: ${file.name}`, "Nạp Tệp Thành Công");
         }
         setIsSignModalOpen(true);
-      } else if (fileNameLower.endsWith(".xlsx") || fileNameLower.endsWith(".xls")) {
+      } else if (
+        fileNameLower.endsWith(".xlsx") ||
+        fileNameLower.endsWith(".xls")
+      ) {
         // Phân tích tệp Excel (hỗ trợ đọc cả file nhiều sheet hoặc file 1 sheet)
-        const parseType = targetUploadType === "MULTI" ? "CURRENT" : targetUploadType;
+        const parseType =
+          targetUploadType === "MULTI" ? "CURRENT" : targetUploadType;
         const res = await parseUniversalChungTuExcelFile(file, parseType);
 
         if (!res.success) {
-          throw new Error(res.error || "Không nhận diện được cấu trúc tệp Excel");
+          throw new Error(
+            res.error || "Không nhận diện được cấu trúc tệp Excel",
+          );
         }
 
-        const isMulti = res.detectedType === "MULTI" || Object.keys(res.breakdown).length > 1;
-        const docDef = TT25_DOC_DEFINITIONS.find((d) => d.id === res.detectedType);
+        const isMulti =
+          res.detectedType === "MULTI" || Object.keys(res.breakdown).length > 1;
+        const docDef = TT25_DOC_DEFINITIONS.find(
+          (d) => d.id === res.detectedType,
+        );
         const breakdownKeys = Object.keys(res.breakdown);
         const singleDefFromBreakdown =
           breakdownKeys.length === 1
             ? TT25_DOC_DEFINITIONS.find((d) => d.id === breakdownKeys[0])
             : null;
-        const derivedCode = docDef?.code || singleDefFromBreakdown?.code || "39";
+        const derivedCode =
+          docDef?.code || singleDefFromBreakdown?.code || "39";
 
         const xmlFileName = `${file.name.replace(/\.[^/.]+$/, "")}.xml`;
 
         setModalConfig({
           title: isMulti
             ? `Tệp Excel Tổng Hợp Nhiều Sheet (${res.totalRows} bản ghi)`
-            : (docDef?.title || `Hồ Sơ ${res.detectedType}`),
-          badge: isMulti ? "Tổng hợp" : (docDef?.badge || "Mẫu"),
+            : docDef?.title || `Hồ Sơ ${res.detectedType}`,
+          badge: isMulti ? "Tổng hợp" : docDef?.badge || "Mẫu",
           code: derivedCode,
           fileName: xmlFileName,
           xmlContent: res.xmlPackage,
@@ -192,22 +202,17 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
       effectiveBase64 ||
       (modalConfig.xmlContent ? xmlToBase64(modalConfig.xmlContent) : "");
     if (!fileBase64) {
-      toast.error("Không tìm thấy nội dung tệp XML để gửi lên Cổng!", "Lỗi Dữ Liệu");
+      toast.error(
+        "Không tìm thấy nội dung tệp XML để gửi lên Cổng!",
+        "Lỗi Dữ Liệu",
+      );
       return;
     }
 
     setIsSendingApi(true);
     setApiResponse(null);
     try {
-      const tokenRes = await BhxhChungTuService.takeToken();
-      if (String(tokenRes.maKetQua) !== "200" || !tokenRes.apiToken) {
-        throw new Error(
-          tokenRes.thongDiep || "Không thể xác thực với Cổng Tiếp Nhận BHXH (Mã token thất bại)",
-        );
-      }
-
-      const res = await BhxhChungTuService.guiHoSoChungTu2025({
-        token: tokenRes.apiToken,
+      const res = await sendBhxhChungTu2025WithBackend({
         fileBase64Str: fileBase64,
         loaiHs: modalConfig.code || "39",
       });
@@ -217,10 +222,12 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
         maKetQua: String(res.maKetQua),
         maGiaoDich:
           res.maGiaoDich ||
-          (isSuccess ? `GDCT_${DEFAULT_MA_CSKCB}_${Date.now().toString().slice(-6)}` : ""),
+          (isSuccess
+            ? `GDCT_${DEFAULT_MA_CSKCB}_${Date.now().toString().slice(-6)}`
+            : ""),
         thongDiep:
           res.ghiChu ||
-          res.message ||
+          res.thongDiep ||
           (isSuccess
             ? "Tiếp nhận hồ sơ chứng từ điện tử thành công!"
             : `Cổng BHXH phản hồi mã: ${res.maKetQua}`),
@@ -370,7 +377,10 @@ export const ChungTuPage: React.FC<ChungTuPageProps> = ({ isActive = true }) => 
               <span className="flex items-center gap-1 text-[10px]">
                 <Upload size={11} /> Nạp tệp &amp; ký số
               </span>
-              <ChevronRight size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
+              <ChevronRight
+                size={12}
+                className="text-slate-400 group-hover:text-blue-600 transition-colors"
+              />
             </div>
           </div>
         ))}

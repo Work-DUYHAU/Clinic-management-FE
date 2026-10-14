@@ -7,11 +7,10 @@ import {
   Check,
   Copy,
 } from "lucide-react";
-import type { SmartCaPersistentConfig } from "../../../services/smartca/smartcaConfig";
-import type { SmartCaQ1InitiateResponse } from "../../../services/smartca/smartcaHandlers";
+import type { SmartCaQ1InitiateResponse } from "../../../services/api";
 
 export interface WaitingApprovalViewProps {
-  config: SmartCaPersistentConfig;
+  config?: { env?: string };
   waitingTransaction: SmartCaQ1InitiateResponse;
   countdown: number;
   formatCountdown: (seconds: number) => string;

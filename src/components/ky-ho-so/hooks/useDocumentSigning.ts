@@ -4,7 +4,7 @@ import { parseDocxAndConvertToPdf } from "../utils/docx";
 import {
   signPdfWithBackend,
   sendBhxhGiayToDienTuWithBackend,
-} from "../../../services/kySoBackendApi";
+} from "../../../services/api";
 
 import type {
   KyHoSoDocInfo,

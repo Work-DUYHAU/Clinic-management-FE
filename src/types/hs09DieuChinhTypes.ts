@@ -202,6 +202,7 @@ export interface Hs09GatewayCredentials {
   tokenId: string;
   kyQT?: string;
   maTinh?: string;
+  signal?: AbortSignal;
   smartCaOptions?: {
     identityValue?: string;
     password?: string;
