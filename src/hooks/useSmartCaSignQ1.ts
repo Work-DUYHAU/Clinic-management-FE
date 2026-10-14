@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSmartCa } from "../context/SmartCaContext";
 import { useToast } from "../context/ToastContext";
 import { useClipboard } from "./useClipboard";
-import { computeXmlDigest } from "../utils/xmlDsigEngine";
 import {
   initiateSignQ1WithBackend,
   checkSignStatusQ1WithBackend,
@@ -18,6 +17,7 @@ import {
 } from "../utils/validators";
 
 import { useSignerFormState, type SignerFormState } from "./useSignerFormState";
+import { computeXmlDigest } from "../utils";
 
 export const COUNTDOWN_SECONDS = 180;
 
@@ -198,9 +198,6 @@ export function useSmartCaSignQ1({
     [effectiveXmlToSign, handleCancelWaiting, onSignedSuccess, toast],
   );
 
-  /**
-   * Polling tự động mỗi 2 giây
-   */
   const startPollingTransaction = useCallback(
     (tran: SmartCaQ1InitiateResponse) => {
       if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
@@ -212,9 +209,6 @@ export function useSmartCaSignQ1({
     [checkTransactionStatus],
   );
 
-  /**
-   * Khởi tạo yêu cầu ký số Q1
-   */
   const handleInitiateQ1Sign = useCallback(async () => {
     if (!effectiveXmlToSign) {
       toast.warning("Nội dung XML trống - không thể ký số!", "Thiếu Dữ Liệu");

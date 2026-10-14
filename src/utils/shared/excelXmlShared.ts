@@ -1,5 +1,4 @@
 import * as XLSX from "xlsx";
-import { BACKEND_BASE_URL } from "../../services/api/client";
 
 export function removeDiacritics(str: string): string {
   if (!str) return "";
@@ -16,17 +15,14 @@ export function normalizeKey(str: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-/** Chuẩn hóa tên cột in hoa [A-Z0-9] (tương thích ngược) */
 export function normalizeHeaderKey(str: string): string {
   return normalizeKey(str).toUpperCase();
 }
 
-/** Chuyển chuỗi tiếng Việt thành in hoa không dấu (giữ nguyên khoảng trắng, dấu gạch dưới...) */
 export function toUnaccentedUpper(str: string): string {
   return removeDiacritics(str).toUpperCase();
 }
 
-/** @deprecated dùng normalizeKey */
 export const normalizeKeyword = normalizeKey;
 
 export interface SharedSchemaField {
@@ -730,15 +726,6 @@ export function downloadXmlFile(xmlContent: string, fileName: string): void {
 }
 
 // CỔNG EGW BHXH & ĐỊNH DẠNG HIỂN THỊ UI
-export interface GatewaySendResult {
-  maKetQua: string;
-  maGiaoDich: string;
-  thongDiep: string;
-  thoiGianTiepNhan: string;
-  totalRecords: number;
-  loaiHs?: string;
-  chiTietLoi?: any;
-}
 
 export function formatCurrencyVnd(val?: number): string {
   if (val === undefined || val === null || isNaN(val)) return "0 đ";
@@ -769,97 +756,10 @@ export function formatYmdHmDisplay(str?: string): string {
 /** @deprecated dùng getTimestampYmdHms */
 export const getThoiGianTiepNhan = getTimestampYmdHms;
 
-export async function sendDanhMucToBhxhGateway(
-  loaiHs: string,
-  recordCount: number,
-  recordLabel: string,
-  maCskcb: string = DEFAULT_MA_CSKCB,
-  maTinh: string = DEFAULT_MA_TINH,
-  fileBase64Str?: string,
-): Promise<GatewaySendResult> {
-  const LOAI_HS_NORMALIZED: Record<string, string> = {
-    DANHMUC01: "70",
-    DM01: "70",
-    "70": "70",
-    DANHMUC02: "71",
-    DM02: "71",
-    "71": "71",
-    DANHMUC03: "10",
-    DM03: "10",
-    "10": "10",
-    DANHMUC04: "11",
-    DM04: "11",
-    "11": "11",
-    DANHMUC05: "12",
-    DM05: "12",
-    "12": "12",
-    DANHMUC06: "72",
-    DM06: "72",
-    "72": "72",
-  };
-  const officialLoaiHs = LOAI_HS_NORMALIZED[loaiHs] || loaiHs;
-
-  const LOAI_HS_TO_SLUG: Record<string, string> = {
-    "70": "dm01",
-    "71": "dm02",
-    "10": "dm03",
-    "11": "dm04",
-    "12": "dm05",
-    "72": "dm06",
-  };
-  const slug = LOAI_HS_TO_SLUG[officialLoaiHs] || "dm01";
-
-  try {
-    const response = await fetch(
-      `${BACKEND_BASE_URL}/danh-muc/${slug}/gui-cong`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileBase64Str,
-          loaiHs: officialLoaiHs,
-          maCskcb,
-          maTinh,
-        }),
-      },
-    );
-
-    const data: any = await response.json();
-    const isOk = Boolean(data.success || String(data.maKetQua) === "200");
-
-    return {
-      maKetQua: String(data.maKetQua ?? (isOk ? "200" : "500")),
-      maGiaoDich:
-        data.maGiaoDich ||
-        (isOk
-          ? `${loaiHs}_T${maTinh}_${maCskcb}_${Date.now().toString().slice(-6)}`
-          : ""),
-      thongDiep:
-        data.thongDiep ||
-        data.ghiChu ||
-        (isOk
-          ? `Tiếp nhận thành công ${recordCount} bản ghi ${recordLabel} vào Cổng BHXH`
-          : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
-      thoiGianTiepNhan: data.thoiGianTiepNhan || getTimestampYmdHms(),
-      totalRecords: recordCount,
-      loaiHs: officialLoaiHs,
-      chiTietLoi: data.chiTietLoi,
-    };
-  } catch (err: unknown) {
-    const errorMsg =
-      err instanceof Error ? err.message : "Lỗi kết nối Cổng BHXH";
-    return {
-      maKetQua: "500",
-      maGiaoDich: "",
-      thongDiep: errorMsg,
-      thoiGianTiepNhan: getTimestampYmdHms(),
-      totalRecords: recordCount,
-      loaiHs: officialLoaiHs,
-    };
-  }
-}
+export {
+  sendDanhMucToBhxhGateway,
+  type GatewaySendResult,
+} from "../../services/api/danhMucApi";
 
 /**
  * Kiểm tra xem kết quả phản hồi từ Cổng BHXH có thành công hay không (dùng chung toàn hệ thống)
