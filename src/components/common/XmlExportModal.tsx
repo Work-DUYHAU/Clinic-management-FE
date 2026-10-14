@@ -27,7 +27,7 @@ import { useClipboard } from "../../hooks/useClipboard";
 import { useModalBehavior } from "../../hooks/useModalBehavior";
 import { SmartCaSignPanel, type SmartCaSignAction } from "./SmartCaSignPanel";
 import { XmlPreviewModal } from "./smartca/XmlPreviewModal";
-import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
+import type { SmartCaSignResponse } from "../../services/api";
 import { extractXmlSignature } from "../../utils/xmlDsigEngine";
 
 export interface SourceFileUploadInfo {

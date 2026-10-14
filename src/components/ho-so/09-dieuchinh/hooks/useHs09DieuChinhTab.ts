@@ -16,7 +16,6 @@ import {
 } from "../../../../utils/hs09DieuChinhXmlEngine";
 import { useToast } from "../../../../context/ToastContext";
 import { useRegisterSignModal } from "../../../../context/SignModalContext";
-import { BhxhChungTuService } from "../../../../services/bhxh/bhxhChungTuService";
 import {
   generateUUID,
   getTodayIsoDate,
@@ -134,7 +133,6 @@ export function useHs09DieuChinhTab({
       setSigningItems(freshTargets);
       setXmlModalTab("smartca");
       setIsXmlModalOpen(true);
-      BhxhChungTuService.takeToken().catch(() => {});
 
       if (!explicitSelected && items.length > 1) {
         toast.info(
@@ -162,10 +160,11 @@ export function useHs09DieuChinhTab({
         setFileUploadStats(result);
         setSelectedTableItems([]);
         setSigningItems([]);
-        BhxhChungTuService.takeToken().catch(() => {});
 
         const isXml = file.name.toLowerCase().endsWith(".xml");
-        const signedCount = result.items.filter((i: HoSoDieuChinh09Item) => i.ttKySo === 2).length;
+        const signedCount = result.items.filter(
+          (i: HoSoDieuChinh09Item) => i.ttKySo === 2,
+        ).length;
         const signedNote =
           signedCount > 0 ? ` (${signedCount} hồ sơ đã có chữ ký số)` : "";
 
@@ -209,8 +208,7 @@ export function useHs09DieuChinhTab({
           "Chuyển Sheet Dữ Liệu",
         );
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : "Lỗi khi chuyển sheet";
+        const msg = err instanceof Error ? err.message : "Lỗi khi chuyển sheet";
         toast.error(msg, "Lỗi Đọc Sheet");
       }
     },
@@ -543,7 +541,9 @@ export function useHs09DieuChinhTab({
   const handleExportExcel = useCallback(
     (itemsToExport?: HoSoDieuChinh09Item[]) => {
       const target =
-        itemsToExport && itemsToExport.length > 0 ? itemsToExport : filteredItems;
+        itemsToExport && itemsToExport.length > 0
+          ? itemsToExport
+          : filteredItems;
       try {
         exportHs09ToExcel(target);
         toast.success(
@@ -562,7 +562,6 @@ export function useHs09DieuChinhTab({
 
   const handleSendGiamDinh = useCallback(
     (selectedItems: HoSoDieuChinh09Item[]) => {
-      BhxhChungTuService.takeToken().catch(() => {});
       toast.showConfirm({
         title: "Xác nhận gửi hồ sơ điều chỉnh",
         content: `Xác nhận gửi ${selectedItems.length} hồ sơ điều chỉnh sang Hệ thống Giám định BHYT? Hồ sơ sau khi gửi sẽ bị khóa hoàn toàn không thể chỉnh sửa.`,
@@ -588,7 +587,9 @@ export function useHs09DieuChinhTab({
               const targetIds = new Set(selectedItems.map((i) => i.id));
               const resultMap = new Map<string, SendHs09BatchItemResult>();
               if (result.batchResults && result.batchResults.length > 0) {
-                result.batchResults.forEach((br: SendHs09BatchItemResult) => resultMap.set(br.id, br));
+                result.batchResults.forEach((br: SendHs09BatchItemResult) =>
+                  resultMap.set(br.id, br),
+                );
               }
 
               const updater = (i: HoSoDieuChinh09Item): HoSoDieuChinh09Item => {

@@ -1,7 +1,3 @@
-// ============================================================
-// BẢNG QUY TẮC NHẬN DIỆN MẪU CHỨNG TỪ (SHEET & HEADER)
-// ============================================================
-
 import type { DocSignOptionType } from "../../types/tt25ChungTuTypes";
 import { normalizeKeyword } from "./excelXmlShared";
 import {
@@ -12,12 +8,6 @@ import {
 export type { DocDetectionRule };
 export { DOC_DETECTION_RULES, normalizeKeyword };
 
-/**
- * Tự động nhận diện loại mẫu chứng từ qua cơ chế chấm điểm (Score-based) tên sheet & header cột:
- * - Khớp tên sheet: +3 điểm
- * - Mỗi từ khóa header khớp: +1 điểm
- * Trả về DocSignOptionType có điểm cao nhất (> 0), hoặc fallbackType nếu không có điểm nào
- */
 export function detectDocTypeFromHeader(
   headerKeys: string[],
   sheetName = "",

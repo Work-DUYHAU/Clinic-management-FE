@@ -9,7 +9,6 @@ import {
   Zap,
   X,
 } from "lucide-react";
-import type { SmartCaPersistentConfig } from "../../../services/smartca/smartcaConfig";
 import {
   type IdentityType,
   IDENTITY_LIMITS,
@@ -17,7 +16,7 @@ import {
 } from "../../../utils/validators";
 
 export interface SignerFormProps {
-  config: SmartCaPersistentConfig;
+  config?: { env?: string };
   idType: IdentityType;
   identityValue: string;
   onIdentityChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -84,12 +83,12 @@ export const SignerForm: React.FC<SignerFormProps> = ({
 
         <span
           className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border ${
-            config.env === "production"
+            config?.env === "production"
               ? "bg-emerald-50 text-emerald-800 border-emerald-200"
               : "bg-blue-50 text-blue-800 border-blue-200"
           }`}
         >
-          {config.env === "production" ? "VNPT Production" : "VNPT Demo"}
+          {config?.env === "production" ? "VNPT Production" : "VNPT Demo"}
         </span>
       </div>
 

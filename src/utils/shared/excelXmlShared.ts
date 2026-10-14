@@ -1,10 +1,6 @@
 import * as XLSX from "xlsx";
-import {
-  BhxhChungTuService,
-  BHXH_CONFIG,
-} from "../../services/bhxh/bhxhChungTuService";
-// 1. CHUẨN HÓA & SO KHỚP TÊN CỘT EXCEL
-/** Bỏ dấu tiếng Việt, giữ nguyên khoảng trắng, dấu gạch dưới, số và chữ */
+import { BACKEND_BASE_URL } from "../../services/api/client";
+
 export function removeDiacritics(str: string): string {
   if (!str) return "";
   return String(str)
@@ -741,6 +737,7 @@ export interface GatewaySendResult {
   thoiGianTiepNhan: string;
   totalRecords: number;
   loaiHs?: string;
+  chiTietLoi?: any;
 }
 
 export function formatCurrencyVnd(val?: number): string {
@@ -780,100 +777,60 @@ export async function sendDanhMucToBhxhGateway(
   maTinh: string = DEFAULT_MA_TINH,
   fileBase64Str?: string,
 ): Promise<GatewaySendResult> {
-  const tokenRes = await BhxhChungTuService.takeToken();
-  const token = tokenRes.apiToken || tokenRes.APIKey?.access_token;
-  if (String(tokenRes.maKetQua) !== "200" || !token) {
-    return {
-      maKetQua: String(tokenRes.maKetQua || "401"),
-      maGiaoDich: "",
-      thongDiep:
-        tokenRes.thongDiep ||
-        tokenRes.message ||
-        "Chưa cấu hình tài khoản kết nối Cổng BHXH hoặc lỗi xác thực Token",
-      thoiGianTiepNhan: getTimestampYmdHms(),
-      totalRecords: recordCount,
-      loaiHs,
-    };
-  }
+  const LOAI_HS_NORMALIZED: Record<string, string> = {
+    DANHMUC01: "70",
+    DM01: "70",
+    "70": "70",
+    DANHMUC02: "71",
+    DM02: "71",
+    "71": "71",
+    DANHMUC03: "10",
+    DM03: "10",
+    "10": "10",
+    DANHMUC04: "11",
+    DM04: "11",
+    "11": "11",
+    DANHMUC05: "12",
+    DM05: "12",
+    "12": "12",
+    DANHMUC06: "72",
+    DM06: "72",
+    "72": "72",
+  };
+  const officialLoaiHs = LOAI_HS_NORMALIZED[loaiHs] || loaiHs;
+
+  const LOAI_HS_TO_SLUG: Record<string, string> = {
+    "70": "dm01",
+    "71": "dm02",
+    "10": "dm03",
+    "11": "dm04",
+    "12": "dm05",
+    "72": "dm06",
+  };
+  const slug = LOAI_HS_TO_SLUG[officialLoaiHs] || "dm01";
 
   try {
-    const LOAI_HS_NORMALIZED: Record<string, string> = {
-      DANHMUC01: "70",
-      DM01: "70",
-      "70": "70",
-      DANHMUC02: "71",
-      DM02: "71",
-      "71": "71",
-      DANHMUC03: "10",
-      DM03: "10",
-      "10": "10",
-      DANHMUC04: "11",
-      DM04: "11",
-      "11": "11",
-      DANHMUC05: "12",
-      DM05: "12",
-      "12": "12",
-      DANHMUC06: "72",
-      DM06: "72",
-      "72": "72",
-    };
-    const officialLoaiHs = LOAI_HS_NORMALIZED[loaiHs] || loaiHs;
-
-    const endpointMap: Record<string, string> = {
-      "70": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_01_BPCMKBCB,
-      "71": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_02_NLKCB,
-      "10": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_03_DMTHUOC,
-      "11": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_04_DMVTYT,
-      "12": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_05_DVKT,
-      "72": BHXH_CONFIG.ENDPOINTS.GUI_DANH_MUC_06_DMTBYT,
-    };
-    const endpoint = endpointMap[officialLoaiHs] || "/api/DanhMucGW";
-
-    const params = new URLSearchParams();
-    params.append("username", BHXH_CONFIG.USERNAME || `${maCskcb}_BV`);
-    params.append("loaiHs", officialLoaiHs);
-    params.append("maTinh", maTinh);
-    params.append("maCskcb", maCskcb);
-    params.append("maCơ sở KCB", maCskcb); // Alias theo curl example tài liệu
-    if (fileBase64Str) {
-      params.append("fileHsBase64", fileBase64Str);
-      params.append("fileBase64Str", fileBase64Str); // Fallback
-    }
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/x-www-form-urlencoded",
-      accessToken: token,
-      tokenId: tokenRes.idToken || tokenRes.APIKey?.id_token || "",
-      passwordHash: tokenRes.passwordHash || "",
-    };
-
-    const baseUrl = BhxhChungTuService.getBaseUrl();
-    const response = await BhxhChungTuService.fetchGateway(
-      `${baseUrl}${endpoint}`,
+    const response = await fetch(
+      `${BACKEND_BASE_URL}/danh-muc/${slug}/gui-cong`,
       {
         method: "POST",
-        headers,
-        body: params.toString(),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileBase64Str,
+          loaiHs: officialLoaiHs,
+          maCskcb,
+          maTinh,
+        }),
       },
     );
 
-    let data: any = {};
-    const text = await response.text();
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = {
-        maKetQua: String(response.status),
-        thongDiep:
-          text.slice(0, 150) ||
-          `Máy chủ Cổng BHXH phản hồi HTTP ${response.status}`,
-      };
-    }
+    const data: any = await response.json();
+    const isOk = Boolean(data.success || String(data.maKetQua) === "200");
 
-    const isOk =
-      String(data.maKetQua ?? (response.ok ? "200" : "500")) === "200";
     return {
-      maKetQua: String(data.maKetQua ?? (response.ok ? "200" : "500")),
+      maKetQua: String(data.maKetQua ?? (isOk ? "200" : "500")),
       maGiaoDich:
         data.maGiaoDich ||
         (isOk
@@ -887,7 +844,8 @@ export async function sendDanhMucToBhxhGateway(
           : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
       thoiGianTiepNhan: data.thoiGianTiepNhan || getTimestampYmdHms(),
       totalRecords: recordCount,
-      loaiHs,
+      loaiHs: officialLoaiHs,
+      chiTietLoi: data.chiTietLoi,
     };
   } catch (err: unknown) {
     const errorMsg =
@@ -898,7 +856,7 @@ export async function sendDanhMucToBhxhGateway(
       thongDiep: errorMsg,
       thoiGianTiepNhan: getTimestampYmdHms(),
       totalRecords: recordCount,
-      loaiHs,
+      loaiHs: officialLoaiHs,
     };
   }
 }

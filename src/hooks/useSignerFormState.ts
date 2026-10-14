@@ -1,13 +1,15 @@
 import { useState, useCallback } from "react";
 import { useSmartCa } from "../context/SmartCaContext";
 import {
-  SMARTCA_DEFAULT_MST,
-  SMARTCA_DEFAULT_PASSWORD,
-} from "../services/smartca/smartcaConfig";
-import {
   type IdentityType,
   sanitizeIdentityInput,
 } from "../utils/validators";
+
+const DEFAULT_MST =
+  import.meta.env.VITE_SMARTCA_DEFAULT_MST ||
+  import.meta.env.VITE_SMARTCA_USER_ID ||
+  "";
+const DEFAULT_PASSWORD = import.meta.env.VITE_SMARTCA_PASSWORD || "";
 
 export interface SignerFormState {
   signerName: string;
@@ -28,7 +30,7 @@ export interface SignerFormState {
 
 export function useSignerFormState(): SignerFormState {
   const { config } = useSmartCa();
-  const defaultMst = SMARTCA_DEFAULT_MST || config.username || "";
+  const defaultMst = DEFAULT_MST || config?.username || "";
 
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
@@ -36,7 +38,7 @@ export function useSignerFormState(): SignerFormState {
     defaultMst ? "mst" : "phone",
   );
   const [identityValue, setIdentityValue] = useState(defaultMst);
-  const [password, setPassword] = useState(SMARTCA_DEFAULT_PASSWORD || "");
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleIdentityChange = useCallback(

@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useClipboard } from "../useClipboard";
 import { computeXmlDigest } from "../../utils/xmlDsigEngine";
-import { signXmlWithBackend } from "../../services/kySoBackendApi";
-import { SMARTCA_TOTP_SECRET } from "../../services/smartca/smartcaConfig";
-import type { SmartCaSignResponse } from "../../services/smartca/smartcaHandlers";
+import { signXmlWithBackend, type SmartCaSignResponse } from "../../services/api";
 import { useSignerFormState, type SignerFormState } from "../useSignerFormState";
 
 export interface UseSmartCaSignQ2Props {
@@ -45,15 +43,6 @@ export function useSmartCaSignQ2({
     handleIdentityChange,
     handleSelectIdType,
   } = form;
-
-  // Khóa bí mật Smart OTP (TOTP Secret Key) nạp từ .env
-  const [totpSecret, setTotpSecret] = useState<string>(
-    SMARTCA_TOTP_SECRET || "",
-  );
-
-  const handleSaveTotpSecret = useCallback((secret: string) => {
-    setTotpSecret((secret || "").trim());
-  }, []);
 
   // Trạng thái giao dịch Ký tự động Q2
   const [isInitiating, setIsInitiating] = useState(false);
@@ -171,7 +160,6 @@ export function useSmartCaSignQ2({
     identityValue,
     password,
     idType,
-    totpSecret,
     onSignedSuccess,
     toast,
   ]);
@@ -193,8 +181,6 @@ export function useSmartCaSignQ2({
     setShowPassword,
     handleIdentityChange,
     handleSelectIdType,
-    totpSecret,
-    setTotpSecret: handleSaveTotpSecret,
     digestInfo,
     isInitiating,
     handleStartSignQ2,
