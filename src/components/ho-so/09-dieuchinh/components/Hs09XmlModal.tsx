@@ -133,9 +133,9 @@ export const Hs09XmlModal: React.FC<Hs09XmlModalProps> = ({
     itemKyQt && itemKyQt.length === 6 ? itemKyQt : getTodayYmd().slice(0, 6);
   const defaultFileName = `HSDC09BH_${DEFAULT_MA_CSKCB}_${kyQT}.xml`;
   const initialSignedXml =
-    items.find((i) => (i as any).signedXml)?.signedXml || null;
+    items.find((i) => i.signedXml)?.signedXml || null;
   const initialSignedAt =
-    items.find((i) => (i as any).signedAt)?.signedAt || null;
+    items.find((i) => i.signedAt)?.signedAt || null;
 
   return (
     <XmlExportModal

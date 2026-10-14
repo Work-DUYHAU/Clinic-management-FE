@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./client";
+import { httpPost } from "./httpClient";
 
 export interface SendBhxhChungTu2025Params {
   fileBase64Str: string;
@@ -14,7 +14,7 @@ export interface SendBhxhChungTu2025Result {
   thongDiep: string;
   ghiChu?: string;
   maGiaoDich?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export async function sendBhxhChungTu2025WithBackend(
@@ -26,34 +26,27 @@ export async function sendBhxhChungTu2025WithBackend(
     throw new Error("Không có nội dung tệp chứng từ để gửi lên Cổng BHXH.");
   }
 
-  const endpoint = `${BACKEND_BASE_URL}/ho-so/chung-tu-tt25/gui-cong`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      fileBase64Str,
-      loaiHs,
-      xmlContent,
-      username,
-    }),
-  });
-
-  const resJson = await response.json();
-  if (!response.ok) {
+  try {
+    return await httpPost<SendBhxhChungTu2025Result>(
+      "/ho-so/chung-tu-tt25/gui-cong",
+      {
+        fileBase64Str,
+        loaiHs,
+        xmlContent,
+        username,
+      },
+    );
+  } catch (err: unknown) {
+    const errorMsg =
+      err instanceof Error
+        ? err.message
+        : "Lỗi kết nối gửi chứng từ TT25 lên Cổng BHXH";
     return {
       success: false,
-      statusCode: response.status,
-      maKetQua: String(resJson.maKetQua || response.status),
-      thongDiep:
-        resJson.thongDiep ||
-        resJson.message ||
-        `Lỗi gửi Cổng BHXH (Mã ${response.status})`,
-      ghiChu: resJson.ghiChu,
-      maGiaoDich: resJson.maGiaoDich,
+      statusCode: 500,
+      maKetQua: "500",
+      thongDiep: errorMsg,
     };
   }
-
-  return resJson;
 }
+

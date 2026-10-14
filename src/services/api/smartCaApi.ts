@@ -2,7 +2,8 @@ import type {
   SignaturePosition,
   KyHoSoSignatureMeta,
 } from "../../components/ky-ho-so/types";
-import { BACKEND_BASE_URL, urlToDataUrl } from "./client";
+import { urlToDataUrl } from "./client";
+import { httpPost, httpPostForm, httpGet } from "./httpClient";
 
 export interface SignPdfWithBackendParams {
   pdfBlobOrFile: Blob | File;
@@ -46,20 +47,10 @@ export async function signPdfWithBackend(
   if (signatureBase64) formData.append("signatureBase64", signatureBase64);
   if (userId) formData.append("userId", userId);
 
-  const endpoint = `${BACKEND_BASE_URL}/smart-ca/sign`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    body: formData,
-  });
-
-  const resJson = await response.json();
-  if (!response.ok || !resJson.success) {
-    throw new Error(
-      resJson.message || `Lỗi ký số Backend (Mã lỗi ${response.status})`,
-    );
-  }
-
-  return resJson;
+  return await httpPostForm<SignPdfWithBackendResult>(
+    "/smart-ca/sign",
+    formData,
+  );
 }
 
 export interface SignXmlWithBackendParams {
@@ -100,30 +91,17 @@ export async function signXmlWithBackend(
     throw new Error("Không có nội dung XML để thực hiện ký số.");
   }
 
-  const endpoint = `${BACKEND_BASE_URL}/smart-ca/sign-xml`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
+  return await httpPost<SignXmlWithBackendResult>(
+    "/smart-ca/sign-xml",
+    {
       rawXml,
       fileName,
       signatureFormat,
       targetDataId,
       userId,
-    }),
-  });
-
-  const resJson = await response.json();
-  if (!response.ok || !resJson.success) {
-    throw new Error(
-      resJson.message || `Lỗi ký số XML Backend (Mã lỗi ${response.status})`,
-    );
-  }
-
-  return resJson;
+    },
+    { signal },
+  );
 }
 
 export interface SmartCaCertificateInfo {
@@ -151,7 +129,7 @@ export interface SmartCaSignResponse {
   signedAt: string;
   digestValue: string;
   signedXml?: string;
-  signer?: any;
+  signer?: unknown;
   error?: string;
 }
 
@@ -169,22 +147,15 @@ export interface SmartCaQ1InitiateResponse {
   rsaExponent?: string;
   digestValue: string;
   signedInfoDigest?: string;
-  signer?: any;
+  signer?: unknown;
   error?: string;
 }
 
 export async function getSmartCaCertificateWithBackend(
   userId?: string,
 ): Promise<SmartCaCertificateInfo> {
-  const url = new URL(`${BACKEND_BASE_URL}/smart-ca/certificate`);
-  if (userId) url.searchParams.set("userId", userId);
-
-  const res = await fetch(url.toString());
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || "Không thể lấy thông tin chứng thư số.");
-  }
-  return data;
+  const endpoint = `/smart-ca/certificate${userId ? `?userId=${encodeURIComponent(userId)}` : ""}`;
+  return await httpGet<SmartCaCertificateInfo>(endpoint);
 }
 
 export interface InitiateSignQ1Params {
@@ -192,7 +163,7 @@ export interface InitiateSignQ1Params {
   fileName?: string;
   username?: string;
   password?: string;
-  signer?: any;
+  signer?: unknown;
   signal?: AbortSignal;
 }
 
@@ -208,24 +179,34 @@ export async function initiateSignQ1WithBackend(
     signal,
   } = params;
 
-  const endpoint = `${BACKEND_BASE_URL}/smart-ca/q1/initiate`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
-      rawXml,
-      fileName,
-      username,
-      password,
-      signer,
-    }),
-  });
+  try {
+    const resJson = await httpPost<SmartCaQ1InitiateResponse>(
+      "/smart-ca/q1/initiate",
+      {
+        rawXml,
+        fileName,
+        username,
+        password,
+        signer,
+      },
+      { signal },
+    );
 
-  const resJson = await response.json();
-  if (!response.ok || !resJson.success) {
+    return {
+      success: true,
+      tranId: resJson.tranId,
+      status: resJson.status,
+      subjectDN: resJson.subjectDN,
+      serialNumber: resJson.serialNumber,
+      issuerDN: resJson.issuerDN,
+      x509Certificate: resJson.x509Certificate,
+      digestValue: resJson.digestValue,
+      signedInfoDigest: resJson.signedInfoDigest,
+      signer: resJson.signer,
+    };
+  } catch (err: unknown) {
+    const errorMsg =
+      err instanceof Error ? err.message : "Lỗi khởi tạo ký số Q1";
     return {
       success: false,
       tranId: "",
@@ -235,22 +216,9 @@ export async function initiateSignQ1WithBackend(
       issuerDN: "",
       x509Certificate: "",
       digestValue: "",
-      error: resJson.message || `Lỗi khởi tạo ký số Q1 (Mã ${response.status})`,
+      error: errorMsg,
     };
   }
-
-  return {
-    success: true,
-    tranId: resJson.tranId,
-    status: resJson.status,
-    subjectDN: resJson.subjectDN,
-    serialNumber: resJson.serialNumber,
-    issuerDN: resJson.issuerDN,
-    x509Certificate: resJson.x509Certificate,
-    digestValue: resJson.digestValue,
-    signedInfoDigest: resJson.signedInfoDigest,
-    signer: resJson.signer,
-  };
 }
 
 export interface CheckSignStatusQ1Params {
@@ -264,26 +232,19 @@ export async function checkSignStatusQ1WithBackend(
 ): Promise<SmartCaSignResponse> {
   const { tranId, rawXml, signal } = params;
 
-  const endpoint = `${BACKEND_BASE_URL}/smart-ca/q1/check-status`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
+  const resJson = await httpPost<
+    SmartCaSignResponse & {
+      meta?: KyHoSoSignatureMeta & { digestValue?: string };
+      message?: string;
+    }
+  >(
+    "/smart-ca/q1/check-status",
+    {
       tranId,
       rawXml,
-    }),
-  });
-
-  const resJson = await response.json();
-  if (!response.ok) {
-    throw new Error(
-      resJson.message ||
-        `Lỗi kiểm tra trạng thái ký số (Mã ${response.status})`,
-    );
-  }
+    },
+    { signal },
+  );
 
   if (resJson.success && resJson.signedXml) {
     return {

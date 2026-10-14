@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./client";
+import { httpPost } from "./httpClient";
 
 export interface GatewaySendResult {
   maKetQua: string;
@@ -7,7 +7,7 @@ export interface GatewaySendResult {
   thoiGianTiepNhan: string;
   totalRecords: number;
   loaiHs?: string;
-  chiTietLoi?: any;
+  chiTietLoi?: unknown;
 }
 
 export interface SendDanhMucParams {
@@ -67,23 +67,26 @@ export async function sendDanhMucToBhxhGateway(
   };
 
   try {
-    const response = await fetch(
-      `${BACKEND_BASE_URL}/danh-muc/${slug}/gui-cong`,
+    interface DanhMucApiResponse {
+      success?: boolean;
+      maKetQua?: string | number;
+      maGiaoDich?: string;
+      thongDiep?: string;
+      ghiChu?: string;
+      thoiGianTiepNhan?: string;
+      chiTietLoi?: unknown;
+    }
+
+    const data = await httpPost<DanhMucApiResponse>(
+      `/danh-muc/${slug}/gui-cong`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileBase64Str,
-          loaiHs: officialLoaiHs,
-          maCskcb,
-          maTinh,
-        }),
+        fileBase64Str,
+        loaiHs: officialLoaiHs,
+        maCskcb,
+        maTinh,
       },
     );
 
-    const data: any = await response.json();
     const isOk = Boolean(data.success || String(data.maKetQua) === "200");
 
     return {
@@ -98,7 +101,7 @@ export async function sendDanhMucToBhxhGateway(
         data.ghiChu ||
         (isOk
           ? `Tiếp nhận thành công ${recordCount} bản ghi ${recordLabel} vào Cổng BHXH`
-          : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? response.status}`),
+          : `Cổng BHXH phản hồi mã kết quả: ${data.maKetQua ?? "500"}`),
       thoiGianTiepNhan: data.thoiGianTiepNhan || getTimestamp(),
       totalRecords: recordCount,
       loaiHs: officialLoaiHs,

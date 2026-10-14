@@ -11,7 +11,15 @@ export interface SendProgressInfo {
   label?: string;
 }
 
-export interface UseXmlExportModalOptions<T, R = any> {
+export interface BaseGatewayResult {
+  maKetQua?: string | number;
+  thongDiep?: string;
+  ghiChu?: string;
+  message?: string;
+  isError?: boolean;
+}
+
+export interface UseXmlExportModalOptions<T, R extends BaseGatewayResult = BaseGatewayResult> {
   isOpen: boolean;
   items: T[];
   defaultTab?: XmlExportTabType;
@@ -21,7 +29,7 @@ export interface UseXmlExportModalOptions<T, R = any> {
   sendGateway?: (
     items: T[],
     signature?: any,
-    fileBase64?: string,
+    fileBase64?: any,
     onProgress?: any,
   ) => Promise<R>;
   downloadSuccessMessage?: string;
@@ -31,7 +39,7 @@ export interface UseXmlExportModalOptions<T, R = any> {
   onSignSuccess?: (items: T[], signedXml?: string, signResponse?: any) => void;
 }
 
-export function useXmlExportModal<T, R = any>({
+export function useXmlExportModal<T, R extends BaseGatewayResult = BaseGatewayResult>({
   isOpen,
   items,
   defaultTab = "smartca",
@@ -137,11 +145,12 @@ export function useXmlExportModal<T, R = any>({
     setSendProgress(null);
     try {
       const onProgress = (current: number, total: number, currentItem: T) => {
-        const itemAny = currentItem as any;
+        const itemObj = currentItem as Record<string, unknown> | undefined;
+        const ttXml1 = itemObj?.ttXml1 as Record<string, unknown> | undefined;
         const label =
-          itemAny?.ttXml1?.maLk ||
-          itemAny?.maLk ||
-          itemAny?.id ||
+          (ttXml1?.maLk as string) ||
+          (itemObj?.maLk as string) ||
+          (itemObj?.id as string) ||
           `Hồ sơ ${current}`;
         setSendProgress({ current, total, label });
       };
@@ -165,10 +174,10 @@ export function useXmlExportModal<T, R = any>({
         }
       } else {
         const errMsg =
-          (res as any)?.thongDiep ||
-          (res as any)?.ghiChu ||
-          (res as any)?.message ||
-          `Cổng BHXH từ chối tiếp nhận (Mã phản hồi: ${String((res as any)?.maKetQua || "400")})`;
+          res?.thongDiep ||
+          res?.ghiChu ||
+          res?.message ||
+          `Cổng BHXH từ chối tiếp nhận (Mã phản hồi: ${String(res?.maKetQua || "400")})`;
         toast.error(errMsg, "Lỗi Tiếp Nhận Cổng BHXH");
       }
     } catch (err: unknown) {
@@ -177,7 +186,7 @@ export function useXmlExportModal<T, R = any>({
         maKetQua: "500",
         thongDiep: msg,
         isError: true,
-      } as any);
+      } as unknown as R);
       toast.error(msg, "Lỗi Gửi Cổng");
     } finally {
       setIsSending(false);

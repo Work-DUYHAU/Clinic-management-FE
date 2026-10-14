@@ -19,7 +19,9 @@ export const SMARTCA_ENDPOINTS: Record<SmartCaEnv, SmartCaEndpoints> = {
       ? "/api-smartca-demo/auth/token"
       : "https://rmgateway.vnptit.vn/auth/token",
     resource: isDev ? "/api-smartca-demo" : "https://rmgateway.vnptit.vn",
-    sp769: isDev ? "/api-smartca-sp769" : "https://rmgateway.vnptit.vn/sca/sp769",
+    sp769: isDev
+      ? "/api-smartca-sp769"
+      : "https://rmgateway.vnptit.vn/sca/sp769",
   },
   production: {
     authorize: isDev
@@ -234,10 +236,6 @@ export const SMARTCA_OAUTH_ERROR_VI: Record<string, string> = {
   invalid_scope: 'Scope API không hợp lệ - cần phạm vi "sign offline_access"',
 };
 
-// ------------------------------------------------------------
-// Kết quả ký ứng dụng (đính kèm hồ sơ khi gửi Cổng BHXH)
-// ------------------------------------------------------------
-
 export interface SmartCaSignatureResult {
   tranId: string;
   credentialId: string;
@@ -245,11 +243,9 @@ export interface SmartCaSignatureResult {
   subjectDN: string;
   signedAt: string; // ISO 8601
   signatures: Array<{ name: string; sig: string }>;
+  signedXml?: string;
+  signedPdfBase64?: string;
 }
-
-// ------------------------------------------------------------
-// Client interface dùng cho VNPT SmartCA Client
-// ------------------------------------------------------------
 
 export interface SmartCaClient {
   login(username: string, password: string): Promise<SmartCaTokenPair>;
@@ -273,10 +269,6 @@ export interface SmartCaClient {
     tranId: string,
   ): Promise<SmartCaTransactionInfo>;
 }
-
-// ------------------------------------------------------------
-// Ký Số Theo Chức Danh / Từng Thành Viên Đơn Vị (Cách 2)
-// ------------------------------------------------------------
 
 export type SignerRole =
   | "BAC_SI"

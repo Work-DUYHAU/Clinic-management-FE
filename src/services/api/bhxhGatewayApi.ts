@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./client";
+import { httpPost, httpGet } from "./httpClient";
 
 export interface SendBhxhGiayToDienTuParams {
   pdfBlobOrFile?: Blob | File;
@@ -15,7 +15,7 @@ export interface SendBhxhGiayToDienTuResult {
   thongDiep: string;
   ghiChu?: string;
   maGiaoDich?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export async function sendBhxhGiayToDienTuWithBackend(
@@ -44,22 +44,12 @@ export async function sendBhxhGiayToDienTuWithBackend(
     throw new Error("Không có dữ liệu tệp PDF để gửi lên Cổng BHXH.");
   }
 
-  const endpoint = `${BACKEND_BASE_URL}/bhxh/gui-giay-to-dien-tu`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      fileBase64Str: base64,
-      loaiHs,
-      maLienThong,
-      maCskcb,
-    }),
+  return await httpPost<SendBhxhGiayToDienTuResult>("/bhxh/gui-giay-to-dien-tu", {
+    fileBase64Str: base64,
+    loaiHs,
+    maLienThong,
+    maCskcb,
   });
-
-  const resJson = await response.json();
-  return resJson;
 }
 
 export interface BhxhGatewayStatusInfo {
@@ -75,14 +65,7 @@ export interface BhxhGatewayStatusInfo {
 
 export async function getBhxhGatewayStatusInfo(): Promise<BhxhGatewayStatusInfo> {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/bhxh/status`);
-    if (!res.ok) {
-      return {
-        connected: false,
-        message: `Lỗi kết nối Backend (Mã ${res.status})`,
-      };
-    }
-    return await res.json();
+    return await httpGet<BhxhGatewayStatusInfo>("/bhxh/status");
   } catch (err) {
     return {
       connected: false,
@@ -93,3 +76,4 @@ export async function getBhxhGatewayStatusInfo(): Promise<BhxhGatewayStatusInfo>
     };
   }
 }
+
