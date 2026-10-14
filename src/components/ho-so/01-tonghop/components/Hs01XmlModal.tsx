@@ -7,8 +7,8 @@ import {
   generateHs01Xml,
   xmlToBase64,
   downloadHs01XmlFile,
-  sendHs01ToBhxhGateway,
 } from "../../../../utils/hs01TongHopXmlEngine";
+import { sendHs01ToBhxhGateway } from "../../../../services/api";
 import { XmlExportModal } from "../../../common";
 import { useXmlExportModal } from "../../../../hooks";
 import { DEFAULT_MA_CSKCB } from "../../../../utils/shared/excelXmlShared";

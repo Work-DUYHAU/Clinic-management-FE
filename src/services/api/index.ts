@@ -4,3 +4,4 @@ export * from "./hs09Api";
 export * from "./hs01Api";
 export * from "./bhxhGatewayApi";
 export * from "./chungTuApi";
+export * from "./danhMucApi";
