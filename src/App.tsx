@@ -1,15 +1,12 @@
 import React, { useState, lazy, Suspense } from "react";
-import {
-  Sidebar,
-  type MainTabType,
-  type HoSoTabType,
-} from "./components/Sidebar";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Sidebar } from "./components/Sidebar";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./context/ToastContext";
 import { SmartCaProvider } from "./context/SmartCaContext";
 import { SignModalProvider } from "./context/SignModalContext";
 import type { HoSoDieuChinh09Item } from "./types/hs09DieuChinhTypes";
-import { useAppRouter } from "./hooks/useAppRouter";
+import { useAppNavigation } from "./hooks/useAppNavigation";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 
 const DanhMucPage = lazy(() =>
@@ -44,8 +41,8 @@ const PageLoadingFallback: React.FC = () => (
 );
 
 export const App: React.FC = () => {
-  const { activeTab, hoSoTab, catalogTab, navigate, setCatalogTab } =
-    useAppRouter();
+  const { activeTab, hoSoTab, catalogTab, navigateTab, setCatalogTab } =
+    useAppNavigation();
   const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>(() => {
     try {
       sessionStorage.removeItem("clinic_hs09_items_cache");
@@ -57,9 +54,52 @@ export const App: React.FC = () => {
     (x) => x.trangThai === "cho_xu_ly",
   ).length;
 
-  const handleNavigate = (tab: MainTabType, subTab?: HoSoTabType) => {
-    navigate(tab, subTab);
-  };
+  const routeItems = [
+    { path: "/", element: <Navigate to="/danh-muc/01_bpcm" replace /> },
+    { path: "/danh-muc", element: <Navigate to="/danh-muc/01_bpcm" replace /> },
+    {
+      path: "/danh-muc/:catalogId",
+      element: (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <DanhMucPage
+            isActive={activeTab === "danh-muc"}
+            activeCatalogTab={catalogTab}
+            onCatalogTabChange={setCatalogTab}
+          />
+        </Suspense>
+      ),
+    },
+    { path: "/ho-so", element: <Navigate to="/ho-so/01_tonghop" replace /> },
+    {
+      path: "/ho-so/:subTab",
+      element: (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <div className="space-y-3 pb-4">
+            {hoSoTab === "01_tonghop" && <Hs01TongHopTab />}
+            {hoSoTab === "09_xuattoan" && (
+              <Hs09DieuChinhTab
+                items={hs09Items}
+                onItemsChange={setHs09Items}
+              />
+            )}
+          </div>
+        </Suspense>
+      ),
+    },
+    {
+      path: "/chung-tu",
+      element: (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <ChungTuPage isActive={activeTab === "chung-tu"} />
+        </Suspense>
+      ),
+    },
+    {
+      path: "/ky-so",
+      element: <KyHoSoPage isActive={activeTab === "ky-so"} />,
+    },
+    { path: "*", element: <Navigate to="/danh-muc/01_bpcm" replace /> },
+  ];
 
   return (
     <ToastProvider>
@@ -70,7 +110,7 @@ export const App: React.FC = () => {
             <Sidebar
               activeTab={activeTab}
               hoSoTab={hoSoTab}
-              onNavigate={handleNavigate}
+              onNavigate={navigateTab}
               pendingXuattoanCount={pendingXuattoanCount}
             />
 
@@ -86,43 +126,11 @@ export const App: React.FC = () => {
                 className={`flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto ${activeTab === "ky-so" ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto no-scrollbar"}`}
               >
                 <ErrorBoundary>
-                  {/* 1. DANH MỤC KCB BHYT (6 BIỂU MẪU) */}
-                  {activeTab === "danh-muc" && (
-                    <Suspense fallback={<PageLoadingFallback />}>
-                      <DanhMucPage
-                        isActive={activeTab === "danh-muc"}
-                        activeCatalogTab={catalogTab}
-                        onCatalogTabChange={setCatalogTab}
-                      />
-                    </Suspense>
-                  )}
-
-                  {/* 2. HỒ SƠ KCB BHYT (01/BH TỔNG HỢP & 09/BH XUẤT TOÁN) */}
-                  {activeTab === "ho-so" && (
-                    <Suspense fallback={<PageLoadingFallback />}>
-                      <div className="space-y-3 pb-4">
-                        {hoSoTab === "01_tonghop" && <Hs01TongHopTab />}
-                        {hoSoTab === "09_xuattoan" && (
-                          <Hs09DieuChinhTab
-                            items={hs09Items}
-                            onItemsChange={setHs09Items}
-                          />
-                        )}
-                      </div>
-                    </Suspense>
-                  )}
-
-                  {/* 3. HỒ SƠ CHỨNG TỪ & GIẤY TỜ ĐIỆN TỬ (TT 25 & BHXH 2025) */}
-                  {activeTab === "chung-tu" && (
-                    <Suspense fallback={<PageLoadingFallback />}>
-                      <ChungTuPage isActive={activeTab === "chung-tu"} />
-                    </Suspense>
-                  )}
-
-                  {/* 4. KÝ SỐ & GỬI BHXH (KÝ HỒ SƠ TỔNG HỢP) */}
-                  {activeTab === "ky-so" && (
-                    <KyHoSoPage isActive={activeTab === "ky-so"} />
-                  )}
+                  <Routes>
+                    {routeItems.map((r, i) => (
+                      <Route key={r.path || i} path={r.path} element={r.element} />
+                    ))}
+                  </Routes>
                 </ErrorBoundary>
               </main>
             </div>

@@ -43,7 +43,6 @@ httpClient.interceptors.response.use(
       ? serverMessage.join("; ")
       : serverMessage || error.message || "Lỗi giao tiếp máy chủ";
 
-    // Gắn thông điệp chuẩn hóa vào Error object để callers dễ dùng
     error.message = formattedError;
 
     return Promise.reject(error);

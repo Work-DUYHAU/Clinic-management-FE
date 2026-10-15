@@ -1,4 +1,3 @@
-import { PDFDocument } from "pdf-lib";
 import type { SignaturePosition, SignAnchorTarget } from "../types";
 
 export interface AnchorDetectionResult {
@@ -151,9 +150,7 @@ export async function detectSignAnchor(
             ? "Thủ trưởng đơn vị"
             : "Thủ trưởng đơn vị";
 
-        let label = signerName
-          ? `🏢 ${role} (${signerName})`
-          : `🏢 ${role}`;
+        let label = signerName ? `🏢 ${role} (${signerName})` : `🏢 ${role}`;
 
         // Tránh trùng lặp target nếu cùng một cột (cùng X ± 0.08)
         const alreadyExists = discoveredTargets.some(
@@ -282,100 +279,3 @@ export function createDefaultPositions(
     },
   ];
 }
-
-export async function convertImageToPngBytes(
-  imageSource: string | File | Blob,
-): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-
-    let objectUrlToRevoke: string | null = null;
-    if (typeof imageSource === "string") {
-      img.src = imageSource;
-    } else {
-      objectUrlToRevoke = URL.createObjectURL(imageSource);
-      img.src = objectUrlToRevoke;
-    }
-
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth || img.width || 400;
-        canvas.height = img.naturalHeight || img.height || 400;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          throw new Error("Không thể khởi tạo Canvas 2D để xử lý hình ảnh");
-        }
-        ctx.drawImage(img, 0, 0);
-        canvas.toBlob((blob) => {
-          if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
-          if (!blob) {
-            reject(new Error("Lỗi khi chuyển đổi định dạng ảnh"));
-            return;
-          }
-          blob
-            .arrayBuffer()
-            .then((buf) => resolve(new Uint8Array(buf)))
-            .catch(reject);
-        }, "image/png");
-      } catch (err) {
-        if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
-        reject(err);
-      }
-    };
-
-    img.onerror = () => {
-      if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
-      reject(new Error("Không thể tải hoặc giải mã tệp hình ảnh"));
-    };
-  });
-}
-
-/**
- * Chuyển đổi tệp ảnh bất kỳ (PNG, JPG, WEBP, BMP, GIF,...) thành một tệp PDF chuẩn
- */
-export async function convertImageToPdf(
-  imageFile: File,
-): Promise<{ pdfBlob: Blob; numPages: number }> {
-  const pngBytes = await convertImageToPngBytes(imageFile);
-  const pdfDoc = await PDFDocument.create();
-  const embeddedImage = await pdfDoc.embedPng(pngBytes);
-  const { width, height } = embeddedImage;
-
-  // Tự động nhận diện khổ ngang (Landscape) hay khổ dọc (Portrait)
-  const isLandscape = width > height;
-  const page = isLandscape
-    ? pdfDoc.addPage([841.89, 595.28]) // A4 Landscape
-    : pdfDoc.addPage([595.28, 841.89]); // A4 Portrait
-
-  const pageWidth = page.getWidth();
-  const pageHeight = page.getHeight();
-
-  // Căn chỉnh ảnh ở giữa trang với lề 24pt
-  const margin = 24;
-  const maxW = pageWidth - margin * 2;
-  const maxH = pageHeight - margin * 2;
-  const scale = Math.min(maxW / width, maxH / height, 1.0);
-
-  const drawW = width * scale;
-  const drawH = height * scale;
-  const drawX = (pageWidth - drawW) / 2;
-  const drawY = (pageHeight - drawH) / 2;
-
-  page.drawImage(embeddedImage, {
-    x: drawX,
-    y: drawY,
-    width: drawW,
-    height: drawH,
-  });
-
-  const pdfBytes = await pdfDoc.save();
-  return {
-    pdfBlob: new Blob([pdfBytes as unknown as BlobPart], {
-      type: "application/pdf",
-    }),
-    numPages: 1,
-  };
-}
-
