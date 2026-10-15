@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "./client";
+import { httpPost } from "./httpClient";
 import type {
   Hs01TongHopItem,
   SendHs01GatewayResult,
@@ -30,7 +30,7 @@ export interface SendBhxhHoSo01Result {
   thongDiep: string;
   ghiChu?: string;
   maGiaoDich?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export async function sendBhxhHoSo01WithBackend(
@@ -56,25 +56,18 @@ export async function sendBhxhHoSo01WithBackend(
     throw new Error("Không có dữ liệu tệp XML / Base64 để gửi lên Cổng BHXH.");
   }
 
-  const endpoint = `${BACKEND_BASE_URL}/bhxh/gui-ho-so-tong-hop-01`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    signal,
-    body: JSON.stringify({
+  return await httpPost<SendBhxhHoSo01Result>(
+    "/bhxh/gui-ho-so-tong-hop-01",
+    {
       fileBase64Str: base64,
       loaiHs,
       kyQT,
       maCskcb,
       maTinh,
       tranId,
-    }),
-  });
-
-  const resJson = await response.json();
-  return resJson;
+    },
+    { signal },
+  );
 }
 
 export async function sendHs01ToBhxhGateway(
@@ -102,7 +95,7 @@ export async function sendHs01ToBhxhGateway(
 
   // 2. Nếu tệp nạp từ XML máy tính, quét trực tiếp thẻ <NAM_QT> và <THANG_QT> trong XML
   if (!namQt || !thangQt) {
-    const signedXmlFromSig = (signature as any)?.signedXml;
+    const signedXmlFromSig = signature?.signedXml;
     let xmlContent = signedXmlFromSig || "";
     if (!xmlContent && customFileBase64) {
       try {
@@ -126,7 +119,7 @@ export async function sendHs01ToBhxhGateway(
   const kyQT = credentials?.kyQT || dataKyQt;
 
   // Ưu tiên tệp XML Base64 đã ký số thực tế để bảo toàn 100% chữ ký điện tử
-  const signedXmlFromSig = (signature as any)?.signedXml;
+  const signedXmlFromSig = signature?.signedXml;
   const base64 = signedXmlFromSig
     ? xmlToBase64(signedXmlFromSig)
     : customFileBase64 || xmlToBase64(generateHs01Xml(items, maCskcb));

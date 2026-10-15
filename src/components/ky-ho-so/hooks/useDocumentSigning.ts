@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useToast } from "../../../context/ToastContext";
-import { parseDocxAndConvertToPdf } from "../utils/docx";
+
 import {
   signPdfWithBackend,
   sendBhxhGiayToDienTuWithBackend,
@@ -47,15 +47,10 @@ export function useDocumentSigning({
     bhxhCode: "",
   });
 
-  // 1. Tải lên tệp hồ sơ (Chỉ cho phép PDF và DOCX. Ảnh chỉ dùng để đổi Con dấu / Chữ ký)
+  // 1. Tải lên tệp hồ sơ (Chỉ cho phép tệp định dạng PDF)
   const handleFileSelect = async (doc: KyHoSoDocInfo) => {
     try {
       if (doc.file) {
-        const isDocx =
-          doc.fileName.toLowerCase().endsWith(".docx") ||
-          doc.fileType.includes("wordprocessingml") ||
-          doc.fileType.includes("docx");
-
         const isPdf =
           doc.fileName.toLowerCase().endsWith(".pdf") ||
           doc.fileType.includes("pdf");
@@ -66,45 +61,29 @@ export function useDocumentSigning({
 
         if (isImage) {
           toast.warning(
-            "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!",
-            "Chỉ Chấp Nhận PDF & DOCX",
+            "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf!",
+            "Chỉ Chấp Nhận PDF",
           );
           return;
         }
 
-        if (!isPdf && !isDocx) {
+        if (!isPdf) {
           toast.error(
-            "Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận tệp .pdf hoặc .docx.",
+            "Định dạng tệp không được hỗ trợ! Hồ sơ ký số chỉ chấp nhận tệp định dạng .pdf.",
             "Lỗi Định Dạng Tệp",
           );
           return;
         }
 
         if (doc.file.size > 25 * 1024 * 1024) {
-          toast.error(
-            "Dung lượng tệp vượt quá 25MB!",
-            "Tệp Quá Lớn",
-          );
+          toast.error("Dung lượng tệp vượt quá 25MB!", "Tệp Quá Lớn");
           return;
         }
 
         setDocInfo(doc);
 
-        let rawBuffer: ArrayBuffer;
-        let finalUrl: string;
-
-        if (isDocx) {
-          toast.info(
-            "Đang chuyển đổi tệp DOCX sang định dạng PDF chuẩn...",
-            "Chuyển Đổi DOCX",
-          );
-          const docxResult = await parseDocxAndConvertToPdf(doc.file);
-          rawBuffer = await docxResult.pdfBlob.arrayBuffer();
-          finalUrl = URL.createObjectURL(docxResult.pdfBlob);
-        } else {
-          rawBuffer = await doc.file.arrayBuffer();
-          finalUrl = URL.createObjectURL(doc.file);
-        }
+        const rawBuffer = await doc.file.arrayBuffer();
+        const finalUrl = URL.createObjectURL(doc.file);
 
         if (pdfUrl) {
           URL.revokeObjectURL(pdfUrl);
@@ -135,7 +114,6 @@ export function useDocumentSigning({
     setPositions(newPositions);
   };
 
-  // 2. Kéo thả di chuyển con dấu hoặc chữ ký (Đồng bộ cả tọa độ pixel lẫn tỷ lệ % chuẩn hóa)
   const handlePositionChange = (
     id: string,
     x: number,
@@ -176,7 +154,10 @@ export function useDocumentSigning({
       const finalFileName =
         (docInfo?.fileName.replace(/\.[^/.]+$/, "") || "document") + ".pdf";
 
-      toast.info("Đang gửi tài liệu lên hệ thống ký số SmartCA...", "Ký Số SmartCA");
+      toast.info(
+        "Đang gửi tài liệu lên hệ thống ký số SmartCA...",
+        "Ký Số SmartCA",
+      );
 
       // Gọi Backend ký số và đóng dấu tập trung
       const signResult = await signPdfWithBackend({
@@ -222,10 +203,13 @@ export function useDocumentSigning({
           "Ký Số Thành Công (Mã 200)",
         );
       } else {
-        throw new Error(signResult.message || "Dịch vụ ký số phản hồi không thành công.");
+        throw new Error(
+          signResult.message || "Dịch vụ ký số phản hồi không thành công.",
+        );
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Lỗi kết nối ký số SmartCA";
+      const msg =
+        err instanceof Error ? err.message : "Lỗi kết nối ký số SmartCA";
       console.error("Lỗi ký số Backend:", err);
       toast.error(`Ký số thất bại: ${msg}`, "Lỗi Ký Số");
     } finally {
@@ -274,13 +258,19 @@ export function useDocumentSigning({
   // 5. Gửi hồ sơ lên Cổng BHXH (Giấy tờ điện tử - Mã loại HS: 60)
   const handleSendBhxh = async () => {
     if (!pdfBytes) {
-      toast.error("Chưa có tệp hồ sơ PDF đã ký để gửi lên Cổng BHXH", "Lỗi Dữ Liệu");
+      toast.error(
+        "Chưa có tệp hồ sơ PDF đã ký để gửi lên Cổng BHXH",
+        "Lỗi Dữ Liệu",
+      );
       return;
     }
 
     setIsSending(true);
     try {
-      toast.info("Đang gửi Giấy tờ điện tử lên Cổng Tiếp Nhận BHXH...", "Gửi Cổng BHXH");
+      toast.info(
+        "Đang gửi Giấy tờ điện tử lên Cổng Tiếp Nhận BHXH...",
+        "Gửi Cổng BHXH",
+      );
 
       const res = await sendBhxhGiayToDienTuWithBackend({
         pdfBlobOrFile: new Blob([pdfBytes], { type: "application/pdf" }),
@@ -288,7 +278,11 @@ export function useDocumentSigning({
         maLienThong: signatureMeta.bhxhCode || `GD_${Date.now()}`,
       });
 
-      if (res.success || String(res.maKetQua) === "200" || String(res.maKetQua) === "0") {
+      if (
+        res.success ||
+        String(res.maKetQua) === "200" ||
+        String(res.maKetQua) === "0"
+      ) {
         setStep("sent");
         toast.success(
           `Gửi hồ sơ lên Cổng BHXH thành công!\nMã giao dịch: ${res.maGiaoDich || "Đã tiếp nhận"}`,

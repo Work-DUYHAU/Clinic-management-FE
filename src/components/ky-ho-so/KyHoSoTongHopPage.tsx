@@ -46,11 +46,6 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
   const handleDocChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const isDocx =
-        file.name.toLowerCase().endsWith(".docx") ||
-        file.type.includes("wordprocessingml") ||
-        file.type.includes("docx");
-
       const isPdf =
         file.name.toLowerCase().endsWith(".pdf") ||
         file.type.includes("pdf");
@@ -61,16 +56,16 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
 
       if (isImage) {
         toast.warning(
-          "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!",
-          "Chỉ Chấp Nhận PDF & DOCX",
+          "Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf!",
+          "Chỉ Chấp Nhận PDF",
         );
         e.target.value = "";
         return;
       }
 
-      if (!isPdf && !isDocx) {
+      if (!isPdf) {
         toast.error(
-          "Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận tệp .pdf hoặc .docx.",
+          "Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận tệp định dạng .pdf.",
           "Lỗi Định Dạng Tệp",
         );
         e.target.value = "";
@@ -100,11 +95,11 @@ export const KyHoSoTongHopPage: React.FC<KyHoSoTongHopPageProps> = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-84px)] min-h-0 items-start overflow-hidden pb-1">
-      {/* Input ẩn để đổi nhanh tệp tài liệu PDF/DOCX */}
+      {/* Input ẩn để đổi nhanh tệp tài liệu PDF */}
       <input
         ref={docFileInputRef}
         type="file"
-        accept=".pdf,.docx"
+        accept=".pdf"
         className="hidden"
         onChange={handleDocChangeInput}
       />

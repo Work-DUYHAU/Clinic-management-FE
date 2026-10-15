@@ -15,11 +15,6 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
   const handleProcessFile = (file?: File) => {
     if (!file) return;
 
-    const isDocx =
-      file.name.toLowerCase().endsWith('.docx') ||
-      file.type.includes('wordprocessingml') ||
-      file.type.includes('docx');
-
     const isPdf =
       file.name.toLowerCase().endsWith('.pdf') ||
       file.type.includes('pdf');
@@ -30,15 +25,15 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
 
     if (isImage) {
       toast.warning(
-        'Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf hoặc .docx!',
-        'Chỉ Chấp Nhận PDF & DOCX',
+        'Tệp hình ảnh (.png, .jpg, .jpeg...) chỉ dùng để tải lên Con dấu hoặc Chữ ký. Hồ sơ tài liệu cần ký chỉ chấp nhận tệp .pdf!',
+        'Chỉ Chấp Nhận PDF',
       );
       return;
     }
 
-    if (!isPdf && !isDocx) {
+    if (!isPdf) {
       toast.error(
-        'Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận định dạng .pdf hoặc .docx.',
+        'Định dạng tệp không được hỗ trợ! Hồ sơ ký chỉ chấp nhận định dạng .pdf.',
         'Lỗi Định Dạng Tệp',
       );
       return;
@@ -95,7 +90,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.docx"
+        accept=".pdf"
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
@@ -112,7 +107,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileSelect }) 
         Kéo thả hoặc chọn tệp hồ sơ
       </h3>
       <p className="text-xs text-slate-500 mb-6 font-medium">
-        Hỗ trợ định dạng PDF, DOCX — tối đa 25MB mỗi tệp (ảnh PNG/JPG chỉ dùng làm con dấu hoặc chữ ký)
+        Hỗ trợ định dạng PDF — tối đa 25MB mỗi tệp (ảnh PNG/JPG chỉ dùng làm con dấu hoặc chữ ký)
       </p>
 
       <button

@@ -30,7 +30,7 @@ interface Hs01TableProps {
   onViewDetail: (item: Hs01TongHopItem) => void;
 }
 
-export const Hs01Table: React.FC<Hs01TableProps> = ({
+export const Hs01Table: React.FC<Hs01TableProps> = React.memo(({
   items,
   searchTerm,
   onSearchChange,
@@ -304,4 +304,5 @@ export const Hs01Table: React.FC<Hs01TableProps> = ({
       />
     </div>
   );
-};
+});
+

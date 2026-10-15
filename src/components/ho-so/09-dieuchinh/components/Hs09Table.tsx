@@ -79,7 +79,7 @@ interface Hs09TableProps {
   onHuyPhien?: (selectedItems: HoSoDieuChinh09Item[]) => void;
 }
 
-export const Hs09Table: React.FC<Hs09TableProps> = ({
+export const Hs09Table: React.FC<Hs09TableProps> = React.memo(({
   items,
   searchTerm,
   onSearchChange,
@@ -1082,4 +1082,5 @@ export const Hs09Table: React.FC<Hs09TableProps> = ({
       </div>
     </div>
   );
-};
+});
+

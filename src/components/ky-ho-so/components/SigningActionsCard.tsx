@@ -120,7 +120,7 @@ export const SigningActionsCard: React.FC<SigningActionsCardProps> = ({
 
       {/* Dòng ghi chú hướng dẫn */}
       <div className="text-[11px] text-slate-400 leading-relaxed font-medium">
-        {step === 'empty' && 'Tải lên hồ sơ (PDF hoặc DOCX) để kích hoạt tính năng ký số.'}
+        {step === 'empty' && 'Tải lên hồ sơ PDF để kích hoạt tính năng ký số.'}
         {step === 'uploaded' &&
           'Kéo thả khung để căn chỉnh vị trí con dấu & chữ ký, sau đó nhấn "Ký số SmartCS".'}
         {step === 'signed' &&

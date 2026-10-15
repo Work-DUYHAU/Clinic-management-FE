@@ -10,13 +10,15 @@ import {
   buildHsDanhMucDocument,
   xmlToBase64,
   downloadXmlFile,
-  sendDanhMucToBhxhGateway,
-  type GatewaySendResult,
   type SharedSchemaField,
   type SchemaKeyMatcher,
   DEFAULT_MA_CSKCB,
   DEFAULT_MA_TINH,
 } from "./excelXmlShared";
+import {
+  sendDanhMucToBhxhGateway,
+  type GatewaySendResult,
+} from "../../services/api/danhMucApi";
 
 export interface DanhMucSheetInfo {
   name: string;
