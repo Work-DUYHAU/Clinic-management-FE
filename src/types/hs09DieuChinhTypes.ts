@@ -179,6 +179,11 @@ export interface SendHs09BatchItemResult {
   thongDiep?: string;
   thoiGianTiepNhan?: string;
   kyQT?: string;
+  _signUpdate?: {
+    signedXml: string;
+    signedAt?: string;
+    ttKySo?: 0 | 2;
+  };
 }
 
 export interface SendHs09GatewayResult {

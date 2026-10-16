@@ -91,23 +91,16 @@ export function useXmlExportModal<T, R extends BaseGatewayResult = BaseGatewayRe
     setSendResult(null);
   };
 
-  const generateXmlRef = useRef(generateXml);
-  generateXmlRef.current = generateXml;
-
-  const generateBase64Ref = useRef(generateBase64);
-  generateBase64Ref.current = generateBase64;
-
   const xmlContent = useMemo(
-    () => (isOpen && items.length > 0 ? generateXmlRef.current(items) : ""),
-    [isOpen, items],
+    () => (isOpen && items.length > 0 ? generateXml(items) : ""),
+    [isOpen, items, generateXml],
   );
 
   const base64Content = useMemo(() => {
     if (!isOpen || !xmlContent) return "";
-    if (generateBase64Ref.current)
-      return generateBase64Ref.current(items, xmlContent);
+    if (generateBase64) return generateBase64(items, xmlContent);
     return "";
-  }, [isOpen, items, xmlContent]);
+  }, [isOpen, items, xmlContent, generateBase64]);
 
   const handleDownloadXml = () => {
     if (items.length === 0) {

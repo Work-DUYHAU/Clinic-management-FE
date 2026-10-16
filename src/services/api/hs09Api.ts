@@ -1,4 +1,4 @@
-import { httpPost, httpGet } from "./httpClient";
+import { httpPost, httpGet, httpDelete } from "./httpClient";
 
 export interface SendBhxhHoSo09Params {
   fileBase64Str?: string;
@@ -93,6 +93,11 @@ export interface SendBhxhHoSo09HangLoatResult {
     thongDiep: string;
     thoiGianTiepNhan: string;
     kyQT?: string;
+    _signUpdate?: {
+      signedXml: string;
+      signedAt?: string;
+      ttKySo?: 0 | 2;
+    };
   }>;
 }
 
@@ -134,26 +139,8 @@ export interface Hs09AuditLogEntry {
   type: "single" | "batch";
 }
 
-export async function getHs09AuditLogsWithBackend(params?: {
-  limit?: number;
-  maCskcb?: string;
-  signal?: AbortSignal;
-}): Promise<Hs09AuditLogEntry[]> {
-  try {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.append("limit", String(params.limit));
-    if (params?.maCskcb) searchParams.append("maCskcb", params.maCskcb);
 
-    const queryStr = searchParams.toString();
-    const endpoint = `/ho-so/09/audit-logs${queryStr ? `?${queryStr}` : ""}`;
-    return await httpGet<Hs09AuditLogEntry[]>(endpoint, {
-      signal: params?.signal,
-    });
-  } catch (err) {
-    console.warn("Lỗi khi lấy audit log HS09 từ Backend:", err);
-    return [];
-  }
-}
+
 
 import type {
   HoSoDieuChinh09Item,
@@ -183,6 +170,12 @@ export function extractSignatureBlockFromXml(xml: string): string | null {
   return null;
 }
 
+function isSingleValidXml(xmlStr?: string): boolean {
+  if (!xmlStr) return false;
+  const matches = xmlStr.match(/<TT_HOSO[\s>]/gi);
+  return matches !== null && matches.length === 1;
+}
+
 export function resolveItemKyQt(
   item: HoSoDieuChinh09Item,
   fallbackKyQt?: string,
@@ -200,33 +193,6 @@ export function resolveItemKyQt(
   return getTodayYmd().slice(0, 6);
 }
 
-export function saveGatewayAuditLog(entry: {
-  loaiHs: string;
-  maCskcb: string;
-  maGiaoDich: string;
-  maKetQua: string;
-  thongDiep: string;
-  totalRecords: number;
-  kyQT?: string;
-}): void {
-  try {
-    const auditEntry = {
-      id: `audit-hs09-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      ...entry,
-    };
-    const savedLogs = JSON.parse(
-      localStorage.getItem("BHXH_GATEWAY_AUDIT_LOGS") || "[]",
-    );
-    savedLogs.unshift(auditEntry);
-    localStorage.setItem(
-      "BHXH_GATEWAY_AUDIT_LOGS",
-      JSON.stringify(savedLogs.slice(0, 100)),
-    );
-  } catch {
-    // Ignore localStorage error
-  }
-}
 
 export interface SendSingleItemParams {
   item: HoSoDieuChinh09Item;
@@ -259,14 +225,13 @@ export async function sendSingleHs09ItemRequest({
 }: SendSingleItemParams): Promise<SendHs09BatchItemResult> {
   const finalKyQt = resolveItemKyQt(item, credentialsKyQt);
 
-  const isSingleValidXml = (xmlStr?: string): boolean => {
-    if (!xmlStr) return false;
-    const matches = xmlStr.match(/<TT_HOSO[\s>]/gi);
-    return matches !== null && matches.length === 1;
-  };
-
   let base64 = "";
   let finalTranId = signatureTranId;
+  // Theo dõi kết quả ký số để trả về cho caller – KHÔNG mutate object item gốc
+  let newSignedXml: string | undefined;
+  let newSignedAt: string | undefined;
+  let newTtKySo: 0 | 2 | undefined;
+
   if (isSingleItem && customFileBase64) {
     try {
       const decoded = atob(customFileBase64);
@@ -303,9 +268,10 @@ export async function sendSingleHs09ItemRequest({
       });
 
       if (signRes.success && signRes.signedXml) {
-        item.signedXml = signRes.signedXml;
-        item.signedAt = signRes.meta?.signTime || new Date().toISOString();
-        item.ttKySo = 2;
+        // Lưu vào local variable, KHÔNG mutate object item gốc
+        newSignedXml = signRes.signedXml;
+        newSignedAt = signRes.meta?.signTime || new Date().toISOString();
+        newTtKySo = 2;
         if (signRes.signatureId) {
           finalTranId = signRes.signatureId;
         }
@@ -366,6 +332,10 @@ export async function sendSingleHs09ItemRequest({
         : `Cổng BHXH phản hồi mã: ${beRes.maKetQua}`),
     thoiGianTiepNhan: getThoiGianTiepNhan(),
     kyQT: finalKyQt,
+    // Thông tin ký số mới (nếu có) – caller dùng để cập nhật state
+    _signUpdate: newSignedXml
+      ? { signedXml: newSignedXml, signedAt: newSignedAt, ttKySo: newTtKySo }
+      : undefined,
   };
 }
 
@@ -417,8 +387,7 @@ export async function sendHs09ToBhxhGateway(
     credentials?.maCskcb || items[0]?.ttMau?.maCskcb || DEFAULT_MA_CSKCB;
 
   const signedXmlFromSig =
-    signature?.signedXml ||
-    items.find((i) => i.signedXml)?.signedXml;
+    signature?.signedXml || items.find((i) => i.signedXml)?.signedXml;
   let signatureBlock = extractSignatureBlockFromXml(signedXmlFromSig || "");
   if (!signatureBlock && customFileBase64) {
     try {
@@ -465,24 +434,9 @@ export async function sendHs09ToBhxhGateway(
         failureCount: isOk ? 0 : 1,
       };
 
-      saveGatewayAuditLog({
-        loaiHs: "73",
-        maCskcb,
-        maGiaoDich: result.maGiaoDich,
-        maKetQua: result.maKetQua,
-        thongDiep: result.thongDiep,
-        totalRecords: 1,
-        kyQT: singleRes.kyQT,
-      });
 
       return result;
     }
-
-    const isSingleValidXml = (xmlStr?: string): boolean => {
-      if (!xmlStr) return false;
-      const matches = xmlStr.match(/<TT_HOSO[\s>]/gi);
-      return matches !== null && matches.length === 1;
-    };
 
     const overallKyQt =
       credentials?.kyQT || resolveItemKyQt(items[0], credentials?.kyQT);
@@ -496,6 +450,10 @@ export async function sendHs09ToBhxhGateway(
       kyQT?: string;
       tranId?: string;
     }> = [];
+    const newlySignedMap = new Map<
+      string,
+      { signedXml: string; signedAt?: string; ttKySo?: 0 | 2 }
+    >();
 
     for (let i = 0; i < items.length; i++) {
       const currentItem = items[i];
@@ -521,14 +479,15 @@ export async function sendHs09ToBhxhGateway(
             userId: credentials?.smartCaOptions?.identityValue,
           });
           if (signRes.success && signRes.signedXml) {
-            currentItem.signedXml = signRes.signedXml;
-            currentItem.signedAt =
-              signRes.meta?.signTime || new Date().toISOString();
-            currentItem.ttKySo = 2;
             if (signRes.signatureId) {
               itemTranId = signRes.signatureId;
             }
             itemBase64 = xmlToBase64(signRes.signedXml);
+            newlySignedMap.set(currentItem.id, {
+              signedXml: signRes.signedXml,
+              signedAt: signRes.meta?.signTime || new Date().toISOString(),
+              ttKySo: 2,
+            });
           }
         } catch {
           // Bỏ qua lỗi ký sơ bộ
@@ -568,6 +527,8 @@ export async function sendHs09ToBhxhGateway(
             thongDiep: itemRes.thongDiep || "",
             thoiGianTiepNhan: itemRes.thoiGianTiepNhan || getThoiGianTiepNhan(),
             kyQT: itemRes.kyQT || overallKyQt,
+            _signUpdate:
+              itemRes._signUpdate || newlySignedMap.get(itemRes.id || ""),
           });
         });
       }
@@ -645,15 +606,6 @@ export async function sendHs09ToBhxhGateway(
       failureCount,
     };
 
-    saveGatewayAuditLog({
-      loaiHs: "73",
-      maCskcb,
-      maGiaoDich: result.maGiaoDich,
-      maKetQua: result.maKetQua,
-      thongDiep: result.thongDiep,
-      totalRecords: items.length,
-      kyQT: finalBatchKyQt,
-    });
 
     return result;
   } catch (err: unknown) {
@@ -674,4 +626,60 @@ export async function sendHs09ToBhxhGateway(
       successCount: 0,
     };
   }
+}
+
+export async function getHs09DraftsApi(
+  maCskcb?: string,
+): Promise<HoSoDieuChinh09Item[]> {
+  const url = maCskcb
+    ? `/ho-so/09/drafts?maCskcb=${encodeURIComponent(maCskcb)}`
+    : "/ho-so/09/drafts";
+  return await httpGet<HoSoDieuChinh09Item[]>(url);
+}
+
+export async function syncHs09DraftsApi(
+  items: HoSoDieuChinh09Item[],
+  maCskcb?: string,
+): Promise<{ success: boolean; total: number }> {
+  return await httpPost<{ success: boolean; total: number }>(
+    "/ho-so/09/drafts",
+    {
+      items,
+      maCskcb,
+    },
+  );
+}
+
+export async function deleteHs09DraftApi(
+  id: string,
+  maCskcb?: string,
+): Promise<{ success: boolean }> {
+  const url = maCskcb
+    ? `/ho-so/09/drafts/${encodeURIComponent(id)}?maCskcb=${encodeURIComponent(maCskcb)}`
+    : `/ho-so/09/drafts/${encodeURIComponent(id)}`;
+  return await httpDelete<{ success: boolean }>(url);
+}
+
+export async function clearHs09DraftsApi(
+  maCskcb?: string,
+): Promise<{ success: boolean }> {
+  const url = maCskcb
+    ? `/ho-so/09/drafts?maCskcb=${encodeURIComponent(maCskcb)}`
+    : "/ho-so/09/drafts";
+  return await httpDelete<{ success: boolean }>(url);
+}
+
+export async function getHs09AuditLogsApi(params?: {
+  maCskcb?: string;
+  limit?: number;
+  from?: string;
+  to?: string;
+}): Promise<any[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.maCskcb) searchParams.append("maCskcb", params.maCskcb);
+  if (params?.limit) searchParams.append("limit", String(params.limit));
+  if (params?.from) searchParams.append("from", params.from);
+  if (params?.to) searchParams.append("to", params.to);
+  const qs = searchParams.toString();
+  return await httpGet<any[]>(`/ho-so/09/audit-logs${qs ? `?${qs}` : ""}`);
 }

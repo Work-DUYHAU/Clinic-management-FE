@@ -43,12 +43,7 @@ const PageLoadingFallback: React.FC = () => (
 export const App: React.FC = () => {
   const { activeTab, hoSoTab, catalogTab, navigateTab, setCatalogTab } =
     useAppNavigation();
-  const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>(() => {
-    try {
-      sessionStorage.removeItem("clinic_hs09_items_cache");
-    } catch {}
-    return [];
-  });
+  const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>([]);
 
   const pendingXuattoanCount = hs09Items.filter(
     (x) => x.trangThai === "cho_xu_ly",

@@ -34,8 +34,9 @@ export async function sendBhxhGiayToDienTuWithBackend(
     const arrayBuffer = await pdfBlobOrFile.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
     }
     base64 = btoa(binary);
   }
@@ -44,12 +45,15 @@ export async function sendBhxhGiayToDienTuWithBackend(
     throw new Error("Không có dữ liệu tệp PDF để gửi lên Cổng BHXH.");
   }
 
-  return await httpPost<SendBhxhGiayToDienTuResult>("/bhxh/gui-giay-to-dien-tu", {
-    fileBase64Str: base64,
-    loaiHs,
-    maLienThong,
-    maCskcb,
-  });
+  return await httpPost<SendBhxhGiayToDienTuResult>(
+    "/bhxh/gui-giay-to-dien-tu",
+    {
+      fileBase64Str: base64,
+      loaiHs,
+      maLienThong,
+      maCskcb,
+    },
+  );
 }
 
 export interface BhxhGatewayStatusInfo {
@@ -76,4 +80,3 @@ export async function getBhxhGatewayStatusInfo(): Promise<BhxhGatewayStatusInfo>
     };
   }
 }
-
