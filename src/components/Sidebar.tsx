@@ -18,6 +18,7 @@ import {
   DEFAULT_CLINIC_NAME,
 } from "../utils/shared/excelXmlShared";
 import { Badge, IconButton } from "../shared/components";
+import { useAuth } from "../context/AuthContext";
 
 export type MainTabType = "danh-muc" | "ho-so" | "chung-tu" | "ky-so";
 export type HoSoTabType = "01_tonghop" | "09_xuattoan";
@@ -53,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingXuattoanCount = 0,
 }) => {
   const toast = useToast();
+  const { user, logout } = useAuth();
 
   const isDanhMucActive = activeTab === "danh-muc";
   const isHoSo01Active = activeTab === "ho-so" && hoSoTab === "01_tonghop";
@@ -138,7 +140,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       okText: "Đăng Xuất",
       cancelText: "Ở Lại",
       danger: true,
-      onOk: () => {
+      onOk: async () => {
+        await logout();
         toast.success(
           "Đã đăng xuất khỏi phiên làm việc an toàn.",
           "Đăng Xuất Thành Công",
@@ -273,11 +276,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <User size={15} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-slate-200 truncate">
-            Chuyên Viên CNTT
+          <div
+            className="text-xs font-semibold text-slate-200 truncate"
+            title={user?.fullName || "Chuyên Viên CNTT"}
+          >
+            {user?.fullName || "Chuyên Viên CNTT"}
           </div>
           <div className="text-[10px] text-slate-400 font-mono truncate">
-            QuanTriVien@cskcb
+            {user?.username ? `ID: ${user.username}` : "QuanTriVien@cskcb"}
           </div>
         </div>
         <IconButton

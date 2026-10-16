@@ -3,8 +3,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { Navbar } from "./components/Navbar";
 import { ToastProvider } from "./context/ToastContext";
+import { AuthProvider } from "./context/AuthContext";
 import { SmartCaProvider } from "./context/SmartCaContext";
 import { SignModalProvider } from "./context/SignModalContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
 import type { HoSoDieuChinh09Item } from "./types/hs09DieuChinhTypes";
 import { useAppNavigation } from "./hooks/useAppNavigation";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
@@ -40,7 +43,7 @@ const PageLoadingFallback: React.FC = () => (
   </div>
 );
 
-export const App: React.FC = () => {
+const MainLayout: React.FC = () => {
   const { activeTab, hoSoTab, catalogTab, navigateTab, setCatalogTab } =
     useAppNavigation();
   const [hs09Items, setHs09Items] = useState<HoSoDieuChinh09Item[]>([]);
@@ -97,41 +100,66 @@ export const App: React.FC = () => {
   ];
 
   return (
+    <div className="flex h-screen w-full bg-[#f1f5f9] text-slate-800 antialiased font-sans overflow-hidden">
+      {/* Left Sidebar Navigation */}
+      <Sidebar
+        activeTab={activeTab}
+        hoSoTab={hoSoTab}
+        onNavigate={navigateTab}
+        pendingXuattoanCount={pendingXuattoanCount}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f1f5f9] h-full overflow-hidden">
+        <Navbar
+          activeTab={activeTab}
+          hoSoTab={hoSoTab}
+          catalogTab={catalogTab}
+        />
+
+        <main
+          className={`flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto ${
+            activeTab === "ky-so"
+              ? "overflow-hidden flex flex-col min-h-0"
+              : "overflow-y-auto no-scrollbar"
+          }`}
+        >
+          <ErrorBoundary>
+            <Routes>
+              {routeItems.map((r, i) => (
+                <Route key={r.path || i} path={r.path} element={r.element} />
+              ))}
+            </Routes>
+          </ErrorBoundary>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
     <ToastProvider>
-      <SmartCaProvider>
-        <SignModalProvider>
-          <div className="flex h-screen w-full bg-[#f1f5f9] text-slate-800 antialiased font-sans overflow-hidden">
-            {/* Left Sidebar Navigation */}
-            <Sidebar
-              activeTab={activeTab}
-              hoSoTab={hoSoTab}
-              onNavigate={navigateTab}
-              pendingXuattoanCount={pendingXuattoanCount}
-            />
+      <AuthProvider>
+        <SmartCaProvider>
+          <SignModalProvider>
+            <Routes>
+              {/* Trang Đăng Nhập Công Khai */}
+              <Route path="/login" element={<LoginPage />} />
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#f1f5f9] h-full overflow-hidden">
-              <Navbar
-                activeTab={activeTab}
-                hoSoTab={hoSoTab}
-                catalogTab={catalogTab}
+              {/* Toàn bộ Phân hệ KCB được bảo vệ bởi ProtectedRoute */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
               />
-
-              <main
-                className={`flex-1 p-2.5 md:p-3 max-w-[1600px] w-full mx-auto ${activeTab === "ky-so" ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto no-scrollbar"}`}
-              >
-                <ErrorBoundary>
-                  <Routes>
-                    {routeItems.map((r, i) => (
-                      <Route key={r.path || i} path={r.path} element={r.element} />
-                    ))}
-                  </Routes>
-                </ErrorBoundary>
-              </main>
-            </div>
-          </div>
-        </SignModalProvider>
-      </SmartCaProvider>
+            </Routes>
+          </SignModalProvider>
+        </SmartCaProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 };
