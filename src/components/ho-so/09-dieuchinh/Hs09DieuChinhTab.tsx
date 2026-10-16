@@ -31,12 +31,6 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
     filteredItems,
     searchTerm,
     setSearchTerm,
-    filterNhomLoi,
-    setFilterNhomLoi,
-    filterSoBangXml,
-    setFilterSoBangXml,
-    filterTrangThai,
-    setFilterTrangThai,
     filterTinhTrangGui,
     setFilterTinhTrangGui,
     filterLoaiThaoTac,
@@ -95,6 +89,8 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
     handleCloseEditModal,
     handleCloseDetailModal,
     handleCloseXmlModal,
+    isSyncingDraft,
+    handleSaveDrafts,
   } = useHs09DieuChinhTab({ items: propItems, onItemsChange });
 
   return (
@@ -118,12 +114,6 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
         items={filteredItems}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        filterNhomLoi={filterNhomLoi}
-        onFilterNhomLoiChange={setFilterNhomLoi}
-        filterSoBangXml={filterSoBangXml}
-        onFilterSoBangXmlChange={setFilterSoBangXml}
-        filterTrangThai={filterTrangThai}
-        onFilterTrangThaiChange={setFilterTrangThai}
         filterTinhTrangGui={filterTinhTrangGui}
         onFilterTinhTrangGuiChange={setFilterTinhTrangGui}
         filterLoaiThaoTac={filterLoaiThaoTac}
@@ -148,6 +138,8 @@ export const Hs09DieuChinhTab: React.FC<Hs09DieuChinhTabProps> = ({
         onSendGiamDinh={handleSendGiamDinh}
         onExportExcel={handleExportExcel}
         onHuyPhien={handleHuyPhien}
+        onSaveDrafts={handleSaveDrafts}
+        isSyncingDraft={isSyncingDraft}
       />
 
       {/* MODALS */}

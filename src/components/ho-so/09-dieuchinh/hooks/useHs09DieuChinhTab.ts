@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { WorkBook } from "xlsx";
 import type {
   HoSoDieuChinh09Item,
@@ -13,6 +13,9 @@ import {
   downloadHs09ExcelTemplate,
   exportHs09ToExcel,
   sendHs09ToBhxhGateway,
+  getHs09DraftsApi,
+  syncHs09DraftsApi,
+  clearHs09DraftsApi,
 } from "../../../../utils/hs09DieuChinhXmlEngine";
 import { useToast } from "../../../../context/ToastContext";
 import { useRegisterSignModal } from "../../../../context/SignModalContext";
@@ -20,6 +23,8 @@ import {
   generateUUID,
   getTodayIsoDate,
 } from "../../../../utils/shared/excelXmlShared";
+
+const HS09_FILE_STATS_KEY = "hs09_file_upload_stats";
 
 export interface UseHs09DieuChinhTabProps {
   items?: HoSoDieuChinh09Item[];
@@ -35,8 +40,7 @@ export function useHs09DieuChinhTab({
   onItemsChange,
 }: UseHs09DieuChinhTabProps = {}) {
   const toast = useToast();
-  const [internalItems, setInternalItems] = useState<HoSoDieuChinh09Item[]>([]);
-  const items = propItems ?? internalItems;
+  const items = propItems ?? [];
   const setItems = useCallback(
     (
       updater:
@@ -45,19 +49,12 @@ export function useHs09DieuChinhTab({
     ) => {
       if (onItemsChange) {
         onItemsChange(updater);
-      } else {
-        setInternalItems((prev) =>
-          typeof updater === "function" ? updater(prev) : updater,
-        );
       }
     },
     [onItemsChange],
   );
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterNhomLoi, setFilterNhomLoi] = useState("all");
-  const [filterSoBangXml, setFilterSoBangXml] = useState("all");
-  const [filterTrangThai, setFilterTrangThai] = useState("all");
 
   // Filters chuẩn Thông tư 12/2026/TT-BTC Mục 2.1
   const [filterTinhTrangGui, setFilterTinhTrangGui] = useState("all");
@@ -68,7 +65,81 @@ export function useHs09DieuChinhTab({
 
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [fileUploadStats, setFileUploadStats] =
-    useState<ParseHs09ExcelResult | null>(null);
+    useState<ParseHs09ExcelResult | null>(() => {
+      try {
+        const raw = localStorage.getItem(HS09_FILE_STATS_KEY);
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        const rows = Number(cached.totalRows) || 0;
+        return {
+          items: [],
+          detectedHeaders: cached.detectedHeaders || {},
+          totalRows: rows,
+          validRows: rows,
+          invalidRows: 0,
+          missingRequiredFields: [],
+          fileName: cached.fileName || "Tệp đã nạp",
+          selectedSheet: cached.selectedSheet || "09-BH",
+          availableSheets: cached.availableSheets || ["09-BH"],
+        };
+      } catch {
+        return null;
+      }
+    });
+
+  // Tự động suy luận thông tin file nếu bảng có hồ sơ nhưng chưa có cache file
+  const effectiveFileUploadStats = useMemo<ParseHs09ExcelResult | null>(() => {
+    if (fileUploadStats) {
+      return {
+        ...fileUploadStats,
+        totalRows: items.length || fileUploadStats.totalRows,
+        validRows: items.length || fileUploadStats.validRows,
+      };
+    }
+    if (items.length > 0) {
+      return {
+        items,
+        detectedHeaders: {},
+        totalRows: items.length,
+        validRows: items.length,
+        invalidRows: 0,
+        missingRequiredFields: [],
+        fileName: "Hồ sơ lưu từ máy chủ (Mẫu 09/BH)",
+        selectedSheet: "09-BH",
+        availableSheets: ["09-BH"],
+      };
+    }
+    return null;
+  }, [fileUploadStats, items]);
+
+  const [isSyncingDraft, setIsSyncingDraft] = useState(false);
+
+  // Tự động khôi phục bản nháp từ Backend khi mở tab (chỉ khi bảng chưa có dữ liệu)
+  useEffect(() => {
+    let isMounted = true;
+    void (async () => {
+      try {
+        const drafts = await getHs09DraftsApi();
+        if (isMounted && drafts && drafts.length > 0) {
+          setItems((currentItems) => {
+            if (currentItems.length === 0) {
+              toast.info(
+                `Đã khôi phục ${drafts.length} hồ sơ điều chỉnh nháp từ máy chủ.`,
+                "Khôi Phục Bản Nháp",
+              );
+              return drafts;
+            }
+            return currentItems;
+          });
+        }
+      } catch {
+        // bỏ qua nếu máy chủ chưa có dữ liệu hoặc offline
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [setItems, toast]);
 
   // Modals state
   const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
@@ -161,6 +232,17 @@ export function useHs09DieuChinhTab({
         setSelectedTableItems([]);
         setSigningItems([]);
 
+        try {
+          const statsToCache = {
+            fileName: file.name,
+            selectedSheet: result.selectedSheet,
+            availableSheets: result.availableSheets,
+            totalRows: result.items.length,
+            detectedHeaders: result.detectedHeaders,
+          };
+          localStorage.setItem(HS09_FILE_STATS_KEY, JSON.stringify(statsToCache));
+        } catch {}
+
         const isXml = file.name.toLowerCase().endsWith(".xml");
         const signedCount = result.items.filter(
           (i: HoSoDieuChinh09Item) => i.ttKySo === 2,
@@ -190,7 +272,13 @@ export function useHs09DieuChinhTab({
 
   const handleSwitchSheet = useCallback(
     (sheetName: string) => {
-      if (!fileUploadStats?.workbook) return;
+      if (!fileUploadStats?.workbook) {
+        toast.info(
+          "Để chuyển sheet khác, vui lòng nạp lại tệp Excel gốc.",
+          "Chuyển Sheet Dữ Liệu",
+        );
+        return;
+      }
       try {
         const wb = fileUploadStats.workbook as WorkBook;
         const ws = wb.Sheets[sheetName];
@@ -203,6 +291,18 @@ export function useHs09DieuChinhTab({
         );
         setItems(result.items);
         setFileUploadStats(result);
+
+        try {
+          const statsToCache = {
+            fileName: fileUploadStats.fileName,
+            selectedSheet: sheetName,
+            availableSheets: fileUploadStats.availableSheets,
+            totalRows: result.items.length,
+            detectedHeaders: result.detectedHeaders,
+          };
+          localStorage.setItem(HS09_FILE_STATS_KEY, JSON.stringify(statsToCache));
+        } catch {}
+
         toast.info(
           `Đã chuyển sang Sheet "${sheetName}" (${result.items.length} hồ sơ)`,
           "Chuyển Sheet Dữ Liệu",
@@ -228,6 +328,30 @@ export function useHs09DieuChinhTab({
     }
   }, [toast]);
 
+  const handleSaveDrafts = useCallback(async () => {
+    if (items.length === 0) {
+      toast.warning("Chưa có hồ sơ điều chỉnh nào để lưu nháp!", "Lưu Nháp");
+      return;
+    }
+    setIsSyncingDraft(true);
+    try {
+      await syncHs09DraftsApi(items);
+      toast.success(
+        `Đã lưu an toàn ${items.length} hồ sơ điều chỉnh lên máy chủ!`,
+        "Lưu Nháp Thành Công",
+      );
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Không thể kết nối máy chủ để lưu nháp.",
+        "Lỗi Lưu Nháp",
+      );
+    } finally {
+      setIsSyncingDraft(false);
+    }
+  }, [items, toast]);
+
   const handleClearData = useCallback(() => {
     toast.showConfirm({
       title: "Xác nhận xóa toàn bộ hồ sơ",
@@ -239,8 +363,12 @@ export function useHs09DieuChinhTab({
       onOk: () => {
         setItems([]);
         setFileUploadStats(null);
+        try {
+          localStorage.removeItem(HS09_FILE_STATS_KEY);
+        } catch {}
         setSigningItems([]);
         setSelectedTableItems([]);
+        void clearHs09DraftsApi().catch(() => {});
         toast.warning(
           "Đã xóa toàn bộ dữ liệu bảng hồ sơ điều chỉnh",
           "Xóa Dữ Liệu",
@@ -358,9 +486,9 @@ export function useHs09DieuChinhTab({
     [setItems, toast],
   );
 
-  const handleSendSuccess = useCallback(
-    (result: SendHs09GatewayResult) => {
-      const targetIds = new Set(signingItems.map((i) => i.id));
+  const applySendResults = useCallback(
+    (result: SendHs09GatewayResult, targetItems: HoSoDieuChinh09Item[]) => {
+      const targetIds = new Set(targetItems.map((i) => i.id));
       const resultMap = new Map<string, SendHs09BatchItemResult>();
       if (result.batchResults && result.batchResults.length > 0) {
         result.batchResults.forEach((br: SendHs09BatchItemResult) => {
@@ -372,28 +500,21 @@ export function useHs09DieuChinhTab({
         if (!targetIds.has(i.id)) return i;
 
         const batchItem = resultMap.get(i.id);
-        if (batchItem) {
-          const isItemSuccess = String(batchItem.maKetQua) === "200";
-          if (!isItemSuccess) {
-            return i;
-          }
-          return {
-            ...i,
-            ttKySo: 2 as const,
-            tinhTrangGui: 2 as const,
-            trangThai: "da_gui_cong" as const,
-            ngayGiaiTrinh: getTodayIsoDate(),
-            maGiaoDichBhxh: batchItem.maGiaoDich || result.maGiaoDich,
-          };
+        if (batchItem && String(batchItem.maKetQua) !== "200") {
+          return i;
         }
 
         return {
           ...i,
-          ttKySo: 2 as const,
+          ttKySo: (batchItem?._signUpdate?.ttKySo ?? 2) as 0 | 2,
           tinhTrangGui: 2 as const,
           trangThai: "da_gui_cong" as const,
           ngayGiaiTrinh: getTodayIsoDate(),
-          maGiaoDichBhxh: result.maGiaoDich,
+          ngayGui: getTodayIsoDate(),
+          nguoiGui: i.ttMau.nguoiLapBieu || "CSKCB",
+          maGiaoDichBhxh: batchItem?.maGiaoDich || result.maGiaoDich,
+          signedXml: batchItem?._signUpdate?.signedXml || i.signedXml,
+          signedAt: batchItem?._signUpdate?.signedAt || i.signedAt,
         };
       };
 
@@ -401,7 +522,14 @@ export function useHs09DieuChinhTab({
       setSigningItems((prev) => prev.map(updater));
       setSelectedTableItems((prev) => prev.map(updater));
     },
-    [setItems, signingItems],
+    [setItems],
+  );
+
+  const handleSendSuccess = useCallback(
+    (result: SendHs09GatewayResult) => {
+      applySendResults(result, signingItems);
+    },
+    [applySendResults, signingItems],
   );
 
   const handleSignSuccess = useCallback(
@@ -500,43 +628,22 @@ export function useHs09DieuChinhTab({
 
   // Filtered Items logic
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const q = searchTerm.toLowerCase();
-      const matchSearch =
-        !searchTerm ||
-        item.ttXml1.maLk.toLowerCase().includes(q) ||
-        item.ttXml1.hoTen.toLowerCase().includes(q) ||
-        item.ttXml1.maThe.toLowerCase().includes(q) ||
-        item.ttXml1.maBn.toLowerCase().includes(q) ||
-        (item.khoaDieuTri && item.khoaDieuTri.toLowerCase().includes(q)) ||
-        (item.nhomLoi && item.nhomLoi.toLowerCase().includes(q)) ||
-        item.dsChiPhiDieuChinh.some(
-          (cp: ChiPhiDieuChinhItem) =>
-            (cp.tuChoi && cp.tuChoi.toLowerCase().includes(q)) ||
-            (cp.lyDoDieuChinh && cp.lyDoDieuChinh.toLowerCase().includes(q)),
-        );
-
-      const matchNhomLoi =
-        filterNhomLoi === "all" ||
-        item.nhomLoi === filterNhomLoi ||
-        item.dsChiPhiDieuChinh.some(
-          (cp: ChiPhiDieuChinhItem) => cp.tuChoi === filterNhomLoi,
-        );
-
-      const matchSoBangXml =
-        filterSoBangXml === "all" ||
-        (filterSoBangXml === "xml1" &&
-          (item.dsXml1DieuChinh?.length || 0) > 0) ||
-        item.dsChiPhiDieuChinh.some(
-          (cp: ChiPhiDieuChinhItem) => String(cp.soBangXml) === filterSoBangXml,
-        );
-
-      const matchStatus =
-        filterTrangThai === "all" || item.trangThai === filterTrangThai;
-
-      return matchSearch && matchNhomLoi && matchSoBangXml && matchStatus;
-    });
-  }, [items, searchTerm, filterNhomLoi, filterSoBangXml, filterTrangThai]);
+    if (!searchTerm) return items;
+    const q = searchTerm.toLowerCase();
+    return items.filter((item) =>
+      item.ttXml1.maLk.toLowerCase().includes(q) ||
+      item.ttXml1.hoTen.toLowerCase().includes(q) ||
+      item.ttXml1.maThe.toLowerCase().includes(q) ||
+      item.ttXml1.maBn.toLowerCase().includes(q) ||
+      (item.khoaDieuTri && item.khoaDieuTri.toLowerCase().includes(q)) ||
+      (item.nhomLoi && item.nhomLoi.toLowerCase().includes(q)) ||
+      item.dsChiPhiDieuChinh.some(
+        (cp: ChiPhiDieuChinhItem) =>
+          (cp.tuChoi && cp.tuChoi.toLowerCase().includes(q)) ||
+          (cp.lyDoDieuChinh && cp.lyDoDieuChinh.toLowerCase().includes(q)),
+      ),
+    );
+  }, [items, searchTerm]);
 
   const handleExportExcel = useCallback(
     (itemsToExport?: HoSoDieuChinh09Item[]) => {
@@ -584,36 +691,7 @@ export function useHs09DieuChinhTab({
                 return;
               }
 
-              const targetIds = new Set(selectedItems.map((i) => i.id));
-              const resultMap = new Map<string, SendHs09BatchItemResult>();
-              if (result.batchResults && result.batchResults.length > 0) {
-                result.batchResults.forEach((br: SendHs09BatchItemResult) =>
-                  resultMap.set(br.id, br),
-                );
-              }
-
-              const updater = (i: HoSoDieuChinh09Item): HoSoDieuChinh09Item => {
-                if (!targetIds.has(i.id)) return i;
-
-                const batchItem = resultMap.get(i.id);
-                if (batchItem && String(batchItem.maKetQua) !== "200") {
-                  return i;
-                }
-
-                return {
-                  ...i,
-                  ttKySo: 2,
-                  tinhTrangGui: 2,
-                  trangThai: "da_gui_cong",
-                  ngayGiaiTrinh: getTodayIsoDate(),
-                  ngayGui: getTodayIsoDate(),
-                  nguoiGui: i.ttMau.nguoiLapBieu || "CSKCB",
-                  maGiaoDichBhxh: batchItem?.maGiaoDich || result.maGiaoDich,
-                };
-              };
-
-              setItems((prev) => prev.map(updater));
-              setSelectedTableItems((prev) => prev.map(updater));
+              applySendResults(result, selectedItems);
 
               if (result.failureCount && result.failureCount > 0) {
                 toast.warning(
@@ -636,7 +714,7 @@ export function useHs09DieuChinhTab({
         },
       });
     },
-    [setItems, toast],
+    [applySendResults, toast],
   );
 
   const handleHuyPhien = useCallback(
@@ -674,12 +752,6 @@ export function useHs09DieuChinhTab({
     filteredItems,
     searchTerm,
     setSearchTerm,
-    filterNhomLoi,
-    setFilterNhomLoi,
-    filterSoBangXml,
-    setFilterSoBangXml,
-    filterTrangThai,
-    setFilterTrangThai,
     filterTinhTrangGui,
     setFilterTinhTrangGui,
     filterLoaiThaoTac,
@@ -691,7 +763,9 @@ export function useHs09DieuChinhTab({
     filterDenNgay,
     setFilterDenNgay,
     isLoadingFile,
-    fileUploadStats,
+    fileUploadStats: effectiveFileUploadStats,
+    isSyncingDraft,
+    handleSaveDrafts,
     // Modals
     isXmlModalOpen,
     xmlModalTab,

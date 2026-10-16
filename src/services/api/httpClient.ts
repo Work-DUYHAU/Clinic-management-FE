@@ -13,6 +13,8 @@ interface RetryableConfig extends AxiosRequestConfig {
   _retryCount?: number;
 }
 
+const RETRY_DELAYS_MS = [1200, 2500]; // exponential backoff: 1.2s → 2.5s
+
 httpClient.interceptors.response.use(
   (response) => response,
   async (
@@ -26,14 +28,12 @@ httpClient.interceptors.response.use(
       error.response.status === 503 ||
       error.response.status === 504;
 
-    if (
-      config &&
-      isNetworkOrServerUnavailable &&
-      (!config._retryCount || config._retryCount < 1)
-    ) {
-      config._retryCount = (config._retryCount || 0) + 1;
-      // Chờ 1.2s trước khi retry
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+    const retryCount = config?._retryCount ?? 0;
+
+    if (config && isNetworkOrServerUnavailable && retryCount < RETRY_DELAYS_MS.length) {
+      config._retryCount = retryCount + 1;
+      const delayMs = RETRY_DELAYS_MS[retryCount];
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
       return httpClient(config);
     }
 
@@ -78,5 +78,13 @@ export async function httpPostForm<T>(
       "Content-Type": "multipart/form-data",
     },
   });
+  return res.data;
+}
+
+export async function httpDelete<T>(
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  const res = await httpClient.delete<T>(url, config);
   return res.data;
 }
