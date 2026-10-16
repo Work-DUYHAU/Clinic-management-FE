@@ -22,7 +22,6 @@ httpClient.interceptors.response.use(
   ) => {
     const config = error.config as RetryableConfig | undefined;
 
-    // Chỉ retry với các lỗi mạng (network error) hoặc lỗi 503/504
     const isNetworkOrServerUnavailable =
       !error.response ||
       error.response.status === 503 ||
@@ -30,7 +29,11 @@ httpClient.interceptors.response.use(
 
     const retryCount = config?._retryCount ?? 0;
 
-    if (config && isNetworkOrServerUnavailable && retryCount < RETRY_DELAYS_MS.length) {
+    if (
+      config &&
+      isNetworkOrServerUnavailable &&
+      retryCount < RETRY_DELAYS_MS.length
+    ) {
       config._retryCount = retryCount + 1;
       const delayMs = RETRY_DELAYS_MS[retryCount];
       await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -63,6 +66,15 @@ export async function httpPost<T>(
   config?: AxiosRequestConfig,
 ): Promise<T> {
   const res = await httpClient.post<T>(url, data, config);
+  return res.data;
+}
+
+export async function httpPut<T>(
+  url: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  const res = await httpClient.put<T>(url, data, config);
   return res.data;
 }
 

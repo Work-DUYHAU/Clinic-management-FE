@@ -1,4 +1,4 @@
-import { httpPost } from "./httpClient";
+import { httpPost } from "../http/httpClient";
 
 export interface SendBhxhChungTu2025Params {
   fileBase64Str: string;

@@ -2,8 +2,7 @@ import type {
   SignaturePosition,
   KyHoSoSignatureMeta,
 } from "../../components/ky-ho-so/types";
-import { urlToDataUrl } from "./client";
-import { httpPost, httpPostForm, httpGet } from "./httpClient";
+import { urlToDataUrl, httpPost, httpPostForm, httpGet } from "../http";
 
 export interface SignPdfWithBackendParams {
   pdfBlobOrFile: Blob | File;

@@ -1,4 +1,4 @@
-import { httpPost } from "./httpClient";
+import { httpPost } from "../http/httpClient";
 import type {
   Hs01TongHopItem,
   SendHs01GatewayResult,
@@ -176,4 +176,3 @@ export async function sendHs01ToBhxhGateway(
     };
   }
 }
-

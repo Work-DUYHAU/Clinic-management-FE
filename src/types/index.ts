@@ -59,4 +59,5 @@ export * from './dichVuTypes';
 export * from './tbyttHdvTypes';
 export * from './hs01TongHopTypes';
 export * from './hs09DieuChinhTypes';
+export * from './hs09ApiTypes';
 export * from './smartcaTypes';

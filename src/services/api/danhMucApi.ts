@@ -1,4 +1,4 @@
-import { httpPost } from "./httpClient";
+import { httpPost } from "../http/httpClient";
 
 export interface GatewaySendResult {
   maKetQua: string;

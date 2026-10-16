@@ -1,4 +1,4 @@
-import { httpPost, httpGet } from "./httpClient";
+import { httpPost, httpGet } from "../http/httpClient";
 
 export interface SendBhxhGiayToDienTuParams {
   pdfBlobOrFile?: Blob | File;
