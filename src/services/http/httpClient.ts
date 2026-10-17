@@ -9,6 +9,31 @@ export const httpClient = axios.create({
   },
 });
 
+export function getStoredToken(): string | null {
+  return (
+    localStorage.getItem("clinic_access_token") ||
+    sessionStorage.getItem("clinic_access_token")
+  );
+}
+
+export function clearStoredAuth(): void {
+  localStorage.removeItem("clinic_access_token");
+  localStorage.removeItem("clinic_user_info");
+  localStorage.removeItem("clinic_token_expires_at");
+  sessionStorage.removeItem("clinic_access_token");
+  sessionStorage.removeItem("clinic_user_info");
+  sessionStorage.removeItem("clinic_token_expires_at");
+}
+
+// Tự động gắn token xác thực Bearer nếu người dùng đã đăng nhập (kiểm tra cả local & session storage)
+httpClient.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 interface RetryableConfig extends AxiosRequestConfig {
   _retryCount?: number;
 }
@@ -21,6 +46,21 @@ httpClient.interceptors.response.use(
     error: AxiosError<{ message?: string | string[]; error?: string }>,
   ) => {
     const config = error.config as RetryableConfig | undefined;
+
+    if (error.response?.status === 401) {
+      clearStoredAuth();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("clinic_auth_expired", {
+            detail: {
+              message:
+                error.response?.data?.message ||
+                "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.",
+            },
+          }),
+        );
+      }
+    }
 
     const isNetworkOrServerUnavailable =
       !error.response ||

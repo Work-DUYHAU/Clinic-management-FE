@@ -154,16 +154,8 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
 
       if (detectedPreSigned) {
         setSignedXml(detectedPreSigned);
-        let restored = initialSignedAt || null;
-        if (!restored && effectiveFileName) {
-          try {
-            restored =
-              localStorage.getItem(`smartca_signed_at_${effectiveFileName}`) ||
-              null;
-          } catch {
-            // ignore
-          }
-        }
+        const sigInfo = extractXmlSignature(detectedPreSigned);
+        const restored = initialSignedAt || sigInfo?.signingTime || null;
         setSignedAt(restored);
       } else {
         // Tệp mới hoặc mở modal mới chưa có chữ ký -> RESET toàn bộ trạng thái ký cũ!
@@ -234,12 +226,6 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     setSignedXml(newSignedXml);
     setSignResponse(res);
     setSignedAt(timeStr);
-    try {
-      localStorage.setItem(`smartca_signed_at_${effectiveFileName}`, timeStr);
-      localStorage.setItem("smartca_signed_at_latest", timeStr);
-    } catch {
-      // ignore
-    }
     clearApiResponse();
 
     // Thông báo cho component cha biết đã ký số thành công ngay lập tức
@@ -277,12 +263,6 @@ export const XmlExportModal: React.FC<XmlExportModalProps> = ({
     setSignedXml(null);
     setSignResponse(null);
     setSignedAt(null);
-    try {
-      localStorage.removeItem(`smartca_signed_at_${effectiveFileName}`);
-      localStorage.removeItem("smartca_signed_at_latest");
-    } catch {
-      // ignore
-    }
     clearApiResponse();
   };
 
