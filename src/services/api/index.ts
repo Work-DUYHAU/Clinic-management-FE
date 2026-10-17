@@ -6,3 +6,5 @@ export * from "./hs01Api";
 export * from "./bhxhGatewayApi";
 export * from "./chungTuApi";
 export * from "./danhMucApi";
+export * from "./authApi";
+

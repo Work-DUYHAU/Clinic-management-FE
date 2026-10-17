@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Lock,
   User,
-  Eye,
-  EyeOff,
   ShieldCheck,
   AlertCircle,
   Stethoscope,
-  KeyRound,
   FileText,
   ArrowRight,
   Server,
@@ -30,10 +27,13 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
 
   const [username, setUsername] = useState<string>(() => {
-    return localStorage.getItem("clinic_remembered_user") || "4001266514";
+    return localStorage.getItem("clinic_remembered_user") || "";
   });
-  const [password, setPassword] = useState<string>("Fqvn@8192");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  // Mật khẩu thật lưu trong Ref (không đưa vào DOM hay React State để F12/React DevTools không soi được)
+  const passwordRealRef = useRef<string>("");
+  // DOM value chỉ chứa chuỗi mặt nạ Unicode '*'
+  const [displayMask, setDisplayMask] = useState<string>("");
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -48,6 +48,57 @@ export const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
+  // Xử lý nhập liệu mật khẩu: chỉ lưu giá trị thật vào Ref, DOM chỉ hiển thị ký tự '*'
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const prevReal = passwordRealRef.current;
+    const prevMask = displayMask;
+
+    if (val.length === 0) {
+      passwordRealRef.current = "";
+      setDisplayMask("");
+      return;
+    }
+
+    if (val.length > prevMask.length) {
+      const addedLen = val.length - prevMask.length;
+      const target = e.target;
+      const cursorPos = target.selectionStart ?? val.length;
+      const insertIdx = Math.max(0, cursorPos - addedLen);
+      const insertedChars = val.slice(insertIdx, cursorPos);
+      const nextReal =
+        prevReal.slice(0, insertIdx) +
+        insertedChars +
+        prevReal.slice(insertIdx);
+      passwordRealRef.current = nextReal;
+      setDisplayMask("*".repeat(nextReal.length));
+    } else if (val.length < prevMask.length) {
+      const removedLen = prevMask.length - val.length;
+      const target = e.target;
+      const cursorPos = target.selectionStart ?? 0;
+      const nextReal =
+        prevReal.slice(0, cursorPos) + prevReal.slice(cursorPos + removedLen);
+      passwordRealRef.current = nextReal;
+      setDisplayMask("*".repeat(nextReal.length));
+    }
+  };
+
+  const handlePasswordPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+    if (!pastedText) return;
+
+    const target = e.currentTarget;
+    const start = target.selectionStart ?? passwordRealRef.current.length;
+    const end = target.selectionEnd ?? passwordRealRef.current.length;
+    const prevReal = passwordRealRef.current;
+
+    const nextReal =
+      prevReal.slice(0, start) + pastedText + prevReal.slice(end);
+    passwordRealRef.current = nextReal;
+    setDisplayMask("*".repeat(nextReal.length));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -56,14 +107,19 @@ export const LoginPage: React.FC = () => {
       setErrorMessage("Vui lòng nhập mã người dùng / tài khoản");
       return;
     }
-    if (!password) {
+    const realPassword = passwordRealRef.current;
+    if (!realPassword) {
       setErrorMessage("Vui lòng nhập mật khẩu");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await login({ username: username.trim(), password, rememberMe });
+      await login({
+        username: username.trim(),
+        password: realPassword,
+        rememberMe,
+      });
 
       if (rememberMe) {
         localStorage.setItem("clinic_remembered_user", username.trim());
@@ -86,12 +142,6 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleQuickFill = () => {
-    setUsername("4001266514");
-    setPassword("Fqvn@8192");
-    setErrorMessage("");
   };
 
   return (
@@ -257,29 +307,6 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Credential Box (.env Account Hint) */}
-          <div className="mb-5 p-3 rounded-xl bg-slate-50 border border-slate-200/90 text-xs flex items-center justify-between gap-2 shadow-xs">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-md bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
-                <KeyRound className="w-3.5 h-3.5" />
-              </div>
-              <div className="truncate">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">
-                  Tài khoản hệ thống
-                </span>
-                <span className="font-mono font-semibold text-slate-800 text-xs">
-                  4001266514
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleQuickFill}
-              className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 font-semibold text-xs rounded-md border border-slate-200 hover:border-blue-300 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-            >
-              Điền nhanh
-            </button>
-          </div>
 
           {/* Error Alert */}
           {errorMessage && (
@@ -336,26 +363,15 @@ export const LoginPage: React.FC = () => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={displayMask}
+                  onChange={handlePasswordChange}
+                  onPaste={handlePasswordPaste}
                   placeholder="Nhập mật khẩu xác thực..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-500/15 transition-all shadow-2xs font-medium"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-500/15 transition-all shadow-2xs font-medium font-mono"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
               </div>
             </div>
 
